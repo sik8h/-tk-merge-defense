@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>삼국지 3D 택티컬 머지 디펜스 — 공식 위키 & 3D DB (HELLSCRIPT-Wiki Architecture)</title>
+  <title>삼국지 3D 택티컬 머지 디펜스 — 공식 전술 기록원 & 3D 명장 도감</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
-      --bg-deep: #050811;
-      --bg-panel: #0b1120;
-      --bg-card: #111a2e;
-      --border: rgba(56, 189, 248, 0.25);
-      --gold: #fbbf24;
-      --cyan: #38bdf8;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
+      --bg-base: #11151c;
+      --bg-panel: #171c26;
+      --bg-card: #1e2533;
+      --bg-hover: #262f40;
+      --border: #2e384b;
+      --gold: #d4af37;
+      --gold-soft: #e5c76b;
+      --jade: #3d8b6e;
+      --accent: #5b8fb9;
+      --text-main: #e6e1d6;
+      --text-sub: #9aa5b4;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: var(--bg-deep);
+      background-color: var(--bg-base);
       color: var(--text-main);
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       min-height: 100dvh;
@@ -26,11 +29,9 @@
       flex-direction: column;
       overflow-x: hidden;
     }
-    /* 상단 헤더 (HELLSCRIPT-Wiki 스타일) */
     #wiki-header {
       height: 58px;
-      background: rgba(8, 13, 26, 0.94);
-      backdrop-filter: blur(12px);
+      background: #141923;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -52,58 +53,46 @@
       font-size: 15px;
       cursor: pointer;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text-main);
-    }
-    .brand-title { font-size: 15px; font-weight: 900; color: var(--gold); letter-spacing: -0.3px; }
-    .brand-sub { display: block; font-size: 10px; color: var(--cyan); font-weight: 700; letter-spacing: 0.6px; }
-    .search-wrap { flex: 1; max-width: 420px; position: relative; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-main); }
+    .brand-title { font-size: 15px; font-weight: 800; color: var(--gold); }
+    .brand-sub { display: block; font-size: 10px; color: var(--text-sub); font-weight: 600; }
+    .search-wrap { flex: 1; max-width: 380px; }
     #wiki-search {
       width: 100%;
-      background: #070c18;
-      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: #0d1017;
+      border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
       font-size: 13px;
       outline: none;
     }
-    #wiki-search:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+    #wiki-search:focus { border-color: var(--gold); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .sync-pill {
-      background: rgba(251, 191, 36, 0.12);
-      border: 1px solid rgba(251, 191, 36, 0.45);
-      color: #fde68a;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: var(--gold-soft);
       padding: 6px 10px;
       border-radius: 6px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
       white-space: nowrap;
     }
     .return-btn {
-      background: linear-gradient(135deg, #0284c7, #0369a1);
-      border: 1px solid var(--cyan);
+      background: #2b4c6f;
+      border: 1px solid #4a75a0;
       color: #fff;
       text-decoration: none;
       padding: 7px 12px;
       border-radius: 6px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
       white-space: nowrap;
     }
-
-    /* 메인 워크스페이스 (좌측 Aside 트리 + 우측 Main 뷰어) */
-    .wiki-workspace {
-      display: flex;
-      flex: 1;
-      min-height: calc(100dvh - 58px);
-    }
+    .wiki-workspace { display: flex; flex: 1; min-height: calc(100dvh - 58px); }
     #wiki-sidebar {
-      width: 270px;
+      width: 260px;
       background: var(--bg-panel);
       border-right: 1px solid var(--border);
       display: flex;
@@ -115,24 +104,23 @@
       grid-template-columns: 1fr 1fr;
       gap: 6px;
       padding: 12px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      border-bottom: 1px solid var(--border);
     }
     .mode-tab {
       text-align: center;
       padding: 8px 6px;
       font-size: 12px;
-      font-weight: 800;
-      color: var(--text-muted);
-      background: #070b14;
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-weight: 700;
+      color: var(--text-sub);
+      background: var(--bg-base);
+      border: 1px solid var(--border);
       border-radius: 6px;
       text-decoration: none;
     }
     .mode-tab.active {
-      color: #fff;
-      background: rgba(56, 189, 248, 0.18);
-      border-color: var(--cyan);
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+      color: var(--gold-soft);
+      background: var(--bg-card);
+      border-color: var(--gold);
     }
     #sidebar-tree {
       flex: 1;
@@ -143,12 +131,10 @@
       gap: 4px;
     }
     .tree-group-title {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 800;
       color: var(--gold);
-      letter-spacing: 0.8px;
       margin: 10px 4px 4px;
-      text-transform: uppercase;
     }
     .tree-link {
       display: flex;
@@ -156,147 +142,107 @@
       justify-content: space-between;
       padding: 8px 10px;
       border-radius: 6px;
-      color: #cbd5e1;
+      color: var(--text-sub);
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
       border: 1px solid transparent;
     }
-    .tree-link:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
+    .tree-link:hover { background: var(--bg-hover); color: var(--text-main); }
     .tree-link.active {
-      background: rgba(251, 191, 36, 0.14);
-      border-color: rgba(251, 191, 36, 0.45);
-      color: var(--gold);
-      font-weight: 800;
+      background: rgba(212, 175, 55, 0.12);
+      border-color: rgba(212, 175, 55, 0.4);
+      color: var(--gold-soft);
+      font-weight: 700;
     }
     .sidebar-footer {
       padding: 10px 12px;
-      font-size: 10px;
-      color: #64748b;
-      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      font-size: 11px;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
       text-align: center;
     }
-
-    /* 우측 본문 영역 */
     #wiki-main {
       flex: 1;
-      padding: 24px 28px 60px;
+      padding: 22px 26px 60px;
       overflow-y: auto;
       max-width: 1180px;
     }
-    .breadcrumb {
-      font-size: 12px;
-      color: var(--cyan);
-      margin-bottom: 10px;
-      font-weight: 700;
-    }
-    .article-layout {
-      display: grid;
-      grid-template-columns: 1fr 250px;
-      gap: 24px;
-      align-items: start;
-    }
+    .breadcrumb { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; font-weight: 700; }
+    .article-layout { display: grid; grid-template-columns: 1fr 240px; gap: 20px; align-items: start; }
     .article-body {
-      background: rgba(11, 17, 32, 0.75);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 12px;
-      padding: 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px;
     }
     .article-body h1 {
-      font-size: 24px;
-      color: var(--gold);
-      margin-bottom: 8px;
+      font-size: 22px;
+      color: var(--gold-soft);
+      margin-bottom: 10px;
       padding-bottom: 10px;
-      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+      border-bottom: 1px solid var(--border);
     }
-    .article-body h2 {
-      font-size: 17px;
-      color: var(--cyan);
-      margin: 22px 0 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .article-body p, .article-body li {
-      font-size: 14px;
-      line-height: 1.7;
-      color: #dbeafe;
-      margin-bottom: 8px;
-    }
-    .article-body ul { padding-left: 20px; margin-bottom: 14px; }
-    .wiki-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 12px 0 20px;
-      font-size: 13px;
-    }
-    .wiki-table th, .wiki-table td {
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      padding: 9px 12px;
-      text-align: left;
-    }
-    .wiki-table th {
-      background: #0f172a;
-      color: var(--gold);
-      font-weight: 800;
-    }
-    .wiki-table tr:nth-child(even) { background: rgba(15, 23, 42, 0.45); }
-
-    /* 우측 인포박스 / TOC */
+    .article-body h2 { font-size: 16px; color: #8ab4d6; margin: 20px 0 8px; }
+    .article-body p, .article-body li { font-size: 14px; line-height: 1.7; color: var(--text-main); margin-bottom: 8px; }
+    .article-body ul { padding-left: 20px; margin-bottom: 12px; }
+    .wiki-table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 13px; }
+    .wiki-table th, .wiki-table td { border: 1px solid var(--border); padding: 9px 11px; text-align: left; }
+    .wiki-table th { background: #121720; color: var(--gold-soft); font-weight: 700; }
+    .wiki-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
     .article-aside {
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 14px;
       position: sticky;
-      top: 78px;
+      top: 76px;
     }
     .aside-title {
       font-size: 12px;
-      font-weight: 900;
+      font-weight: 800;
       color: var(--gold);
-      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+      border-bottom: 1px solid var(--border);
       padding-bottom: 6px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .toc-list { list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
-    .toc-list a { color: #cbd5e1; text-decoration: none; }
-    .toc-list a:hover { color: var(--cyan); }
-
-    /* DB 필터 바 & 카드 그리드 */
+    .toc-list a { color: var(--text-sub); text-decoration: none; }
+    .toc-list a:hover { color: var(--gold-soft); }
     .db-filter-bar {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin: 14px 0 18px;
-      padding: 12px;
+      margin: 12px 0 16px;
+      padding: 10px;
       background: var(--bg-panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
     }
     .filter-btn {
-      background: #070b14;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      color: #cbd5e1;
-      padding: 6px 11px;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      padding: 6px 10px;
       border-radius: 6px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
     }
     .filter-btn.active {
-      background: rgba(251, 191, 36, 0.18);
+      background: rgba(212, 175, 55, 0.15);
       border-color: var(--gold);
-      color: var(--gold);
+      color: var(--gold-soft);
+      font-weight: 700;
     }
     .db-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+      gap: 14px;
     }
     .db-card {
       background: var(--bg-card);
-      border: 1px solid rgba(148, 163, 184, 0.22);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px;
       cursor: pointer;
@@ -307,12 +253,8 @@
       text-align: center;
       position: relative;
     }
-    .db-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--cyan);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-    }
-    .db-card.unlocked { border-color: rgba(251, 191, 36, 0.65); }
+    .db-card:hover { transform: translateY(-2px); border-color: var(--gold); background: var(--bg-hover); }
+    .db-card.unlocked { border-color: rgba(212, 175, 55, 0.55); }
     .unlock-tag {
       position: absolute;
       top: 8px;
@@ -320,70 +262,72 @@
       font-size: 10px;
       padding: 2px 6px;
       border-radius: 4px;
-      font-weight: 800;
+      font-weight: 700;
     }
-    .unlock-tag.yes { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-    .unlock-tag.no { background: rgba(15, 23, 42, 0.8); color: #64748b; border: 1px solid #334155; }
-    .card-banner-canvas {
-      width: 64px;
-      height: 110px;
-      border-radius: 4px;
+    .unlock-tag.yes { background: rgba(61, 139, 110, 0.25); color: #6ee7b7; border: 1px solid var(--jade); }
+    .unlock-tag.no { background: #141923; color: var(--text-sub); border: 1px solid var(--border); }
+    .portrait-canvas {
+      width: 110px;
+      height: 128px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
       margin-bottom: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+      background: #12161f;
     }
-    .card-title { font-size: 14px; font-weight: 800; color: #fff; }
-    .card-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .card-title { font-size: 15px; font-weight: 800; color: var(--text-main); }
+    .card-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+    .card-meta {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.22);
+      padding: 5px 6px;
+      border-radius: 6px;
+      margin-top: 6px;
+      color: #cbd5e1;
+    }
+    .card-lib-info { font-size: 10px; color: var(--gold-soft); margin-top: 5px; font-weight: 600; }
     .card-stamp {
       margin-top: 6px;
       font-size: 11px;
       font-weight: 800;
-      color: #fde047;
-      background: rgba(127, 29, 29, 0.75);
-      border: 1px solid #ef4444;
+      color: #f3e5ab;
+      background: #4a1c1c;
+      border: 1px solid #8c3b3b;
       padding: 2px 8px;
       border-radius: 4px;
       font-family: serif;
     }
-
-    /* 사운드 & 낙관 시연 버튼 */
     .demo-btn {
-      background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+      background: #4a2121;
       border: 1px solid var(--gold);
-      color: #fef08a;
+      color: var(--gold-soft);
       padding: 7px 12px;
       border-radius: 6px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
       cursor: pointer;
       margin: 4px 4px 4px 0;
     }
-    .demo-btn:active { transform: scale(0.95); }
-
-    /* <dialog> 3D 장수 상세 모달 (HELLSCRIPT-Wiki 아키텍처) */
     #hero-dialog {
       margin: auto;
-      background: #0b1120;
+      background: var(--bg-panel);
       color: var(--text-main);
-      border: 2px solid var(--gold);
-      border-radius: 14px;
-      width: 92%;
-      max-width: 680px;
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      width: 94%;
+      max-width: 740px;
       padding: 0;
-      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85);
     }
-    #hero-dialog::backdrop {
-      background: rgba(2, 6, 23, 0.82);
-      backdrop-filter: blur(6px);
-    }
-    .dialog-inner {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      min-height: 360px;
-    }
+    #hero-dialog::backdrop { background: rgba(8, 10, 15, 0.78); backdrop-filter: blur(4px); }
+    .dialog-inner { display: grid; grid-template-columns: 310px 1fr; min-height: 410px; }
     #dialog-3d-stage {
-      background: radial-gradient(circle at 50% 50%, #1e293b 0%, #050811 100%);
+      background: radial-gradient(circle at 50% 45%, #252f42 0%, #11151c 100%);
       position: relative;
-      min-height: 300px;
+      min-height: 340px;
       border-right: 1px solid var(--border);
       cursor: grab;
     }
@@ -393,24 +337,22 @@
       left: 0;
       right: 0;
       text-align: center;
-      font-size: 10px;
-      color: var(--cyan);
+      font-size: 11px;
+      color: var(--gold-soft);
       pointer-events: none;
     }
-    .dialog-info { padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .dialog-info { padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
     .dialog-close {
-      background: #1e293b;
-      border: 1px solid #475569;
-      color: #fff;
-      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 9px 14px;
       border-radius: 6px;
-      font-weight: 800;
+      font-weight: 700;
       cursor: pointer;
       width: 100%;
-      margin-top: 12px;
+      margin-top: 10px;
     }
-
-    /* 한자 사자성어 낙관 시연 오버레이 */
     #wiki-stamp-overlay {
       position: fixed;
       top: 24%;
@@ -420,23 +362,18 @@
       pointer-events: none;
       transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
     }
-    .stamp-hidden {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(2.5) !important;
-    }
+    .stamp-hidden { opacity: 0; transform: translate(-50%, -50%) scale(2.4) !important; }
     .stamp-box {
-      background: rgba(127, 29, 29, 0.95);
-      border: 3px double var(--gold);
-      outline: 2px solid #ef4444;
+      background: rgba(105, 28, 28, 0.96);
+      border: 2px solid var(--gold);
       padding: 10px 22px;
-      border-radius: 8px;
-      box-shadow: 0 0 35px rgba(239, 68, 68, 0.85);
+      border-radius: 6px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
       text-align: center;
-      transform: rotate(-4deg);
+      transform: rotate(-3deg);
     }
-    .stamp-hanja { font-size: 32px; font-weight: 900; color: #fef08a; letter-spacing: 5px; font-family: serif; }
-    .stamp-sub { font-size: 12px; font-weight: 800; color: #fecaca; margin-top: 4px; }
-
+    .stamp-hanja { font-size: 30px; font-weight: 900; color: #f3e5ab; letter-spacing: 5px; font-family: serif; }
+    .stamp-sub { font-size: 12px; font-weight: 700; color: #e6e1d6; margin-top: 4px; }
     @media (max-width: 860px) {
       #drawer-toggle { display: inline-block; }
       #wiki-sidebar {
@@ -451,7 +388,7 @@
       #wiki-sidebar.open { transform: translateX(0); }
       .article-layout { grid-template-columns: 1fr; }
       .dialog-inner { grid-template-columns: 1fr; }
-      #dialog-3d-stage { height: 240px; border-right: none; border-bottom: 1px solid var(--border); }
+      #dialog-3d-stage { height: 270px; border-right: none; border-bottom: 1px solid var(--border); }
     }
   </style>
 </head>
@@ -462,16 +399,16 @@
       <a href="#/tree/overview" class="brand">
         <canvas id="wiki-logo" width="34" height="34"></canvas>
         <div>
-          <span class="brand-title">삼국지 3D 머지 디펜스</span>
-          <span class="brand-sub">HELLSCRIPT-STYLE PUBLIC WIKI & 3D DB</span>
+          <span class="brand-title">삼국지 3D 무쌍 방어전 기록원</span>
+          <span class="brand-sub">ORIENTAL ARCHIVE & 18-PART 3D HERO DB</span>
         </div>
       </a>
     </div>
     <div class="search-wrap">
-      <input type="search" id="wiki-search" placeholder="장수명, 한자(關/呂), 사자성어 낙관, 책략 검색... ( / 키)">
+      <input type="search" id="wiki-search" placeholder="장수명, 한자(關/呂), 무기(청룡언월도), 인연, 해방장수 검색...">
     </div>
     <div class="header-right">
-      <span id="sync-badge" class="sync-pill">📖 도감 동기화: 0/28</span>
+      <span id="sync-badge" class="sync-pill">📖 해방 동기화: 12/28</span>
       <a href="index.html" class="return-btn">🎮 전장 복귀</a>
     </div>
   </header>
@@ -479,17 +416,15 @@
   <div class="wiki-workspace">
     <aside id="wiki-sidebar" aria-label="위키와 데이터베이스 탐색">
       <nav class="mode-switch">
-        <a href="#/tree/overview" class="mode-tab" id="tab-tree">📖 전술 위키</a>
-        <a href="#/db/heroes" class="mode-tab" id="tab-db">🗂️ 리소스·DB</a>
+        <a href="#/tree/overview" class="mode-tab" id="tab-tree">📖 전술 문서</a>
+        <a href="#/db/heroes" class="mode-tab" id="tab-db">🗂️ 통합 도감·DB</a>
       </nav>
-      <nav id="sidebar-tree" aria-label="문서 트리 목록"></nav>
-      <div class="sidebar-footer">ARGON.3K // ZERO-VOICE & ZERO-ASSET</div>
+      <nav id="sidebar-tree" aria-label="문서 목록"></nav>
+      <div class="sidebar-footer">수묵·금석 다크 테마 // ZERO-VOICE</div>
     </aside>
-
     <main id="wiki-main"></main>
   </div>
 
-  <!-- 한자 낙관 시연 오버레이 -->
   <div id="wiki-stamp-overlay" class="stamp-hidden">
     <div class="stamp-box">
       <div class="stamp-hanja" id="wiki-stamp-hanja">義薄雲天</div>
@@ -497,11 +432,10 @@
     </div>
   </div>
 
-  <!-- 3D 장수 피규어 360도 프리뷰 모달 -->
   <dialog id="hero-dialog">
     <div class="dialog-inner">
       <div id="dialog-3d-stage">
-        <div class="stage-hint">🔄 드래그하여 3D 장수 & 한자 군기 360° 회전</div>
+        <div class="stage-hint">🔄 드래그하여 18파츠 3D 장수·무기·탈것 360° 회전</div>
       </div>
       <div class="dialog-info" id="dialog-info-box"></div>
     </div>
