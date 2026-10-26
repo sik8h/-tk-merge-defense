@@ -3,49 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>삼국지 머지 디펜스 - Three Kingdoms Merge Defense</title>
+    <title>삼국지 머지 디펜스 2.5D - Three Kingdoms Tactical Defense</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app-container">
-        <!-- HUD Layer -->
-        <header id="hud">
+        <!-- HUD Glassmorphism Header -->
+        <header id="hud" class="glass-panel">
             <div class="hud-top">
-                <div id="wave-title" class="hud-box">제1장 황건적의 난</div>
-                <button id="sound-btn" class="hud-btn" aria-label="사운드 설정">🔊</button>
+                <div id="wave-title" class="hud-box glow-text">제1장 황건적의 난</div>
+                <div class="hud-controls">
+                    <button id="cam-toggle-btn" class="hud-btn glass-btn" aria-label="시점 전환">🎥 시점: 전술뷰</button>
+                    <button id="sound-btn" class="hud-btn glass-btn" aria-label="사운드 설정">🔊</button>
+                </div>
             </div>
             <div class="hud-stats">
-                <div class="stat-item"><span class="icon">🌾</span> <span id="gold-val">100</span></div>
-                <div class="stat-item"><span class="icon">🏯</span> <span id="hp-val">100/100</span></div>
+                <div class="stat-item"><span class="icon">🌾</span> <span id="gold-val" class="gold-text">100</span></div>
+                <div class="stat-item"><span class="icon">🏯</span> <span id="hp-val" class="hp-text">100/100</span></div>
                 <div class="stat-item"><span class="icon">⚔️</span> <span id="kill-val">0</span></div>
             </div>
             <div id="gate-hp-bar-container">
                 <div id="gate-hp-bar"></div>
+            </div>
+            <!-- Telemetry Bar -->
+            <div id="telemetry-bar" class="telemetry-container">
+                <div class="telemetry-item">⚡ 총 전투력: <span id="total-dps-val" class="highlight-val">0 DPS</span></div>
+                <div id="synergy-badges-container" class="badge-list">
+                    <!-- Dynamic Badges -->
+                </div>
             </div>
         </header>
 
         <!-- Main Canvas Area -->
         <main id="game-view">
             <canvas id="gameCanvas"></canvas>
+
+            <!-- Hologram Briefing Panel (Floating Context Overlay) -->
+            <div id="hero-briefing-panel" class="briefing-card glass-panel hidden">
+                <div class="briefing-header">
+                    <span id="briefing-name" class="hero-title">의용병</span>
+                    <span id="briefing-tier" class="tier-tag">T1</span>
+                </div>
+                <div class="briefing-body">
+                    <div class="stat-row"><span>소속:</span> <strong id="briefing-faction">군웅</strong></div>
+                    <div class="stat-row"><span>공격력:</span> <strong id="briefing-atk">15</strong></div>
+                    <div class="stat-row"><span>공속:</span> <strong id="briefing-aspd">1.1/초</strong></div>
+                    <div class="stat-row"><span>사거리:</span> <strong id="briefing-range">220</strong></div>
+                    <p id="briefing-desc" class="briefing-desc">기본 단발 사격을 수행하는 의용병</p>
+                </div>
+            </div>
         </main>
 
-        <!-- Command Bar -->
-        <footer id="command-bar">
+        <!-- Command Bar Footer -->
+        <footer id="command-bar" class="glass-panel">
             <button id="recruit-btn" class="cmd-btn recruit">
                 <span class="btn-title">장수 모집</span>
                 <span class="btn-sub"><span id="recruit-cost">20</span> 🌾</span>
             </button>
             <button id="upgrade-btn" class="cmd-btn upgrade">
-                <span class="btn-title">전체 무력 강화 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
+                <span class="btn-title">무력 강화 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
                 <span class="btn-sub"><span id="upgrade-cost">30</span> 🌾 (+10%)</span>
+            </button>
+            <button id="skill-btn" class="cmd-btn skill">
+                <span class="btn-title">🔥 적벽 화공</span>
+                <span id="skill-sub" class="btn-sub">필살기 발동</span>
             </button>
         </footer>
 
         <!-- Roguelike Strategy Modal (제갈량의 금낭묘계) -->
         <div id="strategy-modal" class="modal hidden">
-            <div class="modal-content">
+            <div class="modal-content glass-modal">
+                <div class="corner-bracket top-left"></div>
+                <div class="corner-bracket top-right"></div>
+                <div class="corner-bracket bottom-left"></div>
+                <div class="corner-bracket bottom-right"></div>
                 <div class="modal-header">
-                    <h2>🪶 제갈량의 금낭묘계 🪶</h2>
+                    <h2 class="glow-title">🪶 제갈량의 금낭묘계 🪶</h2>
                     <p>웨이브를 승리로 이끌 책략을 선택하십시오.</p>
                 </div>
                 <div id="strategy-cards" class="card-container">
@@ -56,12 +89,12 @@
 
         <!-- Game Over / Victory Overlay -->
         <div id="gameover-modal" class="modal hidden">
-            <div class="modal-content text-center">
-                <h1 id="gameover-title">관문 함락!</h1>
+            <div class="modal-content glass-modal text-center">
+                <h1 id="gameover-title" class="danger-title">관문 함락!</h1>
                 <p id="gameover-subtitle">적의 공세를 막아내지 못했습니다.</p>
                 <div class="final-stats">
-                    <p>최종 도달: <strong id="final-wave">제1장</strong></p>
-                    <p>적 처치 수: <strong id="final-kills">0</strong>명</p>
+                    <p>최종 도달: <strong id="final-wave" class="gold-text">제1장</strong></p>
+                    <p>적 처치 수: <strong id="final-kills" class="gold-text">0</strong>명</p>
                 </div>
                 <button id="restart-btn" class="modal-action-btn">재도전 하기</button>
             </div>
