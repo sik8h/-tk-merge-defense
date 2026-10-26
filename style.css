@@ -30,6 +30,126 @@ body, html {
   border-right: 1px solid rgba(56, 189, 248, 0.2);
 }
 
+/* 3D 본영 메인 메뉴 로비 */
+.lobby-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  background: linear-gradient(180deg, rgba(4, 8, 18, 0.86) 0%, rgba(8, 15, 30, 0.94) 100%);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 14px calc(16px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+.lobby-header { text-align: center; }
+.lobby-tag { font-size: 10px; color: #38bdf8; font-weight: 800; letter-spacing: 1px; }
+.lobby-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fbbf24;
+  text-shadow: 0 0 18px rgba(251, 191, 36, 0.55);
+  margin: 4px 0;
+}
+.lobby-sub { font-size: 12px; color: #cbd5e1; }
+
+.lobby-telemetry {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.lobby-section {
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.sec-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde047;
+  margin-bottom: 8px;
+}
+
+.lord-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.lord-card {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.lord-card.active {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.16);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+}
+
+.lord-hanja { font-size: 22px; font-weight: 900; font-family: serif; }
+.lord-name { font-size: 11px; font-weight: 800; color: #fff; margin-top: 2px; }
+.lord-buff { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+
+.story-preview-box {
+  background: rgba(30, 41, 59, 0.85);
+  border-left: 3px solid #fbbf24;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.lobby-actions { display: flex; flex-direction: column; gap: 8px; }
+.lobby-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+}
+.lobby-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #fde047; }
+.lobby-btn.secondary { background: linear-gradient(135deg, #0284c7, #0369a1); border-color: #38bdf8; }
+.lobby-sub-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.lobby-btn.sub { background: rgba(30, 41, 59, 0.9); font-size: 12px; padding: 9px; border-color: #475569; }
+
+/* 인게임 스토리 해방 드라마 배너 */
+.story-toast {
+  position: absolute;
+  top: 46px;
+  left: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(88, 28, 135, 0.94));
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  padding: 10px 12px;
+  z-index: 29;
+  box-shadow: 0 0 25px rgba(251, 191, 36, 0.5);
+  pointer-events: none;
+}
+.toast-chapter { font-size: 10px; color: #38bdf8; font-weight: 800; }
+.toast-title { font-size: 14px; color: #fef08a; font-weight: 900; margin: 2px 0; }
+.toast-desc { font-size: 11px; color: #e2e8f0; }
+
 #hud {
   padding: 6px 8px 5px;
   background: rgba(8, 15, 30, 0.9);
@@ -43,7 +163,7 @@ body, html {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 5px;
-  gap: 4px;
+  gap: 3px;
 }
 
 .telemetry-tag {
@@ -51,24 +171,22 @@ body, html {
   color: #38bdf8;
   font-weight: 800;
   background: rgba(15, 23, 42, 0.9);
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
   border: 1px solid rgba(56, 189, 248, 0.3);
   white-space: nowrap;
 }
 
 .hud-box {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #fbbf24;
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hud-controls {
-  display: flex;
-  gap: 3px;
-}
+.hud-controls { display: flex; gap: 3px; }
 
 .hud-btn {
   background: rgba(15, 23, 42, 0.9);
@@ -83,8 +201,6 @@ body, html {
   display: inline-flex;
   align-items: center;
 }
-
-.hud-btn:active { transform: scale(0.93); }
 
 .hud-stats {
   display: grid;
@@ -130,14 +246,7 @@ body, html {
   box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
 }
 
-#bond-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 4px;
-  min-height: 2px;
-}
-
+#bond-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
 .bond-chip {
   font-size: 9px;
   font-weight: 800;
@@ -148,35 +257,11 @@ body, html {
   color: #fef08a;
 }
 
-#gate-hp-bar-container {
-  width: 100%;
-  height: 5px;
-  background: #1e293b;
-  border-radius: 3px;
-  overflow: hidden;
-}
+#gate-hp-bar-container { width: 100%; height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+#gate-hp-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); transition: width 0.2s; }
 
-#gate-hp-bar {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #10b981, #34d399);
-  transition: width 0.2s;
-}
-
-#game-view {
-  flex: 1;
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-}
-
-#webgl-container, #hudCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
+#game-view { flex: 1; position: relative; width: 100%; overflow: hidden; }
+#webgl-container, #hudCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 #hudCanvas { pointer-events: auto; z-index: 5; }
 
 #siege-bar {
@@ -234,11 +319,10 @@ body, html {
   font-weight: 900;
   cursor: pointer;
 }
-.duel-btn:active { transform: scale(0.95); }
 
 #hanja-stamp-overlay {
   position: absolute;
-  top: 18%;
+  top: 20%;
   left: 50%;
   transform: translate(-50%, -50%) scale(1);
   z-index: 30;
@@ -246,11 +330,7 @@ body, html {
   transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s;
 }
 
-.stamp-hidden {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(2.6) !important;
-}
-
+.stamp-hidden { opacity: 0; transform: translate(-50%, -50%) scale(2.6) !important; }
 .stamp-box {
   background: rgba(127, 29, 29, 0.92);
   border: 3px double #fbbf24;
@@ -261,15 +341,7 @@ body, html {
   text-align: center;
   transform: rotate(-4deg);
 }
-
-.stamp-hanja {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 4px;
-  color: #fef08a;
-  font-family: "Batang", "Georgia", serif;
-}
-
+.stamp-hanja { font-size: 28px; font-weight: 900; letter-spacing: 4px; color: #fef08a; font-family: serif; }
 .stamp-sub { font-size: 11px; font-weight: 800; color: #fecaca; margin-top: 2px; }
 
 #unit-inspector {
@@ -322,30 +394,30 @@ body, html {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.82);
+  background: rgba(2, 6, 23, 0.84);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  z-index: 50;
+  padding: 14px;
+  z-index: 55;
 }
 
 .hidden { display: none !important; }
 
 .modal-content {
   width: 100%;
-  max-width: 420px;
-  max-height: 85dvh;
+  max-width: 440px;
+  max-height: 86dvh;
   overflow-y: auto;
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(15, 23, 42, 0.97);
   border: 1px solid rgba(251, 191, 36, 0.5);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
 }
 
-.modal-header h2 { font-size: 18px; color: #fbbf24; text-align: center; margin-bottom: 4px; }
-.modal-header p { font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 12px; }
+.modal-header h2 { font-size: 17px; color: #fbbf24; text-align: center; margin-bottom: 4px; }
+.modal-header p { font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 10px; }
 .card-container { display: flex; flex-direction: column; gap: 8px; }
 .strategy-card {
   background: rgba(30, 41, 59, 0.9);
@@ -356,16 +428,31 @@ body, html {
 }
 .strategy-card h3 { font-size: 14px; color: #38bdf8; margin-bottom: 3px; }
 .strategy-card p { font-size: 12px; color: #cbd5e1; }
-.codex-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+
+.codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
 .codex-item {
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(30, 41, 59, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 6px;
-  padding: 6px 4px;
-  text-align: center;
-  font-size: 10px;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
 }
-.codex-item.unlocked { border-color: #fbbf24; background: rgba(251, 191, 36, 0.12); }
+.codex-item.unlocked { border-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+.liberate-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 1px solid #60a5fa;
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 3px;
+}
 .modal-action-btn {
   width: 100%;
   padding: 10px;

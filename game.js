@@ -5,38 +5,62 @@ const FACTION_META = {
   qun: { name: '군웅', hanja: '群', color: '#EF4444', hex: 0xEF4444 }
 };
 
+// 28인 명장 + 스테이지 등반 해방 스토리(unlockWave, fameCost, story) 탑재
 const HERO_DB = [
-  { id: 'shu_1', tier: 1, faction: 'shu', name: '백이병', hanja: '白', weapon: 'spear', atk: 24, spd: 1.0, range: 8.5, stamp: '百毦精兵', desc: '유비 친위 장창병' },
-  { id: 'wei_1', tier: 1, faction: 'wei', name: '청주병', hanja: '青', weapon: 'spear', atk: 26, spd: 0.95, range: 8.5, stamp: '青州強兵', desc: '조조 직속 정예병' },
-  { id: 'wu_1',  tier: 1, faction: 'wu',  name: '강동수군', hanja: '水', weapon: 'bow',   atk: 22, spd: 1.1, range: 9.5, stamp: '江東水軍', desc: '장강의 화살 사수' },
-  { id: 'qun_1', tier: 1, faction: 'qun', name: '황건병', hanja: '黃', weapon: 'mace',  atk: 28, spd: 0.9, range: 8.0, stamp: '蒼天已死', desc: '태평도 선봉대' },
-  { id: 'shu_2', tier: 2, faction: 'shu', name: '관평', hanja: '平', weapon: 'glaive', atk: 55, spd: 1.05, range: 9.0, stamp: '忠義少將', desc: '관우의 양자·청룡의 후예' },
-  { id: 'wei_2', tier: 2, faction: 'wei', name: '악진', hanja: '樂', weapon: 'sword',  atk: 58, spd: 1.0, range: 9.0, stamp: '先登陷陣', desc: '위나라 선등 대장' },
-  { id: 'wu_2',  tier: 2, faction: 'wu',  name: '주태', hanja: '泰', weapon: 'sword',  atk: 54, spd: 1.15, range: 8.5, stamp: '全身刀痕', desc: '손권을 지킨 강철 방패' },
-  { id: 'qun_2', tier: 2, faction: 'qun', name: '화웅', hanja: '華', weapon: 'axe',    atk: 65, spd: 0.9, range: 8.5, stamp: '汜水猛將', desc: '사수관의 거대 도끼장군' },
-  { id: 'shu_3', tier: 3, faction: 'shu', name: '황충', hanja: '黃', weapon: 'bow',    atk: 120, spd: 1.2, range: 11.5, stamp: '百步穿楊', desc: '백보천양 신궁 노장' },
-  { id: 'wei_3', tier: 3, faction: 'wei', name: '서황', hanja: '徐', weapon: 'axe',    atk: 135, spd: 1.0, range: 9.5, stamp: '周亞夫風', desc: '대부 개산부를 휘두르는 명장' },
-  { id: 'wu_3',  tier: 3, faction: 'wu',  name: '감녕', hanja: '甘', weapon: 'mace',   atk: 125, spd: 1.25, range: 9.5, stamp: '錦帆遊俠', desc: '방울 소리의 금범적 두령' },
-  { id: 'qun_3', tier: 3, faction: 'qun', name: '초선', hanja: '貂', weapon: 'fan',    atk: 115, spd: 1.35, range: 10.5, stamp: '閉月連環', desc: '달을 가리는 연환계의 무희', female: true },
-  { id: 'shu_4', tier: 4, faction: 'shu', name: '조운', hanja: '趙', weapon: 'spear',  atk: 260, spd: 1.35, range: 10.5, stamp: '一身是膽', desc: '장판파의 백마 은창 조자룡', mount: 'white' },
-  { id: 'wei_4', tier: 4, faction: 'wei', name: '하후돈', hanja: '夏', weapon: 'sword', atk: 285, spd: 1.15, range: 10.0, stamp: '拔矢啖睛', desc: '화살 박힌 눈을 삼킨 맹장' },
-  { id: 'wu_4',  tier: 4, faction: 'wu',  name: '손상향', hanja: '香', weapon: 'bow',   atk: 250, spd: 1.4, range: 11.5, stamp: '弓腰姬君', desc: '강동의 호걸 궁요희', female: true },
-  { id: 'qun_4', tier: 4, faction: 'qun', name: '맹획', hanja: '孟', weapon: 'mace',   atk: 310, spd: 1.0, range: 9.5, stamp: '南蠻獸王', desc: '전투 코끼리를 탄 남만왕', mount: 'elephant' },
-  { id: 'shu_5', tier: 5, faction: 'shu', name: '장비', hanja: '張', weapon: 'snake',  atk: 560, spd: 1.3, range: 10.5, stamp: '萬夫不當', desc: '장판교의 포효·장팔사모' },
-  { id: 'wei_5', tier: 5, faction: 'wei', name: '장료', hanja: '遼', weapon: 'glaive', atk: 590, spd: 1.25, range: 11.0, stamp: '威震逍遙', desc: '합비에서 손권을 떤 오자양장 필두' },
-  { id: 'wu_5',  tier: 5, faction: 'wu',  name: '육손', hanja: '陸', weapon: 'dual',   atk: 540, spd: 1.45, range: 11.0, stamp: '火燒連營', desc: '이릉 대첩 화공의 대도독' },
-  { id: 'qun_5', tier: 5, faction: 'qun', name: '장각', hanja: '角', weapon: 'staff',  atk: 620, spd: 1.15, range: 12.0, stamp: '黃天當立', desc: '태평요술의 천공장군' },
-  { id: 'shu_6', tier: 6, faction: 'shu', name: '관우', hanja: '關', weapon: 'glaive', atk: 1250, spd: 1.35, range: 11.5, stamp: '義薄雲天', desc: '청룡언월도와 적토마의 무성', redFace: true, beard: 'long', mount: 'red' },
-  { id: 'wei_6', tier: 6, faction: 'wei', name: '사마의', hanja: '司', weapon: 'fan',  atk: 1320, spd: 1.3, range: 12.5, stamp: '塚虎奇謀', desc: '중달의 심연 계략과 낙뢰' },
-  { id: 'wu_6',  tier: 6, faction: 'wu',  name: '주유', hanja: '周', weapon: 'fan',    atk: 1200, spd: 1.5, range: 12.0, stamp: '赤壁業火', desc: '적벽을 불태운 미주랑' },
-  { id: 'qun_6', tier: 6, faction: 'qun', name: '동탁', hanja: '董', weapon: 'mace',   atk: 1400, spd: 1.15, range: 10.5, stamp: '暴虐魔王', desc: '낙양을 집어삼킨 폭군', mount: 'black' },
-  { id: 'shu_7', tier: 7, faction: 'shu', name: '제갈량', hanja: '諸', weapon: 'fan',  atk: 2900, spd: 1.6, range: 13.5, stamp: '臥龍出世', desc: '팔진도 천뢰를 부르는 와룡 승상', halo: true },
-  { id: 'wei_7', tier: 7, faction: 'wei', name: '무제 조조', hanja: '曹', weapon: 'sword', atk: 3100, spd: 1.5, range: 13.0, stamp: '唯才是擧', desc: '천하를 호령하는 난세의 간웅', mount: 'black', halo: true },
-  { id: 'wu_7',  tier: 7, faction: 'wu',  name: '대제 손권', hanja: '孫', weapon: 'sword', atk: 2850, spd: 1.7, range: 13.0, stamp: '江東猛虎', desc: '벽안자염의 오나라 황제', halo: true },
-  { id: 'qun_7', tier: 7, faction: 'qun', name: '무신 여포', hanja: '呂', weapon: 'halberd', atk: 3600, spd: 1.65, range: 13.0, stamp: '天下無雙', desc: '적토마와 방천화극의 인중여포', mount: 'red', plumes: true, halo: true }
+  // Tier 1~3: 초기 해방 (unlockWave: 1)
+  { id: 'shu_1', tier: 1, faction: 'shu', name: '백이병', hanja: '白', weapon: 'spear', atk: 24, spd: 1.0, range: 8.5, stamp: '百毦精兵', unlockWave: 1, fameCost: 0, story: '유비의 곁을 지키는 기본 정예병' },
+  { id: 'wei_1', tier: 1, faction: 'wei', name: '청주병', hanja: '青', weapon: 'spear', atk: 26, spd: 0.95, range: 8.5, stamp: '青州強兵', unlockWave: 1, fameCost: 0, story: '조조가 거느린 청주 정예병' },
+  { id: 'wu_1',  tier: 1, faction: 'wu',  name: '강동수군', hanja: '水', weapon: 'bow',   atk: 22, spd: 1.1, range: 9.5, stamp: '江東水軍', unlockWave: 1, fameCost: 0, story: '장강을 수호하는 수군 사수' },
+  { id: 'qun_1', tier: 1, faction: 'qun', name: '황건병', hanja: '黃', weapon: 'mace',  atk: 28, spd: 0.9, range: 8.0, stamp: '蒼天已死', unlockWave: 1, fameCost: 0, story: '난세의 시작을 알린 선봉병' },
+  { id: 'shu_2', tier: 2, faction: 'shu', name: '관평', hanja: '平', weapon: 'glaive', atk: 55, spd: 1.05, range: 9.0, stamp: '忠義少將', unlockWave: 1, fameCost: 0, story: '관우를 보좌하는 충의의 소장' },
+  { id: 'wei_2', tier: 2, faction: 'wei', name: '악진', hanja: '樂', weapon: 'sword',  atk: 58, spd: 1.0, range: 9.0, stamp: '先登陷陣', unlockWave: 1, fameCost: 0, story: '성벽에 가장 먼저 오르는 선등장' },
+  { id: 'wu_2',  tier: 2, faction: 'wu',  name: '주태', hanja: '泰', weapon: 'sword',  atk: 54, spd: 1.15, range: 8.5, stamp: '全身刀痕', unlockWave: 1, fameCost: 0, story: '손권을 구한 강철의 호위장' },
+  { id: 'qun_2', tier: 2, faction: 'qun', name: '화웅', hanja: '華', weapon: 'axe',    atk: 65, spd: 0.9, range: 8.5, stamp: '汜水猛將', unlockWave: 1, fameCost: 0, story: '사수관의 거대 도끼 맹장' },
+  { id: 'shu_3', tier: 3, faction: 'shu', name: '황충', hanja: '黃', weapon: 'bow',    atk: 120, spd: 1.2, range: 11.5, stamp: '百步穿楊', unlockWave: 1, fameCost: 0, story: '정군산을 호령한 백보천양 신궁' },
+  { id: 'wei_3', tier: 3, faction: 'wei', name: '서황', hanja: '徐', weapon: 'axe',    atk: 135, spd: 1.0, range: 9.5, stamp: '周亞夫風', unlockWave: 1, fameCost: 0, story: '대부를 휘두르는 위나라 오자양장' },
+  { id: 'wu_3',  tier: 3, faction: 'wu',  name: '감녕', hanja: '甘', weapon: 'mace',   atk: 125, spd: 1.25, range: 9.5, stamp: '錦帆遊俠', unlockWave: 1, fameCost: 0, story: '방울 소리와 함께 적진을 기습하는 금범적' },
+  { id: 'qun_3', tier: 3, faction: 'qun', name: '초선', hanja: '貂', weapon: 'fan',    atk: 115, spd: 1.35, range: 10.5, stamp: '閉月連環', unlockWave: 1, fameCost: 0, story: '달을 가리는 미모로 난세를 흔든 무희', female: true },
+
+  // Tier 4: 제2장~제3장 등반 해방 (또는 명성 30 영입)
+  { id: 'wu_4',  tier: 4, faction: 'wu',  name: '손상향', hanja: '香', weapon: 'bow',   atk: 250, spd: 1.4, range: 11.5, stamp: '弓腰姬君', unlockWave: 2, fameCost: 30, story: '[제2장 강동 결집] 무장을 거느린 궁요희 손상향이 전장에 합류했습니다!', female: true },
+  { id: 'qun_4', tier: 4, faction: 'qun', name: '맹획', hanja: '孟', weapon: 'mace',   atk: 310, spd: 1.0, range: 9.5, stamp: '南蠻獸王', unlockWave: 2, fameCost: 30, story: '[제2장 남만 귀순] 칠종칠금 끝에 남만왕 맹획이 코끼리 군단을 이끌고 합류했습니다!', mount: 'elephant' },
+  { id: 'shu_4', tier: 4, faction: 'shu', name: '조운', hanja: '趙', weapon: 'spear',  atk: 260, spd: 1.35, range: 10.5, stamp: '一身是膽', unlockWave: 3, fameCost: 40, story: '[제3장 장판파 단기필마] 상산 조자룡이 백마를 타고 적진을 뚫어 아군에 합류했습니다!', mount: 'white' },
+  { id: 'wei_4', tier: 4, faction: 'wei', name: '하후돈', hanja: '夏', weapon: 'sword', atk: 285, spd: 1.15, range: 10.0, stamp: '拔矢啖睛', unlockWave: 3, fameCost: 40, story: '[제3장 서주 출격] 화살 박힌 눈을 삼킨 맹장 하후돈이 봉인에서 깨어났습니다!' },
+
+  // Tier 5: 제5장~제7장 등반 해방 (또는 명성 70 영입)
+  { id: 'shu_5', tier: 5, faction: 'shu', name: '장비', hanja: '張', weapon: 'snake',  atk: 560, spd: 1.3, range: 10.5, stamp: '萬夫不當', unlockWave: 5, fameCost: 70, story: '[제5장 장판교의 포효] 장팔사모를 쥔 익덕 장비의 우레 같은 고함이 적군을 물리칩니다!' },
+  { id: 'wei_5', tier: 5, faction: 'wei', name: '장료', hanja: '遼', weapon: 'glaive', atk: 590, spd: 1.25, range: 11.0, stamp: '威震逍遙', unlockWave: 5, fameCost: 70, story: '[제5장 합비 소요진] 800기로 대군을 격파한 오자양장 필두 장료가 해방되었습니다!' },
+  { id: 'wu_5',  tier: 5, faction: 'wu',  name: '육손', hanja: '陸', weapon: 'dual',   atk: 540, spd: 1.45, range: 11.0, stamp: '火燒連營', unlockWave: 7, fameCost: 80, story: '[제7장 이릉 화계] 칠백 리 진영을 불태운 대도독 육손이 전군 지휘에 합류합니다!' },
+  { id: 'qun_5', tier: 5, faction: 'qun', name: '장각', hanja: '角', weapon: 'staff',  atk: 620, spd: 1.15, range: 12.0, stamp: '黃天當立', unlockWave: 7, fameCost: 80, story: '[제7장 태평요술] 천공장군 장각의 황천 벼락이 아군의 편에서 작렬합니다!' },
+
+  // Tier 6: 제10장~제12장 등반 해방 (또는 명성 130 영입)
+  { id: 'shu_6', tier: 6, faction: 'shu', name: '관우', hanja: '關', weapon: 'glaive', atk: 1250, spd: 1.35, range: 11.5, stamp: '義薄雲天', unlockWave: 10, fameCost: 130, story: '[제10장 오관육참 돌파] 다섯 관문을 뚫고 적토마에 오른 무성 관우가 주군 곁으로 귀환했습니다!', redFace: true, beard: 'long', mount: 'red' },
+  { id: 'wei_6', tier: 6, faction: 'wei', name: '사마의', hanja: '司', weapon: 'fan',  atk: 1320, spd: 1.3, range: 12.5, stamp: '塚虎奇謀', unlockWave: 10, fameCost: 130, story: '[제10장 총호의 출사] 깊은 침묵을 깨고 중달 사마의가 암흑 귀모를 펼칩니다!' },
+  { id: 'wu_6',  tier: 6, faction: 'wu',  name: '주유', hanja: '周', weapon: 'fan',    atk: 1200, spd: 1.5, range: 12.0, stamp: '赤壁業火', unlockWave: 12, fameCost: 150, story: '[제12장 적벽대전] 동남풍과 함께 미주랑 주유의 적벽 업화가 강산을 불태웁니다!' },
+  { id: 'qun_6', tier: 6, faction: 'qun', name: '동탁', hanja: '董', weapon: 'mace',   atk: 1400, spd: 1.15, range: 10.5, stamp: '暴虐魔王', unlockWave: 12, fameCost: 150, story: '[제12장 낙양 제압] 서량의 패도 폭군 동탁이 압도적 무력으로 전장에 복종합니다!', mount: 'black' },
+
+  // Tier 7: 제15장~제20장 등반 해방 (또는 명성 220 영입)
+  { id: 'shu_7', tier: 7, faction: 'shu', name: '제갈량', hanja: '諸', weapon: 'fan',  atk: 2900, spd: 1.6, range: 13.5, stamp: '臥龍出世', unlockWave: 15, fameCost: 220, story: '[제15장 삼고초려 완성] 융중의 초당에서 잠자던 와룡 제갈량이 마침내 천하를 위해 출사했습니다!', halo: true },
+  { id: 'wei_7', tier: 7, faction: 'wei', name: '무제 조조', hanja: '曹', weapon: 'sword', atk: 3100, spd: 1.5, range: 13.0, stamp: '唯才是擧', unlockWave: 16, fameCost: 220, story: '[제16장 패왕 등극] 천하의 인재를 모두 거느린 난세의 간웅 무제 조조가 강림합니다!', mount: 'black', halo: true },
+  { id: 'wu_7',  tier: 7, faction: 'wu',  name: '대제 손권', hanja: '孫', weapon: 'sword', atk: 2850, spd: 1.7, range: 13.0, stamp: '江東猛虎', unlockWave: 18, fameCost: 220, story: '[제18장 강동 제왕] 벽안자염의 대제 손권이 오나라 황룡의 기운을 해방합니다!', halo: true },
+  { id: 'qun_7', tier: 7, faction: 'qun', name: '무신 여포', hanja: '呂', weapon: 'halberd', atk: 3600, spd: 1.65, range: 13.0, stamp: '天下無雙', unlockWave: 20, fameCost: 260, story: '[제20장 인중여포 마중적토] 호로관의 전설, 천하무쌍 무신 여포가 아군 최강의 신화로 해방되었습니다!', mount: 'red', plumes: true, halo: true }
 ];
 
-// 팔진도 5대 특수 전술 지형
+const CHAPTER_TITLES = {
+  1: '제1장 황건적의 난',
+  2: '제2장 사수관·남만 정벌',
+  3: '제3장 장판파 단기필마',
+  4: '제4장 서주 방어전',
+  5: '제5장 장판교 & 합비 결전',
+  7: '제7장 이릉 화계 & 태평도',
+  10: '제10장 관우의 오관육참',
+  12: '제12장 적벽대전 업화',
+  15: '제15장 삼고초려 와룡출세',
+  16: '제16장 관도·패왕 조조',
+  18: '제18장 강동 대제 손권',
+  20: '제20장 천하무쌍 무신 여포'
+};
+
 const TERRAIN_MAP = {
   2:  { type: 'high',   name: '⛰️ 고지대 (사거리+2.5m·화력+20%)', color: 0x0ea5e9 },
   6:  { type: 'fire',   name: '🔥 화염단 (공격 시 확정 화상)',   color: 0xea580c },
@@ -45,7 +69,6 @@ const TERRAIN_MAP = {
   17: { type: 'supply', name: '🌾 둔전소 (5초마다 군량미 +12)', color: 0xeab308 }
 };
 
-// 5대 명장 인연(Bond) 시너지
 const BOND_LIST = [
   { id: 'oath', name: '🍑 도원결의 (+25% 화력)', ids: ['shu_5', 'shu_6', 'shu_7'], min: 2, atkBonus: 0.25 },
   { id: 'five', name: '🐯 오호대장군 (+25% 화력)', ids: ['shu_3', 'shu_4', 'shu_5', 'shu_6'], min: 2, atkBonus: 0.25 },
@@ -55,15 +78,15 @@ const BOND_LIST = [
 ];
 
 const WEATHER_LIST = [
-  { id: 'clear', name: '☀️ 천시: 쾌청 (사거리 +1m)', rangeMod: 1.0, fireMod: 1.0 },
-  { id: 'wind',  name: '🌪️ 천시: 동남풍 (화공·오나라 화력 +40%)', rangeMod: 0, fireMod: 1.4 },
-  { id: 'rain',  name: '🌧️ 천시: 폭우 (적군 이동속도 -20%)', rangeMod: 0, fireMod: 0.9, slowEnemy: 0.8 },
-  { id: 'fog',   name: '🌫️ 천시: 안개 (치명타 확률 +15%)', rangeMod: -0.5, fireMod: 1.0, critMod: 0.15 }
+  { id: 'clear', name: '☀️ 쾌청', rangeMod: 1.0, fireMod: 1.0 },
+  { id: 'wind',  name: '🌪️ 동남풍', rangeMod: 0, fireMod: 1.4 },
+  { id: 'rain',  name: '🌧️ 폭우', rangeMod: 0, fireMod: 0.9, slowEnemy: 0.8 },
+  { id: 'fog',   name: '🌫️ 안개', rangeMod: -0.5, fireMod: 1.0, critMod: 0.15 }
 ];
 
 const STRATEGY_CARDS = [
   { id: 'oat', title: '🍑 도원결의', desc: '전체 장수 공격속도 영구 +20% 상승', apply: (s) => { s.buffSpd *= 1.2; } },
-  { id: 'sup', title: '🌾 군량 징발', desc: '즉시 군량미 +240 획득 및 호로관 체력 30 회복', apply: (s) => { s.gold += 240; s.hp = Math.min(s.maxHp, s.hp + 30); } },
+  { id: 'sup', title: '🌾 군량 징발 & 명성', desc: '군량미 +240, 무공 명성 +25🎖️, 내구도 +30 회복', apply: (s) => { s.gold += 240; s.fame += 25; s.hp = Math.min(s.maxHp, s.hp + 30); } },
   { id: 'bow', title: '🏹 제갈연노 개량', desc: '전체 장수 공격력 +25% 및 사거리 +1.5m', apply: (s) => { s.buffAtk *= 1.25; s.buffRange += 1.5; } },
   { id: 'crt', title: '⚡ 패왕의 기세', desc: '치명타 확률 +15% 영구 증가', apply: (s) => { s.buffCrit += 0.15; } },
   { id: 'rec', title: '📜 구품관인법', desc: '장수 모집 시 2~3티어 등장 확률 2배 증가', apply: (s) => { s.highRecruitBonus += 0.12; } }
@@ -126,7 +149,7 @@ class BattlefieldAudioEngine {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(freq * 0.98, now);
     osc.frequency.linearRampToValueAtTime(freq, now + 0.04);
-    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.setValueAtTime(0.06, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -181,10 +204,26 @@ function triggerHanjaStamp(hanja4, subtitle) {
   stampTimeout = setTimeout(() => overlay.classList.add('stamp-hidden'), 1500);
 }
 
+let toastTimer = null;
+function showStoryToast(chapterTxt, titleTxt, descTxt) {
+  const box = document.getElementById('story-toast');
+  document.getElementById('toast-chapter').textContent = chapterTxt;
+  document.getElementById('toast-title').textContent = titleTxt;
+  document.getElementById('toast-desc').textContent = descTxt;
+  box.classList.remove('hidden');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.add('hidden'), 4200);
+}
+
 const SAVE_KEY = 'TK_ARGON_SAVE_V4';
+const INITIAL_UNLOCKED = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
 
 const gameState = {
+  inLobby: true,
+  selectedLord: 'shu',
   gold: 120,
+  fame: 30,
+  bestWave: 1,
   hp: 100,
   maxHp: 100,
   wave: 1,
@@ -211,7 +250,7 @@ const gameState = {
   siegeLeftTimer: 0,
   siegeRightTimer: 0,
   supplyCartTimer: 0,
-  unlockedIds: ['shu_1', 'wei_1', 'wu_1', 'qun_1'],
+  unlockedIds: [...INITIAL_UNLOCKED],
   grid: new Array(20).fill(null),
   enemies: [],
   projectiles: [],
@@ -228,7 +267,10 @@ const gameState = {
 function saveGameSafe() {
   try {
     const payload = {
+      selectedLord: gameState.selectedLord,
       gold: gameState.gold,
+      fame: gameState.fame,
+      bestWave: Math.max(gameState.bestWave, gameState.wave),
       wave: gameState.wave,
       kills: gameState.kills,
       recruitCost: gameState.recruitCost,
@@ -246,10 +288,13 @@ function saveGameSafe() {
 function loadGameSafe() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return false;
+    if (!raw) return null;
     const data = JSON.parse(raw);
-    if (!data || !Array.isArray(data.unlockedIds)) return false;
+    if (!data || !Array.isArray(data.unlockedIds)) return null;
+    gameState.selectedLord = data.selectedLord || 'shu';
     gameState.gold = Number(data.gold) || 120;
+    gameState.fame = Number(data.fame) || 30;
+    gameState.bestWave = Number(data.bestWave) || 1;
     gameState.wave = Number(data.wave) || 1;
     gameState.kills = Number(data.kills) || 0;
     gameState.recruitCost = Number(data.recruitCost) || 20;
@@ -257,12 +302,52 @@ function loadGameSafe() {
     gameState.upgradeCost = Number(data.upgradeCost) || 35;
     gameState.siegeLeftLv = Number(data.siegeLeftLv) || 0;
     gameState.siegeRightLv = Number(data.siegeRightLv) || 0;
-    gameState.unlockedIds = data.unlockedIds;
+    const mergedUnlock = new Set([...INITIAL_UNLOCKED, ...data.unlockedIds]);
+    gameState.unlockedIds = Array.from(mergedUnlock);
     gameState.waveRemaining = 8 + gameState.wave * 3;
     return data.gridIds || null;
   } catch (e) {
-    localStorage.removeItem(SAVE_KEY);
-    return false;
+    return null;
+  }
+}
+
+// 스테이지 등반 시 중요 장수 자동 해방 점검
+function checkStageLiberation(waveNum) {
+  const newlyLiberated = HERO_DB.filter(h => h.unlockWave === waveNum && !gameState.unlockedIds.includes(h.id));
+  if (newlyLiberated.length > 0) {
+    newlyLiberated.forEach(h => gameState.unlockedIds.push(h.id));
+    const mainHero = newlyLiberated[0];
+    triggerHanjaStamp(mainHero.stamp, `명장 해방: ${mainHero.name} 합류!`);
+    showStoryToast(
+      `📜 제${waveNum}장 역사 해방 달성!`,
+      `✨ ${newlyLiberated.map(x => `[${x.name}]`).join(' · ')} 해방 완료!`,
+      mainHero.story
+    );
+    saveGameSafe();
+  }
+}
+
+// 본영 메인 메뉴 UI 갱신
+function refreshMainMenuUI() {
+  gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
+  document.getElementById('menu-best-wave').textContent = `제${gameState.bestWave}장`;
+  document.getElementById('menu-fame-val').textContent = gameState.fame;
+  document.getElementById('menu-unlock-cnt').textContent = `${gameState.unlockedIds.length}/28`;
+  document.getElementById('cont-wave-txt').textContent = `제${gameState.wave}장`;
+
+  document.querySelectorAll('.lord-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.lord === gameState.selectedLord);
+  });
+
+  // 다음 해방 목표 표시
+  const nextLocked = HERO_DB.find(h => !gameState.unlockedIds.includes(h.id));
+  const banner = document.getElementById('next-story-banner');
+  if (nextLocked) {
+    banner.innerHTML = `
+      <div>🔒 <strong>다음 해방 명장: [T${nextLocked.tier} ${nextLocked.name}]</strong> (제${nextLocked.unlockWave}장 돌파 또는 ${nextLocked.fameCost}🎖️ 삼고초려)</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${nextLocked.story}</div>`;
+  } else {
+    banner.innerHTML = `<div style="color:#fde047;font-weight:800;">🎉 삼국지 28인 전 명장 해방 완료! 천하통일을 달성했습니다!</div>`;
   }
 }
 
@@ -479,11 +564,7 @@ function initThreeScene() {
       const idx = row * 5 + col;
       const tInfo = TERRAIN_MAP[idx];
       const tileColor = tInfo ? tInfo.color : ((row + col) % 2 === 0 ? 0x0f172a : 0x1e293b);
-      const tileMat = new THREE.MeshStandardMaterial({
-        color: tileColor,
-        metalness: 0.55,
-        roughness: 0.35
-      });
+      const tileMat = new THREE.MeshStandardMaterial({ color: tileColor, metalness: 0.55, roughness: 0.35 });
       const tile = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.25, 2.45), tileMat);
       tile.position.set(startX + col * gapX, 0, startZ + row * gapZ);
       tile.userData.gridIndex = idx;
@@ -513,14 +594,30 @@ function spawnHeroAtGrid(idx, heroData, stars = 1) {
 
   if (!gameState.unlockedIds.includes(heroData.id)) {
     gameState.unlockedIds.push(heroData.id);
-    addFloatingText(`📖 신장 해금: ${heroData.name}!`, gridTiles3D[idx].position, '#fbbf24');
+    addFloatingText(`📜 명장 해방: ${heroData.name}!`, gridTiles3D[idx].position, '#fbbf24');
   }
   updateSynergyAndHUD();
   saveGameSafe();
 }
 
-function getHeroByFactionAndTier(faction, tier) {
-  return HERO_DB.find(h => h.faction === faction && h.tier === tier) || HERO_DB[0];
+// 해방 여부 확인 후 장수 반환 (미해방 시 해방된 장수 또는 삼고초려 안내)
+function getUnlockedHeroOrFallback(faction, tier) {
+  const exact = HERO_DB.find(h => h.faction === faction && h.tier === tier);
+  if (exact && gameState.unlockedIds.includes(exact.id)) return exact;
+
+  // 같은 티어의 해방된 다른 세력 장수 탐색
+  const unlockedSameTier = HERO_DB.filter(h => h.tier === tier && gameState.unlockedIds.includes(h.id));
+  if (unlockedSameTier.length > 0) {
+    return unlockedSameTier[Math.floor(Math.random() * unlockedSameTier.length)];
+  }
+  // 만약 해당 티어가 전원 미해방이면 즉시 첫 명장 드라마틱 해방!
+  if (exact) {
+    gameState.unlockedIds.push(exact.id);
+    triggerHanjaStamp(exact.stamp, `전장 각성: ${exact.name} 해방!`);
+    showStoryToast(`⚡ 전장 긴급 해방!`, `[${exact.name}] 봉인 해제!`, exact.story);
+    return exact;
+  }
+  return HERO_DB[0];
 }
 
 function recruitHero() {
@@ -545,7 +642,7 @@ function recruitHero() {
   if (roll < 0.03 + gameState.highRecruitBonus * 0.3) tier = 3;
   else if (roll < 0.18 + gameState.highRecruitBonus) tier = 2;
 
-  const heroData = getHeroByFactionAndTier(f, tier);
+  const heroData = getUnlockedHeroOrFallback(f, tier);
   spawnHeroAtGrid(targetIdx, heroData);
   sound.playWarDrum();
 
@@ -575,7 +672,7 @@ function tryMergeOrMove(fromIdx, toIdx) {
     if (src.data.faction !== dst.data.faction) {
       nextFaction = Math.random() < 0.5 ? src.data.faction : dst.data.faction;
     }
-    const nextHero = getHeroByFactionAndTier(nextFaction, nextTier);
+    const nextHero = getUnlockedHeroOrFallback(nextFaction, nextTier);
 
     scene.remove(src.mesh);
     scene.remove(dst.mesh);
@@ -598,7 +695,6 @@ function tryMergeOrMove(fromIdx, toIdx) {
   }
 }
 
-// [📐 합체] 버튼: 그리드 내 동일 티어 자동 합성 (동일 세력 우선)
 function autoMergeGrid() {
   sound.init();
   for (let i = 0; i < 20; i++) {
@@ -685,7 +781,7 @@ function spawnSupplyCart() {
   g.position.set(-9.5, 0, -0.2);
   scene.add(g);
   gameState.supplyCart = { mesh: g, hp: 1 };
-  addFloatingText('🐂 황금 목우유마 출현! (터치 시 군량미)', new THREE.Vector3(0, 2.5, -1), '#fbbf24');
+  addFloatingText('🐂 황금 목우유마 출현! (터치 시 군량미+명성)', new THREE.Vector3(0, 2.5, -1), '#fbbf24');
 }
 
 function addFloatingText(text, worldPos, color = '#ffffff') {
@@ -713,12 +809,16 @@ function getActiveSynergies() {
     }
   });
 
+  const lordSpd = gameState.selectedLord === 'shu' ? 1.15 : 1.0;
+  const lordAtk = gameState.selectedLord === 'wei' ? 1.15 : 1.0;
+  const lordCrit = gameState.selectedLord === 'qun' ? 0.12 : 0;
+
   return {
     counts,
-    shuMult: counts.shu >= 3 ? 1.3 : 1.0,
-    weiMult: counts.wei >= 3 ? 1.25 : 1.0,
-    wuBurn: counts.wu >= 3,
-    qunCrit: counts.qun >= 3 ? 0.22 : 0,
+    shuMult: (counts.shu >= 3 ? 1.3 : 1.0) * lordSpd,
+    weiMult: (counts.wei >= 3 ? 1.25 : 1.0) * lordAtk,
+    wuBurn: counts.wu >= 3 || gameState.selectedLord === 'wu',
+    qunCrit: (counts.qun >= 3 ? 0.22 : 0) + lordCrit,
     bondAtkBonus,
     activeBonds
   };
@@ -728,13 +828,14 @@ function updateSynergyAndHUD() {
   const syn = getActiveSynergies();
   const codexBonus = gameState.unlockedIds.length * 2 + Math.round(syn.bondAtkBonus * 100);
   const weather = WEATHER_LIST[gameState.weatherIdx];
+  const chapTitle = CHAPTER_TITLES[gameState.wave] || `제${gameState.wave}장 중원 진격전`;
 
   document.getElementById('weather-badge').textContent = weather.name;
   document.getElementById('gold-val').textContent = Math.floor(gameState.gold);
   document.getElementById('hp-val').textContent = `${Math.max(0, Math.floor(gameState.hp))}/${gameState.maxHp}`;
-  document.getElementById('kill-val').textContent = gameState.kills;
+  document.getElementById('fame-val').textContent = gameState.fame;
   document.getElementById('bonus-val').textContent = `+${codexBonus}%`;
-  document.getElementById('wave-title').textContent = `제${gameState.wave}장 호로관 전투`;
+  document.getElementById('wave-title').textContent = chapTitle;
   document.getElementById('recruit-cost').textContent = gameState.recruitCost;
   document.getElementById('upgrade-lvl').textContent = gameState.upgradeLvl;
   document.getElementById('upgrade-cost').textContent = gameState.upgradeCost;
@@ -759,29 +860,34 @@ function updateSynergyAndHUD() {
 }
 
 function updateGame(dt) {
-  if (gameState.isGameOver) return;
+  // 로비에 있을 때는 배경 3D 마법진 회전 연출만 수행
+  if (gameState.inLobby || gameState.isGameOver) {
+    gameState.grid.forEach(cell => {
+      if (cell && cell.mesh.userData.auraRing) cell.mesh.userData.auraRing.rotation.z += dt * 1.5;
+    });
+    return;
+  }
+
   const effDt = dt * gameState.gameSpeed;
   sound.updateBgm(effDt);
-
   const weather = WEATHER_LIST[gameState.weatherIdx];
 
-  // 보스 일기토 타이머
   if (gameState.duelTimer > 0) {
     gameState.duelTimer = Math.max(0, gameState.duelTimer - dt);
     document.getElementById('duel-timer').textContent = gameState.duelTimer.toFixed(1);
     if (gameState.duelTimer <= 0 || !gameState.activeBoss || gameState.activeBoss.hp <= 0) {
       gameState.duelTimer = 0;
       document.getElementById('duel-overlay').classList.add('hidden');
-      if (gameState.duelHits >= 10) {
+      if (gameState.duelHits >= 8) {
         const reward = 45 + gameState.duelHits * 3;
         gameState.gold += reward;
-        triggerHanjaStamp('一騎討勝', `일기토 ${gameState.duelHits}연타 승리! +${reward}🌾`);
+        gameState.fame += 15;
+        triggerHanjaStamp('一騎討勝', `일기토 ${gameState.duelHits}연타 승리! +${reward}🌾 +15🎖️`);
         updateSynergyAndHUD();
       }
     }
   }
 
-  // 둔전소(17번 타일) 군량미 자동 생산
   if (gameState.grid[17]) {
     gameState.supplyTileTimer += effDt;
     if (gameState.supplyTileTimer >= 5.0) {
@@ -831,9 +937,12 @@ function updateGame(dt) {
     }
   } else if (gameState.enemies.length === 0) {
     gameState.wave++;
+    gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
     gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
     gameState.waveRemaining = 8 + gameState.wave * 3;
     gameState.gold += 35 + gameState.wave * 8;
+    gameState.fame += 10;
+    checkStageLiberation(gameState.wave);
     updateSynergyAndHUD();
     saveGameSafe();
     if (gameState.wave % 2 === 0) openStrategyModal();
@@ -875,7 +984,6 @@ function updateGame(dt) {
         }
         sound.playBladeSlash();
 
-        // 숙련도 3성 무쌍 각성 판정
         cell.xp++;
         if (cell.stars < 3 && cell.xp >= cell.stars * 12) {
           cell.stars++;
@@ -945,6 +1053,8 @@ function updateGame(dt) {
       gameState.enemies.splice(i, 1);
       gameState.kills++;
       gameState.gold += en.isBoss ? 90 : 8 + Math.floor(gameState.wave * 1.5);
+      if (en.isBoss) gameState.fame += 20;
+      else if (gameState.kills % 5 === 0) gameState.fame += 2;
       updateSynergyAndHUD();
       continue;
     }
@@ -961,6 +1071,7 @@ function updateGame(dt) {
         updateSynergyAndHUD();
         if (gameState.hp <= 0) {
           gameState.isGameOver = true;
+          saveGameSafe();
           document.getElementById('final-wave').textContent = `제${gameState.wave}장`;
           document.getElementById('final-kills').textContent = gameState.kills;
           document.getElementById('gameover-modal').classList.remove('hidden');
@@ -1000,7 +1111,6 @@ function render2DOverlay() {
   }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 특수 지형 아이콘 & 장수 별(★) 등급 표시
   gridTiles3D.forEach((tile, idx) => {
     const tInfo = TERRAIN_MAP[idx];
     const cell = gameState.grid[idx];
@@ -1076,7 +1186,8 @@ function getTileIndexFromEvent(e) {
     if (cartHits.length > 0) {
       const bonus = 60 + gameState.wave * 15;
       gameState.gold += bonus;
-      triggerHanjaStamp('木牛流馬', `보급 수레 확보! +${bonus}🌾`);
+      gameState.fame += 8;
+      triggerHanjaStamp('木牛流馬', `보급 수레 확보! +${bonus}🌾 +8🎖️`);
       scene.remove(gameState.supplyCart.mesh);
       gameState.supplyCart = null;
       updateSynergyAndHUD();
@@ -1089,10 +1200,88 @@ function getTileIndexFromEvent(e) {
   return -1;
 }
 
+// 명성(🎖️)으로 중요 장수 즉시 삼고초려 해방
+window.liberateHeroByFame = function(heroId) {
+  const h = HERO_DB.find(x => x.id === heroId);
+  if (!h || gameState.unlockedIds.includes(heroId)) return;
+  if (gameState.fame < h.fameCost) {
+    alert(`무공 명성이 부족합니다! (현재 ${gameState.fame}🎖️ / 필요 ${h.fameCost}🎖️)\n적과 보스를 처치하거나 스테이지를 등반하면 자동 해방됩니다.`);
+    return;
+  }
+  gameState.fame -= h.fameCost;
+  gameState.unlockedIds.push(heroId);
+  triggerHanjaStamp(h.stamp, `삼고초려 성공: ${h.name} 합류!`);
+  showStoryToast('🎖️ 삼고초려 명장 영입!', `✨ [${h.name}] 해방 완료!`, h.story);
+  saveGameSafe();
+  openCodexModal();
+  refreshMainMenuUI();
+  updateSynergyAndHUD();
+};
+
+function startNewCampaign() {
+  sound.init();
+  sound.playWarDrum();
+  gameState.enemies.forEach(e => scene.remove(e.mesh));
+  gameState.projectiles.forEach(p => scene.remove(p.mesh));
+  gameState.grid.forEach(c => { if (c && c.mesh) scene.remove(c.mesh); });
+  gameState.enemies = [];
+  gameState.projectiles = [];
+  gameState.grid = new Array(20).fill(null);
+  gameState.gold = 120;
+  gameState.hp = 100;
+  gameState.wave = 1;
+  gameState.kills = 0;
+  gameState.recruitCost = 20;
+  gameState.upgradeLvl = 1;
+  gameState.upgradeCost = 35;
+  gameState.waveRemaining = 10;
+  gameState.isGameOver = false;
+  gameState.inLobby = false;
+
+  const starterHero = HERO_DB.find(h => h.faction === gameState.selectedLord && h.tier === 1) || HERO_DB[0];
+  spawnHeroAtGrid(7, starterHero);
+  spawnHeroAtGrid(12, starterHero);
+
+  document.getElementById('main-menu-overlay').classList.add('hidden');
+  document.getElementById('gameover-modal').classList.add('hidden');
+  updateSynergyAndHUD();
+  saveGameSafe();
+}
+
 function bindEvents() {
   const canvas = document.getElementById('hudCanvas');
 
+  // 로비 이벤트
+  document.querySelectorAll('.lord-card').forEach(card => {
+    card.addEventListener('click', () => {
+      sound.init();
+      sound.playWarDrum();
+      gameState.selectedLord = card.dataset.lord;
+      refreshMainMenuUI();
+      saveGameSafe();
+    });
+  });
+
+  document.getElementById('continue-game-btn').addEventListener('click', () => {
+    sound.init();
+    sound.playGong();
+    gameState.inLobby = false;
+    document.getElementById('main-menu-overlay').classList.add('hidden');
+    updateSynergyAndHUD();
+  });
+
+  document.getElementById('new-game-btn').addEventListener('click', startNewCampaign);
+  document.getElementById('open-story-btn').addEventListener('click', openCodexModal);
+
+  document.getElementById('lobby-return-btn').addEventListener('click', () => {
+    saveGameSafe();
+    refreshMainMenuUI();
+    gameState.inLobby = true;
+    document.getElementById('main-menu-overlay').classList.remove('hidden');
+  });
+
   const onDown = (e) => {
+    if (gameState.inLobby) return;
     sound.init();
     const idx = getTileIndexFromEvent(e);
     if (idx >= 0 && gameState.grid[idx]) {
@@ -1234,8 +1423,12 @@ function bindEvents() {
   });
 
   document.getElementById('restart-btn').addEventListener('click', () => {
-    localStorage.removeItem(SAVE_KEY);
-    location.reload();
+    document.getElementById('gameover-modal').classList.add('hidden');
+    gameState.hp = 100;
+    gameState.isGameOver = false;
+    gameState.inLobby = true;
+    refreshMainMenuUI();
+    document.getElementById('main-menu-overlay').classList.remove('hidden');
   });
 
   window.addEventListener('resize', () => {
@@ -1270,15 +1463,29 @@ function openStrategyModal() {
 }
 
 function openCodexModal() {
+  document.getElementById('modal-fame-val').textContent = gameState.fame;
   const grid = document.getElementById('codex-grid');
   grid.innerHTML = '';
   HERO_DB.forEach(h => {
     const unlocked = gameState.unlockedIds.includes(h.id);
     const d = document.createElement('div');
     d.className = `codex-item ${unlocked ? 'unlocked' : ''}`;
-    d.innerHTML = `<div style="font-size:16px;font-weight:900;color:${FACTION_META[h.faction].color}">${h.hanja}</div>
-                   <div>T${h.tier} ${h.name}</div>
-                   <div style="font-size:9px;color:#94a3b8">${unlocked ? '✅ 해금' : '🔒 미해금'}</div>`;
+    d.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:20px;font-weight:900;color:${FACTION_META[h.faction].color};font-family:serif;">[${h.hanja}]</span>
+        <div>
+          <div style="font-weight:800;color:#fff;">T${h.tier} ${h.name}</div>
+          <div style="font-size:9px;color:#fbbf24;">낙관: ${h.stamp}</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#cbd5e1;line-height:1.35;">${h.story}</div>
+      <div>
+        ${unlocked
+          ? `<span style="color:#34d399;font-weight:800;font-size:10px;">✅ 해방 완료 (+2% 화력)</span>`
+          : `<div style="font-size:9px;color:#f87171;">🔒 제${h.unlockWave}장 돌파 시 자동 해방</div>
+             <button class="liberate-btn" onclick="liberateHeroByFame('${h.id}')">🎖️ 삼고초려 즉시 해방 (${h.fameCost}🎖️)</button>`
+        }
+      </div>`;
     grid.appendChild(d);
   });
   document.getElementById('codex-modal').classList.remove('hidden');
@@ -1289,7 +1496,7 @@ window.addEventListener('DOMContentLoaded', () => {
   bindEvents();
 
   const savedGridIds = loadGameSafe();
-  if (Array.isArray(savedGridIds)) {
+  if (Array.isArray(savedGridIds) && savedGridIds.some(x => x !== null)) {
     savedGridIds.forEach((id, idx) => {
       if (id) {
         const h = HERO_DB.find(item => item.id === id);
@@ -1300,6 +1507,7 @@ window.addEventListener('DOMContentLoaded', () => {
     spawnHeroAtGrid(7, HERO_DB[0]);
     spawnHeroAtGrid(12, HERO_DB[1]);
   }
+  refreshMainMenuUI();
   updateSynergyAndHUD();
 
   let lastTime = performance.now();

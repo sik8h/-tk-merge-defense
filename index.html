@@ -15,24 +15,79 @@
 </head>
 <body>
   <div id="app-container">
+    <!-- 3D 본영 메인 메뉴 로비 오버레이 -->
+    <div id="main-menu-overlay" class="lobby-overlay">
+      <div class="lobby-header">
+        <div class="lobby-tag">ARGON.3K // TACTICAL MERGE DEFENSE</div>
+        <h1 class="lobby-title">삼국지 3D 무쌍 방어전</h1>
+        <p class="lobby-sub">관문을 수호하고 역사 속 봉인된 명장들을 해방하라</p>
+      </div>
+
+      <div class="lobby-telemetry">
+        <div> 최고 도달: <b id="menu-best-wave">제1장</b></div>
+        <div>🎖️ 무공 명성: <b id="menu-fame-val">0</b></div>
+        <div>📖 해방 명장: <b id="menu-unlock-cnt">12/28</b></div>
+      </div>
+
+      <div class="lobby-section">
+        <div class="sec-title">👑 출진 주군 선택 (고유 군주 패시브)</div>
+        <div class="lord-grid" id="lord-select-grid">
+          <div class="lord-card active" data-lord="shu">
+            <div class="lord-hanja" style="color:#10b981">劉</div>
+            <div class="lord-name">소열제 유비</div>
+            <div class="lord-buff">전군 공속 +15%</div>
+          </div>
+          <div class="lord-card" data-lord="wei">
+            <div class="lord-hanja" style="color:#3b82f6">曹</div>
+            <div class="lord-name">무제 조조</div>
+            <div class="lord-buff">전군 화력 +15%</div>
+          </div>
+          <div class="lord-card" data-lord="wu">
+            <div class="lord-hanja" style="color:#f97316">孫</div>
+            <div class="lord-name">대제 손권</div>
+            <div class="lord-buff">화염 피해 +25%</div>
+          </div>
+          <div class="lord-card" data-lord="qun">
+            <div class="lord-hanja" style="color:#ef4444">呂</div>
+            <div class="lord-name">무신 여포</div>
+            <div class="lord-buff">치명타율 +12%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lobby-section">
+        <div class="sec-title">🗺️ 다음 명장 해방 목표 (스테이지 등반 스토리)</div>
+        <div id="next-story-banner" class="story-preview-box"></div>
+      </div>
+
+      <div class="lobby-actions">
+        <button id="continue-game-btn" class="lobby-btn primary">▶ 전장 이어하기 (<span id="cont-wave-txt">제1장</span>)</button>
+        <button id="new-game-btn" class="lobby-btn secondary">⚔️ 새로운 출진 (제1장부터)</button>
+        <div class="lobby-sub-btns">
+          <button id="open-story-btn" class="lobby-btn sub">📜 연대기 & 명장 해방 (삼고초려)</button>
+          <a href="wiki.html#/tree/overview" class="lobby-btn sub" style="text-decoration:none;text-align:center;">📚 공식 전술 위키 & 3D DB</a>
+        </div>
+      </div>
+    </div>
+
     <header id="hud">
       <div class="hud-top">
-        <div id="weather-badge" class="telemetry-tag">☀️ 천시: 쾌청</div>
-        <div id="wave-title" class="hud-box">제1장 호로관 전투</div>
+        <button id="lobby-return-btn" class="hud-btn" title="본영 메뉴로">🏯 본영</button>
+        <div id="weather-badge" class="telemetry-tag">☀️ 쾌청</div>
+        <div id="wave-title" class="hud-box">제1장 황건적의 난</div>
         <div class="hud-controls">
-          <button id="automerge-btn" class="hud-btn" title="자동 합성">📐 합체</button>
-          <button id="speed-btn" class="hud-btn" title="배속 전환">⏩ 1x</button>
-          <button id="cam-btn" class="hud-btn" title="시점 전환">🎥</button>
+          <button id="automerge-btn" class="hud-btn" title="자동 합체">📐 합체</button>
+          <button id="speed-btn" class="hud-btn" title="배속">⏩ 1x</button>
+          <button id="cam-btn" class="hud-btn" title="시점">🎥</button>
           <button id="sound-btn" class="hud-btn" title="사운드">🔊</button>
-          <button id="codex-btn" class="hud-btn" title="도감">📖</button>
-          <a href="wiki.html#/tree/overview" class="hud-btn" title="공식 위키">📚 위키</a>
+          <button id="codex-btn" class="hud-btn" title="명장 해방">📜 해방</button>
         </div>
       </div>
       <div class="hud-stats">
         <div class="stat-item"><span class="label">군량미</span><span class="val">🌾 <b id="gold-val">120</b></span></div>
         <div class="stat-item"><span class="label">호로관 내구도</span><span class="val">🏯 <b id="hp-val">100/100</b></span></div>
-        <div class="stat-item"><span class="label">격파</span><span class="val">⚔️ <b id="kill-val">0</b></span></div>
-        <div class="stat-item"><span class="label">도감·인연 화력</span><span class="val">🔥 <b id="bonus-val">+0%</b></span></div>
+        <div class="stat-item"><span class="label">무공 명성</span><span class="val">🎖️ <b id="fame-val">0</b></span></div>
+        <div class="stat-item"><span class="label">해방·인연 화력</span><span class="val">🔥 <b id="bonus-val">+0%</b></span></div>
       </div>
       <div id="synergy-bar">
         <span id="syn-shu" class="syn-badge">🟢 촉 0/3</span>
@@ -49,6 +104,13 @@
     <main id="game-view">
       <div id="webgl-container"></div>
       <canvas id="hudCanvas"></canvas>
+
+      <!-- 스토리 해방 드라마 알림 배너 -->
+      <div id="story-toast" class="story-toast hidden">
+        <div class="toast-chapter" id="toast-chapter">📜 제3장 장판파 전투 돌파!</div>
+        <div class="toast-title" id="toast-title">🟢 [백마은창 조운] 해방 합류!</div>
+        <div class="toast-desc" id="toast-desc">"상산 조자룡이 주군을 모시러 단기필마로 당도했습니다!"</div>
+      </div>
 
       <!-- 무쌍 한자 사자성어 낙관(Stamp) 연출 -->
       <div id="hanja-stamp-overlay" class="stamp-hidden">
@@ -68,7 +130,7 @@
       <div id="duel-overlay" class="hidden">
         <div class="duel-box">
           <div class="duel-title">⚔️ 보스 일기토(一騎討) 격돌! ⚔️</div>
-          <div class="duel-sub">남은 시간 <b id="duel-timer">5.0</b>초 동안 버튼을 연타해 적장을 베하십시오!</div>
+          <div class="duel-sub">남은 시간 <b id="duel-timer">5.0</b>초 동안 연타해 적장을 베고 명성(🎖️)을 획득하십시오!</div>
           <button id="duel-hit-btn" class="duel-btn">⚡ 일기토 무쌍 참격! (<span id="duel-hits">0</span>타)</button>
         </div>
       </div>
@@ -87,7 +149,7 @@
     <footer id="command-bar">
       <button id="recruit-btn" class="cmd-btn recruit">
         <span class="btn-title">장수 모집</span>
-        <span class="btn-sub"><span id="recruit-cost">20</span> 🌾 (4세력 균등)</span>
+        <span class="btn-sub"><span id="recruit-cost">20</span> 🌾 (해방 장수 출현)</span>
       </button>
       <button id="upgrade-btn" class="cmd-btn upgrade">
         <span class="btn-title">태학 무력연구 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
@@ -110,15 +172,15 @@
       </div>
     </div>
 
-    <!-- 28인 명장 도감 모달 -->
+    <!-- 연대기 스토리 & 28인 명장 해방(삼고초려) 모달 -->
     <div id="codex-modal" class="modal hidden">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>📖 삼국지 28인 명장 도감</h2>
-          <p>최초 해금 시 영구 공격력 +2% (같은 세력 합성 시 100% 계승)</p>
+          <h2>📜 삼국지 연대기 & 명장 해방 (삼고초려)</h2>
+          <p>스테이지 등반 시 자동 해방되거나, 무공 명성(🎖️ <b id="modal-fame-val">0</b>)으로 즉시 영입할 수 있습니다.</p>
         </div>
         <div id="codex-grid" class="codex-grid"></div>
-        <button id="close-codex-btn" class="modal-action-btn">닫기</button>
+        <button id="close-codex-btn" class="modal-action-btn">전장으로 돌아가기</button>
       </div>
     </div>
 
@@ -126,12 +188,12 @@
     <div id="gameover-modal" class="modal hidden">
       <div class="modal-content text-center">
         <h1 id="gameover-title">호로관 함락!</h1>
-        <p id="gameover-subtitle">적군에게 방어선이 돌파당했습니다.</p>
-        <div class="final-stats">
-          <p>최종 도달: <strong id="final-wave">제1장</strong></p>
+        <p id="gameover-subtitle">적군에게 방어선이 돌파당했습니다. (해방한 명장과 명성은 영구 보존됩니다)</p>
+        <div class="final-stats" style="margin:12px 0;font-size:13px;line-height:1.8;">
+          <p>최종 도달 스테이지: <strong id="final-wave" style="color:#fbbf24">제1장</strong></p>
           <p>적 처치 수: <strong id="final-kills">0</strong>명</p>
         </div>
-        <button id="restart-btn" class="modal-action-btn">전장 재가동</button>
+        <button id="restart-btn" class="modal-action-btn">🏯 본영 로비로 귀환</button>
       </div>
     </div>
   </div>

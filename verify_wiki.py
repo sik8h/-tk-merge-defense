@@ -21,7 +21,7 @@ async def run():
         await page.screenshot(path="/home/jules/verification/screenshots/wiki_db.png")
 
         # Click on first hero card
-        card = page.locator(".hero-card").first
+        card = page.locator(".db-card").first
         await card.click()
         await page.wait_for_timeout(1500)
         await page.screenshot(path="/home/jules/verification/screenshots/wiki_modal.png")

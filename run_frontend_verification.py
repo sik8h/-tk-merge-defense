@@ -6,6 +6,10 @@ def run_cuj(page):
     page.goto(f"file://{cwd}/index.html")
     page.wait_for_timeout(2000)
 
+    # Click continue game in lobby
+    page.click("#continue-game-btn")
+    page.wait_for_timeout(1000)
+
     # Click recruit buttons
     page.click("#recruit-btn")
     page.wait_for_timeout(500)
