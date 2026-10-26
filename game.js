@@ -386,6 +386,7 @@ const gameState = {
     atkBonusPercent: 0,
     goldMultiplier: 1.0,
     aspdBonusPercent: 0,
+    skillCooldown: 0,
     paused: false,
     gameOver: false,
     grid: Array(ROWS * COLS).fill(null), // Array of Hero objects or null
@@ -398,8 +399,15 @@ const gameState = {
     enemiesToSpawn: 0,
     spawnTimer: 0,
     waveClearTimer: 0,
-    auraTimer: 0
+    auraTimer: 0,
+    synergies: {
+        shu: false,
+        wei: false,
+        qun: false
+    }
 };
+
+const SKILL_MAX_COOLDOWN = 20;
 
 // Enemy Chapter / Wave Definitions
 const CHAPTERS = [
@@ -419,7 +427,6 @@ function getWaveConfig(waveNum) {
     if (waveNum <= CHAPTERS.length) {
         return CHAPTERS[waveNum - 1];
     }
-    // Endless Scaling
     const isBoss = waveNum % 5 === 0;
     const baseHp = Math.round(1000 * Math.pow(1.4, waveNum - 5));
     const bossName = isBoss ? `무신 여포 Lv.${waveNum / 5}` : `정예 대장 Lv.${waveNum}`;
@@ -446,12 +453,21 @@ class Hero {
     }
 
     getAtk() {
-        const base = this.config.atk;
-        return Math.round(base * (1 + gameState.atkBonusPercent / 100));
+        let bonus = gameState.atkBonusPercent;
+        if (gameState.synergies.wei) bonus += 15; // Wei Synergy: +15% ATK
+        return Math.round(this.config.atk * (1 + bonus / 100));
     }
 
     getAttackSpeed() {
-        return this.config.attackSpeed * (1 + gameState.aspdBonusPercent / 100);
+        let bonus = gameState.aspdBonusPercent;
+        if (gameState.synergies.shu) bonus += 25; // Shu Synergy: +25% ASPD
+        return this.config.attackSpeed * (1 + bonus / 100);
+    }
+
+    getRange() {
+        let r = this.config.range;
+        if (gameState.synergies.wei) r *= 1.15; // Wei Synergy: +15% Range
+        return r;
     }
 }
 
@@ -463,7 +479,7 @@ class Enemy {
         this.speed = config.speed;
         this.goldReward = config.gold;
         this.isBoss = config.isBoss;
-        this.pathProgress = 0; // 0 to 1 along S-curve
+        this.pathProgress = 0;
         this.x = 0;
         this.y = 0;
         this.radius = config.isBoss ? 22 : 12;
@@ -480,15 +496,13 @@ class Enemy {
         }
 
         const effectiveSpeed = this.speed * this.slowFactor;
-        // Total distance along path
-        this.pathProgress += (effectiveSpeed * dt) / 260; // Normalized progress speed
+        this.pathProgress += (effectiveSpeed * dt) / 260;
 
         if (this.pathProgress >= 1) {
             this.pathProgress = 1;
-            return true; // Reached gate
+            return true;
         }
 
-        // Interpolate along path points
         const pos = getPointOnPath(pathPoints, this.pathProgress);
         this.x = pos.x;
         this.y = pos.y;
@@ -499,7 +513,6 @@ class Enemy {
         ctx.save();
         ctx.translate(this.x, this.y);
 
-        // Glow for Boss
         if (this.isBoss) {
             ctx.shadowColor = "#FF2222";
             ctx.shadowBlur = 15;
@@ -509,7 +522,6 @@ class Enemy {
             ctx.fill();
         }
 
-        // Slow effect tint
         ctx.fillStyle = this.slowTimer > 0 ? "#38BDF8" : (this.isBoss ? "#DC2626" : "#EAB308");
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
@@ -518,14 +530,12 @@ class Enemy {
         ctx.strokeStyle = "#FFFFFF";
         ctx.stroke();
 
-        // Enemy Text / Initial
         ctx.fillStyle = "#FFFFFF";
         ctx.font = `bold ${this.isBoss ? 13 : 10}px sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(this.name.substring(0, 2), 0, 0);
 
-        // HP Bar
         const barW = this.radius * 2 + 4;
         const barH = 4;
         const hpPct = Math.max(0, this.hp / this.maxHp);
@@ -570,7 +580,7 @@ class Projectile {
             enemies.forEach(e => {
                 if (!this.hitEnemies.has(e) && Math.hypot(e.x - this.x, e.y - this.y) < e.radius + 10) {
                     this.hitEnemies.add(e);
-                    applyDamage(e, this.damage);
+                    performAttackHit(e, this.damage);
                     createImpactParticles(e.x, e.y, this.color, 4);
                 }
             });
@@ -594,7 +604,7 @@ class Projectile {
 
             if (dist < 14) {
                 this.active = false;
-                applyDamage(this.target, this.damage);
+                performAttackHit(this.target, this.damage);
                 createImpactParticles(this.target.x, this.target.y, this.color, 6);
             } else {
                 this.x += (dx / dist) * this.speed * dt;
@@ -622,10 +632,10 @@ class Particle {
         this.y = y;
         this.color = color;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 120 + 30;
+        const speed = Math.random() * 140 + 40;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
-        this.life = 0.4 + Math.random() * 0.3;
+        this.life = 0.4 + Math.random() * 0.4;
         this.maxLife = this.life;
         this.radius = 2 + Math.random() * 3;
     }
@@ -672,7 +682,7 @@ class FloatingText {
         ctx.font = `bold ${this.fontSize}px sans-serif`;
         ctx.textAlign = "center";
         ctx.shadowColor = "#000000";
-        ctx.shadowBlur = 4;
+        ctx.shadowBlur = 5;
         ctx.fillText(this.text, this.x, this.y);
         ctx.restore();
     }
@@ -697,6 +707,8 @@ const recruitCostEl = document.getElementById("recruit-cost");
 const upgradeBtn = document.getElementById("upgrade-btn");
 const upgradeLvlEl = document.getElementById("upgrade-lvl");
 const upgradeCostEl = document.getElementById("upgrade-cost");
+const skillBtn = document.getElementById("skill-btn");
+const skillSubEl = document.getElementById("skill-sub");
 
 const strategyModal = document.getElementById("strategy-modal");
 const strategyCardsContainer = document.getElementById("strategy-cards");
@@ -715,6 +727,7 @@ let gridHeight = 0;
 let cellWidth = 0;
 let cellHeight = 0;
 let pathPoints = [];
+let sellZoneRect = { x: 0, y: 0, width: 0, height: 0 };
 
 function resizeCanvas() {
     const view = document.getElementById("game-view");
@@ -723,10 +736,17 @@ function resizeCanvas() {
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
 
-    gridHeight = canvasHeight * 0.42;
-    gridStartY = canvasHeight - gridHeight - 10;
+    gridHeight = canvasHeight * 0.40;
+    gridStartY = canvasHeight - gridHeight - 38;
     cellWidth = canvasWidth / COLS;
     cellHeight = gridHeight / ROWS;
+
+    sellZoneRect = {
+        x: 12,
+        y: gridStartY + gridHeight + 4,
+        width: canvasWidth - 24,
+        height: 30
+    };
 
     const topY = 15;
     const gateY = gridStartY - 25;
@@ -765,7 +785,7 @@ function getPointOnPath(points, t) {
 }
 
 /* ==========================================================================
-   7. Grid Touch & Drag-and-Drop System
+   7. Grid Touch, Drag-and-Drop & Dismiss (Sell) System
    ========================================================================== */
 
 function getCellCenter(index) {
@@ -783,6 +803,15 @@ function getIndexFromCoords(x, y) {
     const row = Math.floor((y - gridStartY) / cellHeight);
     if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return -1;
     return row * COLS + col;
+}
+
+function isInsideSellZone(x, y) {
+    return (
+        x >= sellZoneRect.x &&
+        x <= sellZoneRect.x + sellZoneRect.width &&
+        y >= sellZoneRect.y &&
+        y <= sellZoneRect.y + sellZoneRect.height
+    );
 }
 
 function handleDragStart(clientX, clientY) {
@@ -813,36 +842,49 @@ function handleDragMove(clientX, clientY) {
 function handleDragEnd() {
     if (!gameState.draggedItem) return;
     const { sourceIndex, hero, x, y } = gameState.draggedItem;
-    const targetIndex = getIndexFromCoords(x, y);
 
-    if (targetIndex !== -1 && targetIndex !== sourceIndex) {
-        const targetHero = gameState.grid[targetIndex];
+    if (isInsideSellZone(x, y)) {
+        // [1. 장수 해산(판매) 시스템]
+        const refundGold = Math.round(gameState.recruitCost * hero.tier * 0.5);
+        gameState.gold += refundGold;
+        gameState.grid[sourceIndex] = null;
 
-        if (targetHero === null) {
-            gameState.grid[targetIndex] = hero;
-            gameState.grid[sourceIndex] = null;
-        } else if (targetHero.tier === hero.tier && hero.tier < 7) {
-            const nextTier = hero.tier + 1;
-            const newHero = new Hero(nextTier);
-            gameState.grid[targetIndex] = newHero;
-            gameState.grid[sourceIndex] = null;
+        audioEngine.playSound('merge');
+        createImpactParticles(x, y, "#FFD700", 12);
+        gameState.floatingTexts.push(new FloatingText(x, y - 10, `+${refundGold}🌾 환급!`, "#FFD700", 18));
+    } else {
+        const targetIndex = getIndexFromCoords(x, y);
 
-            const targetPos = getCellCenter(targetIndex);
-            createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 18);
-            gameState.floatingTexts.push(new FloatingText(targetPos.x, targetPos.y - 15, `${newHero.config.name} 승급!`, newHero.config.color, 18));
+        if (targetIndex !== -1 && targetIndex !== sourceIndex) {
+            const targetHero = gameState.grid[targetIndex];
 
-            if (nextTier === 7) {
-                audioEngine.playSound('lubu');
+            if (targetHero === null) {
+                gameState.grid[targetIndex] = hero;
+                gameState.grid[sourceIndex] = null;
+            } else if (targetHero.tier === hero.tier && hero.tier < 7) {
+                const nextTier = hero.tier + 1;
+                const newHero = new Hero(nextTier);
+                gameState.grid[targetIndex] = newHero;
+                gameState.grid[sourceIndex] = null;
+
+                const targetPos = getCellCenter(targetIndex);
+                createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 18);
+                gameState.floatingTexts.push(new FloatingText(targetPos.x, targetPos.y - 15, `${newHero.config.name} 승급!`, newHero.config.color, 18));
+
+                if (nextTier === 7) {
+                    audioEngine.playSound('lubu');
+                } else {
+                    audioEngine.playSound('merge');
+                }
             } else {
-                audioEngine.playSound('merge');
+                gameState.grid[targetIndex] = hero;
+                gameState.grid[sourceIndex] = targetHero;
             }
-        } else {
-            gameState.grid[targetIndex] = hero;
-            gameState.grid[sourceIndex] = targetHero;
         }
     }
 
     gameState.draggedItem = null;
+    updateSynergies();
 }
 
 // Touch & Mouse Event Listeners
@@ -880,13 +922,48 @@ canvas.addEventListener("mouseup", () => {
 });
 
 /* ==========================================================================
-   8. Combat Engine & Attack Logic
+   8. Faction Synergies & Combat Mechanics
    ========================================================================== */
 
-function applyDamage(enemy, amount) {
+function updateSynergies() {
+    let shu = 0;
+    let wei = 0;
+    let qun = 0;
+
+    for (let i = 0; i < gameState.grid.length; i++) {
+        const hero = gameState.grid[i];
+        if (!hero) continue;
+        const faction = hero.config.faction;
+        if (faction === "촉") shu++;
+        else if (faction === "위") wei++;
+        else if (faction === "군웅") qun++;
+    }
+
+    gameState.synergies.shu = (shu >= 3);
+    gameState.synergies.wei = (wei >= 2);
+    gameState.synergies.qun = (qun >= 3);
+}
+
+function performAttackHit(enemy, baseDamage, forceCrit = false) {
+    // [2. 치명타 시스템] Base 15% + Qun Synergy +20%
+    let critChance = 0.15;
+    if (gameState.synergies.qun) critChance += 0.20;
+
+    const isCrit = forceCrit || (Math.random() < critChance);
+    const finalDamage = isCrit ? baseDamage * 2 : baseDamage;
+
+    applyDamage(enemy, finalDamage, isCrit);
+}
+
+function applyDamage(enemy, amount, isCrit = false) {
     enemy.hp -= amount;
     audioEngine.playSound('hit');
-    gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 10, `-${amount}`, "#FF5555", 13));
+
+    if (isCrit) {
+        gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 12, `💥 -${amount}!`, "#FFD700", 18));
+    } else {
+        gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 10, `-${amount}`, "#FF5555", 13));
+    }
 
     if (enemy.hp <= 0) {
         const reward = Math.round(enemy.goldReward * gameState.goldMultiplier);
@@ -919,7 +996,7 @@ function updateCombat(dt) {
 
             aliveEnemies.forEach(e => {
                 const dist = Math.hypot(e.x - pos.x, e.y - pos.y);
-                if (dist <= hero.config.range) {
+                if (dist <= hero.getRange()) {
                     if (e.pathProgress > maxProgress) {
                         maxProgress = e.pathProgress;
                         target = e;
@@ -936,21 +1013,21 @@ function updateCombat(dt) {
                     gameState.projectiles.push(new Projectile(pos.x, pos.y, target, hero));
                 } else if (type === 'rapid_spear') {
                     audioEngine.playSound('spear');
-                    applyDamage(target, hero.getAtk());
+                    performAttackHit(target, hero.getAtk());
                     createImpactParticles(target.x, target.y, hero.config.color, 5);
                 } else if (type === 'aoe') {
                     audioEngine.playSound('spear');
                     aliveEnemies.forEach(e => {
-                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.config.range) {
-                            applyDamage(e, hero.getAtk());
+                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
+                            performAttackHit(e, hero.getAtk());
                             createImpactParticles(e.x, e.y, "#10B981", 6);
                         }
                     });
                 } else if (type === 'slow_aoe') {
                     audioEngine.playSound('boss');
                     aliveEnemies.forEach(e => {
-                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.config.range) {
-                            applyDamage(e, hero.getAtk());
+                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
+                            performAttackHit(e, hero.getAtk());
                             e.slowTimer = 2.0;
                             e.slowFactor = 0.5;
                             createImpactParticles(e.x, e.y, "#8B5CF6", 8);
@@ -959,7 +1036,7 @@ function updateCombat(dt) {
                 } else if (type === 'musou') {
                     audioEngine.playSound('lubu');
                     aliveEnemies.forEach(e => {
-                        applyDamage(e, hero.getAtk());
+                        performAttackHit(e, hero.getAtk());
                         createImpactParticles(e.x, e.y, "#EF4444", 10);
                     });
                     gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.3, "천하무쌍 방천화극!!", "#EF4444", 22));
@@ -1070,7 +1147,7 @@ function showStrategyModal() {
 }
 
 /* ==========================================================================
-   11. Recruitment, Upgrades & Actions
+   11. Recruitment, Active Skill & Actions
    ========================================================================== */
 
 function recruitHero() {
@@ -1090,12 +1167,43 @@ function recruitHero() {
     gameState.recruitCost = Math.round(gameState.recruitCost * 1.15);
 
     const targetSlot = emptyIndices[0];
-    const newHero = new Hero(1);
+
+    // [2. 확률형 초고속 발탁 (82% T1, 15% T2, 3% T3)]
+    const roll = Math.random();
+    let recruitedTier = 1;
+    let recruitText = null;
+    let recruitTextColor = "#4AE3B5";
+
+    if (roll < 0.82) {
+        recruitingTier = 1;
+    } else if (roll < 0.97) {
+        recruitingTier = 2;
+        recruitText = "⚡ 정예 발탁!";
+        recruitTextColor = "#3B82F6";
+    } else {
+        recruitingTier = 3;
+        recruitText = "🌟 명장 초고속 등용!!";
+        recruitTextColor = "#FFD700";
+    }
+
+    const newHero = new Hero(recruitingTier);
     gameState.grid[targetSlot] = newHero;
 
     const pos = getCellCenter(targetSlot);
-    createImpactParticles(pos.x, pos.y, newHero.config.color, 12);
-    audioEngine.playSound('spear');
+
+    if (recruitingTier === 3) {
+        createImpactParticles(pos.x, pos.y, "#FFD700", 24);
+        audioEngine.playSound('merge');
+    } else {
+        createImpactParticles(pos.x, pos.y, newHero.config.color, 12);
+        audioEngine.playSound('spear');
+    }
+
+    if (recruitText) {
+        gameState.floatingTexts.push(new FloatingText(pos.x, pos.y - 20, recruitText, recruitTextColor, 18));
+    }
+
+    updateSynergies();
 }
 
 function upgradeForce() {
@@ -1110,8 +1218,27 @@ function upgradeForce() {
     gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight / 2, `전체 무력 강화 Lv.${gameState.upgradeLevel}!`, "#FFD700", 20));
 }
 
+function triggerRedCliffSkill() {
+    if (gameState.skillCooldown > 0 || gameState.paused || gameState.gameOver) return;
+
+    // [4. 액티브 필살기: 적벽 화공]
+    gameState.skillCooldown = SKILL_MAX_COOLDOWN;
+    const fireDamage = gameState.wave * 120;
+
+    gameState.enemies.forEach(e => {
+        applyDamage(e, fireDamage, true); // Fire burst critical damage
+        e.slowTimer = 3.0; // 3 sec slow
+        e.slowFactor = 0.4;
+    });
+
+    audioEngine.playSound('boss');
+    createImpactParticles(canvasWidth / 2, canvasHeight * 0.35, "#FF4400", 40);
+    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.35, "🔥 적벽의 화공이 적진을 불태웁니다!!", "#FF4400", 22));
+}
+
 recruitBtn.addEventListener("click", recruitHero);
 upgradeBtn.addEventListener("click", upgradeForce);
+skillBtn.addEventListener("click", triggerRedCliffSkill);
 
 soundBtnEl.addEventListener("click", () => {
     SOUND_CONFIG.enabled = !SOUND_CONFIG.enabled;
@@ -1146,6 +1273,14 @@ function updateUI() {
 
     recruitBtn.classList.toggle("disabled", gameState.gold < gameState.recruitCost);
     upgradeBtn.classList.toggle("disabled", gameState.gold < gameState.upgradeCost);
+
+    if (gameState.skillCooldown > 0) {
+        skillBtn.classList.add("disabled");
+        skillSubEl.innerText = `${Math.ceil(gameState.skillCooldown)}초 후 가능`;
+    } else {
+        skillBtn.classList.remove("disabled");
+        skillSubEl.innerText = "필살기 발동";
+    }
 }
 
 function drawGame() {
@@ -1169,7 +1304,37 @@ function drawGame() {
     ctx.stroke();
     ctx.restore();
 
-    // 2. Draw Gate / Castle Gate Line
+    // 2. Draw Active Faction Synergy Badges (Top of Canvas above gate)
+    ctx.save();
+    let badgeX = 12;
+    const badgeY = 22;
+    ctx.font = "bold 11px sans-serif";
+
+    const badgeList = [
+        { active: gameState.synergies.shu, label: "🟢 촉의 의지 (공속+25%)", color: "#10B981" },
+        { active: gameState.synergies.wei, label: "🔵 위의 군율 (공/사거리+15%)", color: "#3B82F6" },
+        { active: gameState.synergies.qun, label: "🔴 패왕의 기세 (치명타+20%)", color: "#EF4444" }
+    ];
+
+    badgeList.forEach(b => {
+        if (b.active) {
+            const txtWidth = ctx.measureText(b.label).width;
+            ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+            ctx.strokeStyle = b.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(badgeX, badgeY - 12, txtWidth + 12, 18, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = b.color;
+            ctx.fillText(b.label, badgeX + 6, badgeY + 1);
+            badgeX += txtWidth + 18;
+        }
+    });
+    ctx.restore();
+
+    // 3. Draw Gate Line
     const gateY = gridStartY - 15;
     ctx.save();
     ctx.fillStyle = "#3a2e1d";
@@ -1180,11 +1345,11 @@ function drawGame() {
     ctx.fillText("🏯 성문 관문 방어선", canvasWidth / 2, gateY + 9);
     ctx.restore();
 
-    // 3. Draw Enemies & Projectiles
+    // 4. Draw Enemies & Projectiles
     gameState.enemies.forEach(e => e.draw(ctx));
     gameState.projectiles.forEach(p => p.draw(ctx));
 
-    // 4. Draw 5x4 Grid Tiles
+    // 5. Draw 5x4 Grid Tiles
     for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
             const x = col * cellWidth;
@@ -1209,14 +1374,32 @@ function drawGame() {
         }
     }
 
-    // 5. Draw Dragged Hero Following Cursor/Touch
+    // 6. Draw Dismiss / Sell Drop Zone when dragging
     if (gameState.draggedItem) {
+        ctx.save();
+        ctx.fillStyle = "rgba(220, 38, 38, 0.35)";
+        ctx.strokeStyle = "#EF4444";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(sellZoneRect.x, sellZoneRect.y, sellZoneRect.width, sellZoneRect.height, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 13px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const refundAmt = Math.round(gameState.recruitCost * gameState.draggedItem.hero.tier * 0.5);
+        ctx.fillText(`🌾 장수 해산 (+${refundAmt}🌾 환급)`, sellZoneRect.x + sellZoneRect.width / 2, sellZoneRect.y + sellZoneRect.height / 2);
+        ctx.restore();
+
+        // Draw Dragged Hero Following Cursor
         const { hero, x, y } = gameState.draggedItem;
         const radius = Math.min(cellWidth, cellHeight) * 0.4;
         drawHeroVisual(ctx, x, y, radius, hero.config, gameState.auraTimer);
     }
 
-    // 6. Draw Particles & Floating Text
+    // 7. Draw Particles & Floating Text
     gameState.particles.forEach(p => p.draw(ctx));
     gameState.floatingTexts.forEach(ft => ft.draw(ctx));
 }
@@ -1228,6 +1411,10 @@ function gameLoop(now) {
 
     if (!gameState.paused && !gameState.gameOver) {
         gameState.auraTimer += dt;
+        if (gameState.skillCooldown > 0) {
+            gameState.skillCooldown = Math.max(0, gameState.skillCooldown - dt);
+        }
+
         updateWave(dt);
         updateCombat(dt);
 
@@ -1248,12 +1435,13 @@ function gameLoop(now) {
 
 /* ==========================================================================
    13. Initialization
-   ========================================================================= */
+   ========================================================================== */
 
 function initGame() {
     resizeCanvas();
     gameState.grid[7] = new Hero(1);
     gameState.grid[12] = new Hero(1);
+    updateSynergies();
     startNextWave();
     requestAnimationFrame(gameLoop);
 }
