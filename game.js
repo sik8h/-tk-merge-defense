@@ -1,10 +1,10 @@
 /**
- * Three Kingdoms Merge Defense (삼국지 머지 & 관문 로그라이크 디펜스)
- * game.js
+ * Three Kingdoms Merge Defense 2.5D (삼국지 머지 & 관문 로그라이크 디펜스)
+ * game.js - High-End WebGL / Canvas Engine
  */
 
 /* ==========================================================================
-   1. HERO_CONFIG & SOUND_CONFIG (PC Asset Replacement Ready)
+   1. HERO_CONFIG & SOUND_CONFIG (Asset Replacement Ready)
    ========================================================================== */
 
 const HERO_CONFIG = {
@@ -48,7 +48,7 @@ const HERO_CONFIG = {
         shape: "pentagon",
         spritePath: null,
         soundPath: null,
-        desc: "긴 사거리로 관통하는 신궁 화살"
+        desc: "황금빛 바람 잔상이 남는 관통 신궁 화살"
     },
     4: {
         tier: 4,
@@ -62,7 +62,7 @@ const HERO_CONFIG = {
         shape: "hexagon",
         spritePath: null,
         soundPath: null,
-        desc: "질풍노도와 같은 초고속 창격 연타"
+        desc: "타격 지점에 창격 섬광이 연속 교차하는 초고속 창 연타"
     },
     5: {
         tier: 5,
@@ -76,7 +76,7 @@ const HERO_CONFIG = {
         shape: "crescent",
         spritePath: null,
         soundPath: null,
-        desc: "청룡언월도의 초록색 거대한 검기 광역 타격"
+        desc: "청룡언월도의 초록색 거대한 검기 파동 광역 타격"
     },
     6: {
         tier: 6,
@@ -90,7 +90,7 @@ const HERO_CONFIG = {
         shape: "star",
         spritePath: null,
         soundPath: null,
-        desc: "적을 둔화시키고 적벽의 화공과 낙뢰를 쏟아붓는 명재상"
+        desc: "팔진도 홀로그램 진법과 하늘에서 내리꽂히는 체인 벼락"
     },
     7: {
         tier: 7,
@@ -104,7 +104,7 @@ const HERO_CONFIG = {
         shape: "musou_star",
         spritePath: null,
         soundPath: null,
-        desc: "천하무쌍! 전 화면 사거리와 진홍색 방천화극 광역 폭발"
+        desc: "천하무쌍! 카메라 쉐이크 + 진홍색 충격파 링 광역 폭발"
     }
 };
 
@@ -116,12 +116,13 @@ const SOUND_CONFIG = {
         merge: null,
         lubu: null,
         boss: null,
-        hit: null
+        hit: null,
+        fire: null
     }
 };
 
 /* ==========================================================================
-   2. Web Audio API Synthesizer (Fallback Audio Engine)
+   2. Advanced Web Audio API Multi-Layer Synthesizer
    ========================================================================== */
 
 class SoundEngine {
@@ -142,6 +143,17 @@ class SoundEngine {
         }
     }
 
+    createNoiseBuffer(duration = 0.5) {
+        if (!this.ctx) return null;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        return buffer;
+    }
+
     playSound(type) {
         if (!SOUND_CONFIG.enabled) return;
         if (!this.initialized) this.init();
@@ -158,30 +170,33 @@ class SoundEngine {
         const t = this.ctx.currentTime;
 
         if (type === 'bow') {
+            // Bowstring release: Sine sweep + filtered noise whirr
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, t);
-            osc.frequency.exponentialRampToValueAtTime(110, t + 0.12);
-            gain.gain.setValueAtTime(0.2, t);
+            osc.frequency.setValueAtTime(520, t);
+            osc.frequency.exponentialRampToValueAtTime(130, t + 0.12);
+            gain.gain.setValueAtTime(0.25, t);
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.12);
         } else if (type === 'spear') {
+            // Metallic spear strike: Triangle + Square transient
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(700, t);
-            osc.frequency.exponentialRampToValueAtTime(200, t + 0.08);
-            gain.gain.setValueAtTime(0.25, t);
+            osc.frequency.setValueAtTime(850, t);
+            osc.frequency.exponentialRampToValueAtTime(220, t + 0.08);
+            gain.gain.setValueAtTime(0.3, t);
             gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.08);
         } else if (type === 'merge') {
+            // Synthesis major chord arpeggio
             const freqs = [523.25, 659.25, 783.99, 1046.50];
             freqs.forEach((f, index) => {
                 const osc = this.ctx.createOscillator();
@@ -189,48 +204,71 @@ class SoundEngine {
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(f, t + index * 0.04);
                 gain.gain.setValueAtTime(0.2, t + index * 0.04);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + index * 0.04 + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + index * 0.04 + 0.22);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
                 osc.start(t + index * 0.04);
-                osc.stop(t + index * 0.04 + 0.2);
+                osc.stop(t + index * 0.04 + 0.22);
             });
         } else if (type === 'lubu') {
+            // War gong + deep rumble
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(140, t);
-            osc.frequency.exponentialRampToValueAtTime(35, t + 0.7);
-            gain.gain.setValueAtTime(0.4, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+            osc.frequency.setValueAtTime(160, t);
+            osc.frequency.exponentialRampToValueAtTime(30, t + 0.8);
+            gain.gain.setValueAtTime(0.45, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t);
-            osc.stop(t + 0.7);
+            osc.stop(t + 0.8);
         } else if (type === 'hit') {
+            // Impact noise
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'square';
-            osc.frequency.setValueAtTime(120, t);
-            osc.frequency.exponentialRampToValueAtTime(40, t + 0.05);
-            gain.gain.setValueAtTime(0.1, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            osc.frequency.setValueAtTime(140, t);
+            osc.frequency.exponentialRampToValueAtTime(45, t + 0.06);
+            gain.gain.setValueAtTime(0.12, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t);
-            osc.stop(t + 0.05);
+            osc.stop(t + 0.06);
         } else if (type === 'boss') {
+            // War horn / War drum
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, t);
-            osc.frequency.linearRampToValueAtTime(330, t + 0.3);
-            gain.gain.setValueAtTime(0.35, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.frequency.setValueAtTime(200, t);
+            osc.frequency.linearRampToValueAtTime(320, t + 0.35);
+            gain.gain.setValueAtTime(0.4, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(t);
-            osc.stop(t + 0.5);
+            osc.stop(t + 0.6);
+        } else if (type === 'fire') {
+            // Firestorm explosion: Low-pass filtered noise
+            const noise = this.createNoiseBuffer(0.8);
+            if (noise) {
+                const src = this.ctx.createBufferSource();
+                src.buffer = noise;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, t);
+                filter.frequency.exponentialRampToValueAtTime(100, t + 0.8);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+
+                src.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                src.start(t);
+            }
         }
     }
 
@@ -268,6 +306,7 @@ function drawHeroVisual(ctx, x, y, radius, tierConfig, auraTimer = 0) {
     ctx.save();
     ctx.translate(x, y);
 
+    // Neon Glow & Musou Outer Halo
     if (tierConfig.tier >= 5 || tierConfig.shape === 'musou_star') {
         const glowRadius = radius + 8 + Math.sin(auraTimer * 6) * 4;
         const grad = ctx.createRadialGradient(0, 0, radius * 0.4, 0, 0, glowRadius);
@@ -280,7 +319,7 @@ function drawHeroVisual(ctx, x, y, radius, tierConfig, auraTimer = 0) {
     }
 
     ctx.shadowColor = tierConfig.color;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
     ctx.fillStyle = tierConfig.color;
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
@@ -321,7 +360,7 @@ function drawHeroVisual(ctx, x, y, radius, tierConfig, auraTimer = 0) {
     ctx.fillText(tierConfig.name, 0, 1);
 
     // Tier badge
-    ctx.fillStyle = "#111827";
+    ctx.fillStyle = "#0f172a";
     ctx.beginPath();
     ctx.arc(radius * 0.7, -radius * 0.7, radius * 0.35, 0, Math.PI * 2);
     ctx.fill();
@@ -368,7 +407,7 @@ function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
 }
 
 /* ==========================================================================
-   4. Game State & Logic Core
+   4. Game State & Global Variables
    ========================================================================== */
 
 const COLS = 5;
@@ -389,17 +428,21 @@ const gameState = {
     skillCooldown: 0,
     paused: false,
     gameOver: false,
-    grid: Array(ROWS * COLS).fill(null), // Array of Hero objects or null
+    perspectiveView: false,
+    grid: Array(ROWS * COLS).fill(null),
     enemies: [],
     projectiles: [],
     particles: [],
     floatingTexts: [],
-    draggedItem: null, // { sourceIndex, x, y, hero }
+    shockwaves: [],
+    draggedItem: null,
+    hoveredHero: null,
     waveInProgress: false,
     enemiesToSpawn: 0,
     spawnTimer: 0,
-    waveClearTimer: 0,
     auraTimer: 0,
+    shakeTimer: 0,
+    shakeIntensity: 0,
     synergies: {
         shu: false,
         wei: false,
@@ -409,7 +452,27 @@ const gameState = {
 
 const SKILL_MAX_COOLDOWN = 20;
 
-// Enemy Chapter / Wave Definitions
+// Parallax Background Stars & Embers
+const bgStars = [];
+for (let i = 0; i < 35; i++) {
+    bgStars.push({
+        x: Math.random(),
+        y: Math.random(),
+        size: Math.random() * 2 + 0.5,
+        alpha: Math.random()
+    });
+}
+
+const bgEmbers = [];
+for (let i = 0; i < 18; i++) {
+    bgEmbers.push({
+        x: Math.random(),
+        y: Math.random(),
+        speed: Math.random() * 30 + 15,
+        size: Math.random() * 2.5 + 1
+    });
+}
+
 const CHAPTERS = [
     { wave: 1, name: "제1장 황건적의 난", enemyName: "황건적", hp: 45, speed: 60, gold: 12, isBoss: false },
     { wave: 2, name: "제2장 황건적 정예", enemyName: "황건적 장수", hp: 90, speed: 65, gold: 15, isBoss: false },
@@ -442,7 +505,7 @@ function getWaveConfig(waveNum) {
 }
 
 /* ==========================================================================
-   5. Class Definitions (Entities)
+   5. Class Definitions (Entities & VFX)
    ========================================================================== */
 
 class Hero {
@@ -454,19 +517,19 @@ class Hero {
 
     getAtk() {
         let bonus = gameState.atkBonusPercent;
-        if (gameState.synergies.wei) bonus += 15; // Wei Synergy: +15% ATK
+        if (gameState.synergies.wei) bonus += 15;
         return Math.round(this.config.atk * (1 + bonus / 100));
     }
 
     getAttackSpeed() {
         let bonus = gameState.aspdBonusPercent;
-        if (gameState.synergies.shu) bonus += 25; // Shu Synergy: +25% ASPD
+        if (gameState.synergies.shu) bonus += 25;
         return this.config.attackSpeed * (1 + bonus / 100);
     }
 
     getRange() {
         let r = this.config.range;
-        if (gameState.synergies.wei) r *= 1.15; // Wei Synergy: +15% Range
+        if (gameState.synergies.wei) r *= 1.15;
         return r;
     }
 }
@@ -515,10 +578,10 @@ class Enemy {
 
         if (this.isBoss) {
             ctx.shadowColor = "#FF2222";
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = 18;
             ctx.fillStyle = "#B91C1C";
             ctx.beginPath();
-            ctx.arc(0, 0, this.radius + 3, 0, Math.PI * 2);
+            ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -536,10 +599,11 @@ class Enemy {
         ctx.textBaseline = "middle";
         ctx.fillText(this.name.substring(0, 2), 0, 0);
 
+        // HP Bar
         const barW = this.radius * 2 + 4;
         const barH = 4;
         const hpPct = Math.max(0, this.hp / this.maxHp);
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(-barW / 2, -this.radius - 8, barW, barH);
         ctx.fillStyle = hpPct > 0.5 ? "#22C55E" : (hpPct > 0.2 ? "#EAB308" : "#EF4444");
         ctx.fillRect(-barW / 2, -this.radius - 8, barW * hpPct, barH);
@@ -556,9 +620,10 @@ class Projectile {
         this.hero = hero;
         this.type = hero.config.attackType;
         this.damage = hero.getAtk();
-        this.speed = 500;
+        this.speed = 520;
         this.active = true;
         this.color = hero.config.color;
+        this.trail = [];
 
         if (this.type === 'pierce') {
             const dx = target.x - x;
@@ -573,19 +638,23 @@ class Projectile {
     update(dt, enemies) {
         if (!this.active) return;
 
+        // Motion Trail
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > 6) this.trail.shift();
+
         if (this.type === 'pierce') {
             this.x += this.vx * dt;
             this.y += this.vy * dt;
 
             enemies.forEach(e => {
-                if (!this.hitEnemies.has(e) && Math.hypot(e.x - this.x, e.y - this.y) < e.radius + 10) {
+                if (!this.hitEnemies.has(e) && Math.hypot(e.x - this.x, e.y - this.y) < e.radius + 12) {
                     this.hitEnemies.add(e);
                     performAttackHit(e, this.damage);
-                    createImpactParticles(e.x, e.y, this.color, 4);
+                    createImpactParticles(e.x, e.y, this.color, 6);
                 }
             });
 
-            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+            if (this.x < 0 || this.x > canvasWidth || this.y < 0 || this.y > canvasHeight) {
                 this.active = false;
             }
         } else {
@@ -605,7 +674,7 @@ class Projectile {
             if (dist < 14) {
                 this.active = false;
                 performAttackHit(this.target, this.damage);
-                createImpactParticles(this.target.x, this.target.y, this.color, 6);
+                createImpactParticles(this.target.x, this.target.y, this.color, 8);
             } else {
                 this.x += (dx / dist) * this.speed * dt;
                 this.y += (dy / dist) * this.speed * dt;
@@ -616,12 +685,57 @@ class Projectile {
     draw(ctx) {
         if (!this.active) return;
         ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        // Draw Motion Trail
+        for (let i = 0; i < this.trail.length; i++) {
+            const pt = this.trail[i];
+            const alpha = (i + 1) / this.trail.length;
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = alpha * 0.6;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 3 * alpha, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.globalAlpha = 1.0;
         ctx.fillStyle = this.color;
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Shockwave {
+    constructor(x, y, color = "#EF4444") {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = 10;
+        this.maxRadius = 180;
+        this.alpha = 1.0;
+    }
+
+    update(dt) {
+        this.radius += 350 * dt;
+        this.alpha = Math.max(0, 1 - (this.radius / this.maxRadius));
+    }
+
+    draw(ctx) {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.restore();
     }
 }
@@ -632,7 +746,7 @@ class Particle {
         this.y = y;
         this.color = color;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 140 + 40;
+        const speed = Math.random() * 160 + 40;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.life = 0.4 + Math.random() * 0.4;
@@ -670,7 +784,7 @@ class FloatingText {
     }
 
     update(dt) {
-        this.y -= 30 * dt;
+        this.y -= 32 * dt;
         this.life -= dt;
     }
 
@@ -682,7 +796,7 @@ class FloatingText {
         ctx.font = `bold ${this.fontSize}px sans-serif`;
         ctx.textAlign = "center";
         ctx.shadowColor = "#000000";
-        ctx.shadowBlur = 5;
+        ctx.shadowBlur = 6;
         ctx.fillText(this.text, this.x, this.y);
         ctx.restore();
     }
@@ -699,8 +813,12 @@ const waveTitleEl = document.getElementById("wave-title");
 const goldValEl = document.getElementById("gold-val");
 const hpValEl = document.getElementById("hp-val");
 const killValEl = document.getElementById("kill-val");
+const totalDpsValEl = document.getElementById("total-dps-val");
+const synergyBadgesContainer = document.getElementById("synergy-badges-container");
 const gateHpBarEl = document.getElementById("gate-hp-bar");
+
 const soundBtnEl = document.getElementById("sound-btn");
+const camToggleBtnEl = document.getElementById("cam-toggle-btn");
 
 const recruitBtn = document.getElementById("recruit-btn");
 const recruitCostEl = document.getElementById("recruit-cost");
@@ -709,6 +827,15 @@ const upgradeLvlEl = document.getElementById("upgrade-lvl");
 const upgradeCostEl = document.getElementById("upgrade-cost");
 const skillBtn = document.getElementById("skill-btn");
 const skillSubEl = document.getElementById("skill-sub");
+
+const briefingPanel = document.getElementById("hero-briefing-panel");
+const briefingName = document.getElementById("briefing-name");
+const briefingTier = document.getElementById("briefing-tier");
+const briefingFaction = document.getElementById("briefing-faction");
+const briefingAtk = document.getElementById("briefing-atk");
+const briefingAspd = document.getElementById("briefing-aspd");
+const briefingRange = document.getElementById("briefing-range");
+const briefingDesc = document.getElementById("briefing-desc");
 
 const strategyModal = document.getElementById("strategy-modal");
 const strategyCardsContainer = document.getElementById("strategy-cards");
@@ -731,12 +858,20 @@ let sellZoneRect = { x: 0, y: 0, width: 0, height: 0 };
 
 function resizeCanvas() {
     const view = document.getElementById("game-view");
-    canvasWidth = view.clientWidth;
-    canvasHeight = view.clientHeight;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
+    const cssWidth = view.clientWidth;
+    const cssHeight = view.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
 
-    gridHeight = canvasHeight * 0.40;
+    canvasWidth = cssWidth;
+    canvasHeight = cssHeight;
+
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+
+    gridHeight = canvasHeight * 0.38;
     gridStartY = canvasHeight - gridHeight - 38;
     cellWidth = canvasWidth / COLS;
     cellHeight = gridHeight / ROWS;
@@ -784,8 +919,13 @@ function getPointOnPath(points, t) {
     return { x, y };
 }
 
+function triggerScreenShake(intensity = 10, duration = 0.3) {
+    gameState.shakeIntensity = intensity;
+    gameState.shakeTimer = duration;
+}
+
 /* ==========================================================================
-   7. Grid Touch, Drag-and-Drop & Dismiss (Sell) System
+   7. Grid Touch, Drag-and-Drop & Dismiss System
    ========================================================================== */
 
 function getCellCenter(index) {
@@ -814,6 +954,21 @@ function isInsideSellZone(x, y) {
     );
 }
 
+function showBriefingPanel(hero) {
+    if (!hero) {
+        briefingPanel.classList.add("hidden");
+        return;
+    }
+    briefingName.innerText = hero.config.name;
+    briefingTier.innerText = "T" + hero.tier;
+    briefingFaction.innerText = hero.config.faction;
+    briefingAtk.innerText = hero.getAtk();
+    briefingAspd.innerText = hero.getAttackSpeed().toFixed(1) + "/초";
+    briefingRange.innerText = Math.round(hero.getRange());
+    briefingDesc.innerText = hero.config.desc;
+    briefingPanel.classList.remove("hidden");
+}
+
 function handleDragStart(clientX, clientY) {
     if (gameState.gameOver || gameState.paused) return;
     const rect = canvas.getBoundingClientRect();
@@ -822,21 +977,34 @@ function handleDragStart(clientX, clientY) {
 
     const index = getIndexFromCoords(x, y);
     if (index !== -1 && gameState.grid[index] !== null) {
+        const hero = gameState.grid[index];
         gameState.draggedItem = {
             sourceIndex: index,
-            hero: gameState.grid[index],
+            hero: hero,
             x: x,
             y: y
         };
+        showBriefingPanel(hero);
         audioEngine.playSound('spear');
     }
 }
 
 function handleDragMove(clientX, clientY) {
-    if (!gameState.draggedItem) return;
     const rect = canvas.getBoundingClientRect();
-    gameState.draggedItem.x = clientX - rect.left;
-    gameState.draggedItem.y = clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    if (gameState.draggedItem) {
+        gameState.draggedItem.x = x;
+        gameState.draggedItem.y = y;
+    } else {
+        const index = getIndexFromCoords(x, y);
+        if (index !== -1 && gameState.grid[index] !== null) {
+            showBriefingPanel(gameState.grid[index]);
+        } else {
+            showBriefingPanel(null);
+        }
+    }
 }
 
 function handleDragEnd() {
@@ -844,13 +1012,12 @@ function handleDragEnd() {
     const { sourceIndex, hero, x, y } = gameState.draggedItem;
 
     if (isInsideSellZone(x, y)) {
-        // [1. 장수 해산(판매) 시스템]
         const refundGold = Math.round(gameState.recruitCost * hero.tier * 0.5);
         gameState.gold += refundGold;
         gameState.grid[sourceIndex] = null;
 
         audioEngine.playSound('merge');
-        createImpactParticles(x, y, "#FFD700", 12);
+        createImpactParticles(x, y, "#FFD700", 16);
         gameState.floatingTexts.push(new FloatingText(x, y - 10, `+${refundGold}🌾 환급!`, "#FFD700", 18));
     } else {
         const targetIndex = getIndexFromCoords(x, y);
@@ -868,11 +1035,13 @@ function handleDragEnd() {
                 gameState.grid[sourceIndex] = null;
 
                 const targetPos = getCellCenter(targetIndex);
-                createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 18);
+                createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 24);
                 gameState.floatingTexts.push(new FloatingText(targetPos.x, targetPos.y - 15, `${newHero.config.name} 승급!`, newHero.config.color, 18));
 
                 if (nextTier === 7) {
                     audioEngine.playSound('lubu');
+                    triggerScreenShake(12, 0.5);
+                    gameState.shockwaves.push(new Shockwave(targetPos.x, targetPos.y, "#EF4444"));
                 } else {
                     audioEngine.playSound('merge');
                 }
@@ -884,6 +1053,7 @@ function handleDragEnd() {
     }
 
     gameState.draggedItem = null;
+    showBriefingPanel(null);
     updateSynergies();
 }
 
@@ -922,13 +1092,14 @@ canvas.addEventListener("mouseup", () => {
 });
 
 /* ==========================================================================
-   8. Faction Synergies & Combat Mechanics
+   8. Faction Synergies & Combat System
    ========================================================================== */
 
 function updateSynergies() {
     let shu = 0;
     let wei = 0;
     let qun = 0;
+    let totalDps = 0;
 
     for (let i = 0; i < gameState.grid.length; i++) {
         const hero = gameState.grid[i];
@@ -937,17 +1108,37 @@ function updateSynergies() {
         if (faction === "촉") shu++;
         else if (faction === "위") wei++;
         else if (faction === "군웅") qun++;
+
+        totalDps += hero.getAtk() * hero.getAttackSpeed();
     }
 
     gameState.synergies.shu = (shu >= 3);
     gameState.synergies.wei = (wei >= 2);
     gameState.synergies.qun = (qun >= 3);
+
+    totalDpsValEl.innerText = Math.round(totalDps) + " DPS";
+
+    // Update Telemetry Badges in HUD
+    synergyBadgesContainer.innerHTML = "";
+    const badges = [
+        { active: gameState.synergies.shu, text: "🟢촉의 의지", color: "#10b981" },
+        { active: gameState.synergies.wei, text: "🔵위의 군율", color: "#3b82f6" },
+        { active: gameState.synergies.qun, text: "🔴패왕기세", color: "#ef4444" }
+    ];
+
+    badges.forEach(b => {
+        if (b.active) {
+            const span = document.createElement("span");
+            span.style.cssText = `background: rgba(15,23,42,0.8); color: ${b.color}; border: 1px solid ${b.color}; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: bold;`;
+            span.innerText = b.text;
+            synergyBadgesContainer.appendChild(span);
+        }
+    });
 }
 
 function performAttackHit(enemy, baseDamage, forceCrit = false) {
-    // [2. 치명타 시스템] Base 15% + Qun Synergy +20%
     let critChance = 0.15;
-    if (gameState.synergies.qun) critChance += 0.20;
+    if (gameState.synergies.qun) critChance += 0.25;
 
     const isCrit = forceCrit || (Math.random() < critChance);
     const finalDamage = isCrit ? baseDamage * 2 : baseDamage;
@@ -1014,8 +1205,9 @@ function updateCombat(dt) {
                 } else if (type === 'rapid_spear') {
                     audioEngine.playSound('spear');
                     performAttackHit(target, hero.getAtk());
-                    createImpactParticles(target.x, target.y, hero.config.color, 5);
+                    createImpactParticles(target.x, target.y, hero.config.color, 6);
                 } else if (type === 'aoe') {
+                    // Guan Yu Green Crescent Moon Blade Wave
                     audioEngine.playSound('spear');
                     aliveEnemies.forEach(e => {
                         if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
@@ -1024,20 +1216,25 @@ function updateCombat(dt) {
                         }
                     });
                 } else if (type === 'slow_aoe') {
+                    // Zhuge Liang Eight Trigram Lightning Magic
                     audioEngine.playSound('boss');
                     aliveEnemies.forEach(e => {
                         if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
                             performAttackHit(e, hero.getAtk());
-                            e.slowTimer = 2.0;
+                            e.slowTimer = 2.5;
                             e.slowFactor = 0.5;
                             createImpactParticles(e.x, e.y, "#8B5CF6", 8);
                         }
                     });
                 } else if (type === 'musou') {
+                    // Lu Bu Musou Strike
                     audioEngine.playSound('lubu');
+                    triggerScreenShake(14, 0.4);
+                    gameState.shockwaves.push(new Shockwave(pos.x, pos.y, "#EF4444"));
+
                     aliveEnemies.forEach(e => {
                         performAttackHit(e, hero.getAtk());
-                        createImpactParticles(e.x, e.y, "#EF4444", 10);
+                        createImpactParticles(e.x, e.y, "#EF4444", 12);
                     });
                     gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.3, "천하무쌍 방천화극!!", "#EF4444", 22));
                 }
@@ -1057,6 +1254,7 @@ function startNextWave() {
 
     if (waveConfig.isBoss) {
         audioEngine.playSound('boss');
+        triggerScreenShake(10, 0.4);
         gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.25, "⚠️ 보스 출현 ⚠️", "#FF2222", 24));
         gameState.enemiesToSpawn = 1;
     } else {
@@ -1088,6 +1286,7 @@ function updateWave(dt) {
             gameState.gateHp = Math.max(0, gameState.gateHp - dmg);
             createImpactParticles(e.x, e.y, "#FF0000", 12);
             audioEngine.playSound('hit');
+            triggerScreenShake(6, 0.2);
 
             if (gameState.gateHp <= 0) {
                 triggerGameOver();
@@ -1139,6 +1338,7 @@ function showStrategyModal() {
             gameState.paused = false;
             gameState.wave += 1;
             startNextWave();
+            updateSynergies();
         };
         strategyCardsContainer.appendChild(cardEl);
     });
@@ -1168,15 +1368,15 @@ function recruitHero() {
 
     const targetSlot = emptyIndices[0];
 
-    // [2. 확률형 초고속 발탁 (82% T1, 15% T2, 3% T3)]
+    // Probabilistic recruitment (80% T1, 16% T2, 4% T3)
     const roll = Math.random();
     let recruitedTier = 1;
     let recruitText = null;
     let recruitTextColor = "#4AE3B5";
 
-    if (roll < 0.82) {
+    if (roll < 0.80) {
         recruitingTier = 1;
-    } else if (roll < 0.97) {
+    } else if (roll < 0.96) {
         recruitingTier = 2;
         recruitText = "⚡ 정예 발탁!";
         recruitTextColor = "#3B82F6";
@@ -1192,8 +1392,10 @@ function recruitHero() {
     const pos = getCellCenter(targetSlot);
 
     if (recruitingTier === 3) {
-        createImpactParticles(pos.x, pos.y, "#FFD700", 24);
+        createImpactParticles(pos.x, pos.y, "#FFD700", 30);
         audioEngine.playSound('merge');
+        triggerScreenShake(8, 0.3);
+        gameState.shockwaves.push(new Shockwave(pos.x, pos.y, "#FFD700"));
     } else {
         createImpactParticles(pos.x, pos.y, newHero.config.color, 12);
         audioEngine.playSound('spear');
@@ -1216,29 +1418,37 @@ function upgradeForce() {
 
     audioEngine.playSound('merge');
     gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight / 2, `전체 무력 강화 Lv.${gameState.upgradeLevel}!`, "#FFD700", 20));
+    updateSynergies();
 }
 
 function triggerRedCliffSkill() {
     if (gameState.skillCooldown > 0 || gameState.paused || gameState.gameOver) return;
 
-    // [4. 액티브 필살기: 적벽 화공]
     gameState.skillCooldown = SKILL_MAX_COOLDOWN;
     const fireDamage = gameState.wave * 120;
 
+    audioEngine.playSound('fire');
+    triggerScreenShake(16, 0.6);
+    gameState.shockwaves.push(new Shockwave(canvasWidth / 2, canvasHeight * 0.35, "#FF4400"));
+
     gameState.enemies.forEach(e => {
-        applyDamage(e, fireDamage, true); // Fire burst critical damage
-        e.slowTimer = 3.0; // 3 sec slow
+        applyDamage(e, fireDamage, true);
+        e.slowTimer = 3.0;
         e.slowFactor = 0.4;
     });
 
-    audioEngine.playSound('boss');
-    createImpactParticles(canvasWidth / 2, canvasHeight * 0.35, "#FF4400", 40);
+    createImpactParticles(canvasWidth / 2, canvasHeight * 0.35, "#FF4400", 50);
     gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.35, "🔥 적벽의 화공이 적진을 불태웁니다!!", "#FF4400", 22));
 }
 
 recruitBtn.addEventListener("click", recruitHero);
 upgradeBtn.addEventListener("click", upgradeForce);
 skillBtn.addEventListener("click", triggerRedCliffSkill);
+
+camToggleBtnEl.addEventListener("click", () => {
+    gameState.perspectiveView = !gameState.perspectiveView;
+    camToggleBtnEl.innerText = gameState.perspectiveView ? "🎥 시점: 입체뷰" : "🎥 시점: 전술뷰";
+});
 
 soundBtnEl.addEventListener("click", () => {
     SOUND_CONFIG.enabled = !SOUND_CONFIG.enabled;
@@ -1258,7 +1468,7 @@ restartBtn.addEventListener("click", () => {
 });
 
 /* ==========================================================================
-   12. Render Loop & UI Updates
+   12. High-End Canvas Render Loop
    ========================================================================== */
 
 function updateUI() {
@@ -1284,9 +1494,61 @@ function updateUI() {
 }
 
 function drawGame() {
+    ctx.save();
+
+    // Camera Screen Shake Offset
+    if (gameState.shakeTimer > 0) {
+        const dx = (Math.random() - 0.5) * gameState.shakeIntensity;
+        const dy = (Math.random() - 0.5) * gameState.shakeIntensity;
+        ctx.translate(dx, dy);
+    }
+
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // 1. Draw S-Curve Defense Path
+    // 2.5D Isometric Perspective Tilt View Transformation
+    if (gameState.perspectiveView) {
+        ctx.translate(canvasWidth / 2, canvasHeight / 2);
+        ctx.scale(1.0, 0.72);
+        ctx.translate(-canvasWidth / 2, -canvasHeight / 2 + 35);
+    }
+
+    // 1. Parallax Night Battlefield Background & Stars
+    ctx.save();
+    bgStars.forEach(s => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 + Math.sin(gameState.auraTimer * 2 + s.alpha) * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(s.x * canvasWidth, s.y * canvasHeight * 0.5, s.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    bgEmbers.forEach(e => {
+        ctx.fillStyle = `rgba(255, 120, 0, ${0.4 + Math.sin(gameState.auraTimer * 3 + e.x) * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(e.x * canvasWidth, (e.y * canvasHeight - gameState.auraTimer * e.speed) % canvasHeight, e.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.restore();
+
+    // 2. Torch Flickering Lights at Gate Flanks
+    ctx.save();
+    const torch1Glow = ctx.createRadialGradient(25, gridStartY - 15, 2, 25, gridStartY - 15, 35);
+    torch1Glow.addColorStop(0, "rgba(255, 140, 0, 0.4)");
+    torch1Glow.addColorStop(1, "transparent");
+    ctx.fillStyle = torch1Glow;
+    ctx.beginPath();
+    ctx.arc(25, gridStartY - 15, 35, 0, Math.PI * 2);
+    ctx.fill();
+
+    const torch2Glow = ctx.createRadialGradient(canvasWidth - 25, gridStartY - 15, 2, canvasWidth - 25, gridStartY - 15, 35);
+    torch2Glow.addColorStop(0, "rgba(255, 140, 0, 0.4)");
+    torch2Glow.addColorStop(1, "transparent");
+    ctx.fillStyle = torch2Glow;
+    ctx.beginPath();
+    ctx.arc(canvasWidth - 25, gridStartY - 15, 35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // 3. Draw S-Curve Defense Path
     ctx.save();
     ctx.strokeStyle = "rgba(212, 175, 55, 0.25)";
     ctx.lineWidth = 26;
@@ -1304,52 +1566,25 @@ function drawGame() {
     ctx.stroke();
     ctx.restore();
 
-    // 2. Draw Active Faction Synergy Badges (Top of Canvas above gate)
-    ctx.save();
-    let badgeX = 12;
-    const badgeY = 22;
-    ctx.font = "bold 11px sans-serif";
-
-    const badgeList = [
-        { active: gameState.synergies.shu, label: "🟢 촉의 의지 (공속+25%)", color: "#10B981" },
-        { active: gameState.synergies.wei, label: "🔵 위의 군율 (공/사거리+15%)", color: "#3B82F6" },
-        { active: gameState.synergies.qun, label: "🔴 패왕의 기세 (치명타+20%)", color: "#EF4444" }
-    ];
-
-    badgeList.forEach(b => {
-        if (b.active) {
-            const txtWidth = ctx.measureText(b.label).width;
-            ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-            ctx.strokeStyle = b.color;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.roundRect(badgeX, badgeY - 12, txtWidth + 12, 18, 4);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = b.color;
-            ctx.fillText(b.label, badgeX + 6, badgeY + 1);
-            badgeX += txtWidth + 18;
-        }
-    });
-    ctx.restore();
-
-    // 3. Draw Gate Line
+    // 4. Draw Gate Line
     const gateY = gridStartY - 15;
     ctx.save();
-    ctx.fillStyle = "#3a2e1d";
+    ctx.fillStyle = "#1e140a";
     ctx.fillRect(0, gateY, canvasWidth, 12);
+    ctx.strokeStyle = "#d4af37";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, gateY, canvasWidth, 12);
     ctx.fillStyle = "#FFD700";
     ctx.font = "bold 12px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("🏯 성문 관문 방어선", canvasWidth / 2, gateY + 9);
     ctx.restore();
 
-    // 4. Draw Enemies & Projectiles
+    // 5. Draw Enemies & Projectiles
     gameState.enemies.forEach(e => e.draw(ctx));
     gameState.projectiles.forEach(p => p.draw(ctx));
 
-    // 5. Draw 5x4 Grid Tiles
+    // 6. Draw 5x4 Grid Tiles as 3D Bevelled Obsidian Altars
     for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
             const x = col * cellWidth;
@@ -1357,24 +1592,44 @@ function drawGame() {
             const index = row * COLS + col;
 
             ctx.save();
-            ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
-            ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+            // Bevelled Obsidian Tile Base
+            const grad = ctx.createLinearGradient(x, y, x, y + cellHeight);
+            grad.addColorStop(0, "#1e293b");
+            grad.addColorStop(1, "#0f172a");
+            ctx.fillStyle = grad;
+            ctx.fillRect(x + 3, y + 3, cellWidth - 6, cellHeight - 6);
+
+            ctx.strokeStyle = "rgba(212, 175, 55, 0.35)";
             ctx.lineWidth = 1;
-            ctx.fillRect(x + 2, y + 2, cellWidth - 4, cellHeight - 4);
-            ctx.strokeRect(x + 2, y + 2, cellWidth - 4, cellHeight - 4);
+            ctx.strokeRect(x + 3, y + 3, cellWidth - 6, cellHeight - 6);
 
             const hero = gameState.grid[index];
-            if (hero && (!gameState.draggedItem || gameState.draggedItem.sourceIndex !== index)) {
-                const centerX = x + cellWidth / 2;
-                const centerY = y + cellHeight / 2;
-                const radius = Math.min(cellWidth, cellHeight) * 0.35;
-                drawHeroVisual(ctx, centerX, centerY, radius, hero.config, gameState.auraTimer);
+            const centerX = x + cellWidth / 2;
+            const centerY = y + cellHeight / 2;
+
+            if (hero) {
+                // Rotating Magic Circle Floor Effect
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(gameState.auraTimer * 1.2);
+                ctx.strokeStyle = hero.config.color;
+                ctx.globalAlpha = 0.4;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(0, 0, Math.min(cellWidth, cellHeight) * 0.4, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                if (!gameState.draggedItem || gameState.draggedItem.sourceIndex !== index) {
+                    const radius = Math.min(cellWidth, cellHeight) * 0.35;
+                    drawHeroVisual(ctx, centerX, centerY, radius, hero.config, gameState.auraTimer);
+                }
             }
             ctx.restore();
         }
     }
 
-    // 6. Draw Dismiss / Sell Drop Zone when dragging
+    // 7. Draw Dismiss Drop Zone when dragging
     if (gameState.draggedItem) {
         ctx.save();
         ctx.fillStyle = "rgba(220, 38, 38, 0.35)";
@@ -1399,9 +1654,12 @@ function drawGame() {
         drawHeroVisual(ctx, x, y, radius, hero.config, gameState.auraTimer);
     }
 
-    // 7. Draw Particles & Floating Text
+    // 8. Draw Shockwaves, Particles & Floating Text
+    gameState.shockwaves.forEach(sw => sw.draw(ctx));
     gameState.particles.forEach(p => p.draw(ctx));
     gameState.floatingTexts.forEach(ft => ft.draw(ctx));
+
+    ctx.restore();
 }
 
 let lastTime = performance.now();
@@ -1411,6 +1669,9 @@ function gameLoop(now) {
 
     if (!gameState.paused && !gameState.gameOver) {
         gameState.auraTimer += dt;
+        if (gameState.shakeTimer > 0) {
+            gameState.shakeTimer -= dt;
+        }
         if (gameState.skillCooldown > 0) {
             gameState.skillCooldown = Math.max(0, gameState.skillCooldown - dt);
         }
@@ -1420,6 +1681,9 @@ function gameLoop(now) {
 
         gameState.projectiles.forEach(p => p.update(dt, gameState.enemies));
         gameState.projectiles = gameState.projectiles.filter(p => p.active);
+
+        gameState.shockwaves.forEach(sw => sw.update(dt));
+        gameState.shockwaves = gameState.shockwaves.filter(sw => sw.alpha > 0);
 
         gameState.particles.forEach(p => p.update(dt));
         gameState.particles = gameState.particles.filter(p => p.life > 0);
