@@ -1,1713 +1,1338 @@
-/**
- * Three Kingdoms Merge Defense 2.5D (삼국지 머지 & 관문 로그라이크 디펜스)
- * game.js - High-End WebGL / Canvas Engine
- */
-
 /* ==========================================================================
-   1. HERO_CONFIG & SOUND_CONFIG (Asset Replacement Ready)
+   Argon Engine: Three.js WebGL 3D Tactical Merge Defense
    ========================================================================== */
 
+// --- [1. HERO & SOUND CONFIG] ---
 const HERO_CONFIG = {
-    1: {
-        tier: 1,
-        name: "의용병",
-        faction: "군웅",
-        atk: 15,
-        attackSpeed: 1.1,
-        range: 220,
-        attackType: "single",
-        color: "#4AE3B5",
-        shape: "triangle",
-        spritePath: null,
-        soundPath: null,
-        desc: "기본 단발 사격을 수행하는 의용병"
-    },
-    2: {
-        tier: 2,
-        name: "정예 창병",
-        faction: "위",
-        atk: 32,
-        attackSpeed: 1.6,
-        range: 250,
-        attackType: "rapid",
-        color: "#3B82F6",
-        shape: "square",
-        spritePath: null,
-        soundPath: null,
-        desc: "빠른 2연타 공격을 퍼붓는 창병"
-    },
-    3: {
-        tier: 3,
-        name: "황충",
-        faction: "촉",
-        atk: 75,
-        attackSpeed: 1.0,
-        range: 350,
-        attackType: "pierce",
-        color: "#F59E0B",
-        shape: "pentagon",
-        spritePath: null,
-        soundPath: null,
-        desc: "황금빛 바람 잔상이 남는 관통 신궁 화살"
-    },
-    4: {
-        tier: 4,
-        name: "조운",
-        faction: "촉",
-        atk: 160,
-        attackSpeed: 2.6,
-        range: 280,
-        attackType: "rapid_spear",
-        color: "#06B6D4",
-        shape: "hexagon",
-        spritePath: null,
-        soundPath: null,
-        desc: "타격 지점에 창격 섬광이 연속 교차하는 초고속 창 연타"
-    },
-    5: {
-        tier: 5,
-        name: "관우",
-        faction: "촉",
-        atk: 380,
-        attackSpeed: 0.9,
-        range: 320,
-        attackType: "aoe",
-        color: "#10B981",
-        shape: "crescent",
-        spritePath: null,
-        soundPath: null,
-        desc: "청룡언월도의 초록색 거대한 검기 파동 광역 타격"
-    },
-    6: {
-        tier: 6,
-        name: "제갈량",
-        faction: "촉",
-        atk: 850,
-        attackSpeed: 0.8,
-        range: 380,
-        attackType: "slow_aoe",
-        color: "#8B5CF6",
-        shape: "star",
-        spritePath: null,
-        soundPath: null,
-        desc: "팔진도 홀로그램 진법과 하늘에서 내리꽂히는 체인 벼락"
-    },
-    7: {
-        tier: 7,
-        name: "무신 여포",
-        faction: "군웅",
-        atk: 2200,
-        attackSpeed: 1.2,
-        range: 999, // Full screen range
-        attackType: "musou",
-        color: "#EF4444",
-        shape: "musou_star",
-        spritePath: null,
-        soundPath: null,
-        desc: "천하무쌍! 카메라 쉐이크 + 진홍색 충격파 링 광역 폭발"
-    }
+  1: { tier: 1, name: "의용병", faction: "촉", atk: 25, asp: 1.0, range: 4.5, type: "단일", color: 0x38bdf8, shape: "pyramid", spritePath: null, soundPath: null, desc: "기본 신속 단발 사격" },
+  2: { tier: 2, name: "정예 창병", faction: "위", atk: 55, asp: 1.3, range: 4.0, type: "연타", color: 0x60a5fa, shape: "cube", spritePath: null, soundPath: null, desc: "빠른 속도의 창격 연타" },
+  3: { tier: 3, name: "황충", faction: "촉", atk: 110, asp: 0.9, range: 7.0, type: "관통", color: 0xfacc15, shape: "gimbal", spritePath: null, soundPath: null, desc: "장거리 관통 신궁 화살" },
+  4: { tier: 4, name: "조운", faction: "촉", atk: 210, asp: 1.7, range: 5.0, type: "연타", color: 0x22d3ee, shape: "spear", spritePath: null, soundPath: null, desc: "전광석화 초고속 창격" },
+  5: { tier: 5, name: "관우", faction: "촉", atk: 420, asp: 0.85, range: 6.0, type: "범위폭발", color: 0x10b981, shape: "crescent", spritePath: null, soundPath: null, desc: "청룡언월도 검기 파동" },
+  6: { tier: 6, name: "제갈량", faction: "촉", atk: 780, asp: 0.75, range: 6.5, type: "둔화", color: 0x8b5cf6, shape: "octahedron", spritePath: null, soundPath: null, desc: "팔진도 낙뢰 & 화공 둔화" },
+  7: { tier: 7, name: "무신 여포", faction: "군웅", atk: 1600, asp: 1.1, range: 9.0, type: "범위폭발", color: 0xef4444, shape: "musou", spritePath: null, soundPath: null, desc: "진홍색 방천화극 전장 초토화" }
 };
 
 const SOUND_CONFIG = {
-    enabled: true,
-    paths: {
-        bow: null,
-        spear: null,
-        merge: null,
-        lubu: null,
-        boss: null,
-        hit: null,
-        fire: null
-    }
+  enabled: true,
+  bow: null,
+  hit: null,
+  merge: null,
+  boss: null,
+  skill: null
 };
 
-/* ==========================================================================
-   2. Advanced Web Audio API Multi-Layer Synthesizer
-   ========================================================================== */
-
+// --- [2. AUDIO SYNTHESIZER Engine] ---
 class SoundEngine {
-    constructor() {
-        this.ctx = null;
-        this.initialized = false;
-        this.audioCache = {};
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
     }
-
-    init() {
-        if (this.initialized) return;
-        try {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioCtx();
-            this.initialized = true;
-        } catch (e) {
-            console.warn("Web Audio API not supported", e);
-        }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
     }
-
-    createNoiseBuffer(duration = 0.5) {
-        if (!this.ctx) return null;
-        const bufferSize = this.ctx.sampleRate * duration;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const output = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
-        return buffer;
+  }
+  playTone(freq, type, duration, startVol = 0.1, endVol = 0) {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(startVol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(Math.max(endVol, 0.0001), this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  }
+  playBow() { this.playTone(600, 'sine', 0.08, 0.1, 0.001); }
+  playHit() { this.playTone(150, 'triangle', 0.1, 0.2, 0.001); }
+  playMerge() {
+    if (!this.enabled || !this.ctx) return;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.25, 0.15, 0.001), idx * 60);
+    });
+  }
+  playBossAlert() {
+    if (!this.enabled || !this.ctx) return;
+    [220, 196, 174, 130].forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'sawtooth', 0.35, 0.2, 0.001), idx * 120);
+    });
+  }
+  playSkill() {
+    if (!this.enabled || !this.ctx) return;
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => {
+        this.playTone(100 + i * 40, 'sawtooth', 0.15, 0.25, 0.01);
+      }, i * 40);
     }
-
-    playSound(type) {
-        if (!SOUND_CONFIG.enabled) return;
-        if (!this.initialized) this.init();
-        if (!this.ctx) return;
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-
-        if (SOUND_CONFIG.paths[type]) {
-            this.playFileSound(SOUND_CONFIG.paths[type]);
-            return;
-        }
-
-        const t = this.ctx.currentTime;
-
-        if (type === 'bow') {
-            // Bowstring release: Sine sweep + filtered noise whirr
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(520, t);
-            osc.frequency.exponentialRampToValueAtTime(130, t + 0.12);
-            gain.gain.setValueAtTime(0.25, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.12);
-        } else if (type === 'spear') {
-            // Metallic spear strike: Triangle + Square transient
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(850, t);
-            osc.frequency.exponentialRampToValueAtTime(220, t + 0.08);
-            gain.gain.setValueAtTime(0.3, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.08);
-        } else if (type === 'merge') {
-            // Synthesis major chord arpeggio
-            const freqs = [523.25, 659.25, 783.99, 1046.50];
-            freqs.forEach((f, index) => {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(f, t + index * 0.04);
-                gain.gain.setValueAtTime(0.2, t + index * 0.04);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + index * 0.04 + 0.22);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(t + index * 0.04);
-                osc.stop(t + index * 0.04 + 0.22);
-            });
-        } else if (type === 'lubu') {
-            // War gong + deep rumble
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(160, t);
-            osc.frequency.exponentialRampToValueAtTime(30, t + 0.8);
-            gain.gain.setValueAtTime(0.45, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.8);
-        } else if (type === 'hit') {
-            // Impact noise
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(140, t);
-            osc.frequency.exponentialRampToValueAtTime(45, t + 0.06);
-            gain.gain.setValueAtTime(0.12, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.06);
-        } else if (type === 'boss') {
-            // War horn / War drum
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, t);
-            osc.frequency.linearRampToValueAtTime(320, t + 0.35);
-            gain.gain.setValueAtTime(0.4, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(t);
-            osc.stop(t + 0.6);
-        } else if (type === 'fire') {
-            // Firestorm explosion: Low-pass filtered noise
-            const noise = this.createNoiseBuffer(0.8);
-            if (noise) {
-                const src = this.ctx.createBufferSource();
-                src.buffer = noise;
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(800, t);
-                filter.frequency.exponentialRampToValueAtTime(100, t + 0.8);
-
-                const gain = this.ctx.createGain();
-                gain.gain.setValueAtTime(0.5, t);
-                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
-
-                src.connect(filter);
-                filter.connect(gain);
-                gain.connect(this.ctx.destination);
-                src.start(t);
-            }
-        }
-    }
-
-    playFileSound(path) {
-        if (!this.audioCache[path]) {
-            this.audioCache[path] = new Audio(path);
-        }
-        const audio = this.audioCache[path].cloneNode();
-        audio.play().catch(e => console.warn("Audio play blocked", e));
-    }
+  }
 }
-
 const audioEngine = new SoundEngine();
 
-/* ==========================================================================
-   3. Sprite & Geometry Fallback Canvas Renderer
-   ========================================================================== */
-
-const imageCache = {};
-
-function drawHeroVisual(ctx, x, y, radius, tierConfig, auraTimer = 0) {
-    if (tierConfig.spritePath) {
-        if (!imageCache[tierConfig.spritePath]) {
-            const img = new Image();
-            img.src = tierConfig.spritePath;
-            imageCache[tierConfig.spritePath] = img;
-        }
-        const img = imageCache[tierConfig.spritePath];
-        if (img.complete && img.naturalWidth !== 0) {
-            ctx.drawImage(img, x - radius, y - radius, radius * 2, radius * 2);
-            return;
-        }
-    }
-
-    ctx.save();
-    ctx.translate(x, y);
-
-    // Neon Glow & Musou Outer Halo
-    if (tierConfig.tier >= 5 || tierConfig.shape === 'musou_star') {
-        const glowRadius = radius + 8 + Math.sin(auraTimer * 6) * 4;
-        const grad = ctx.createRadialGradient(0, 0, radius * 0.4, 0, 0, glowRadius);
-        grad.addColorStop(0, tierConfig.color);
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(0, 0, glowRadius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    ctx.shadowColor = tierConfig.color;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = tierConfig.color;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-
-    const shape = tierConfig.shape;
-    ctx.beginPath();
-
-    if (shape === "triangle") {
-        ctx.moveTo(0, -radius);
-        ctx.lineTo(radius * 0.866, radius * 0.5);
-        ctx.lineTo(-radius * 0.866, radius * 0.5);
-        ctx.closePath();
-    } else if (shape === "square") {
-        const side = radius * 1.4;
-        ctx.rect(-side / 2, -side / 2, side, side);
-    } else if (shape === "pentagon") {
-        drawPolygon(ctx, 0, 0, radius, 5);
-    } else if (shape === "hexagon") {
-        drawPolygon(ctx, 0, 0, radius, 6);
-    } else if (shape === "crescent") {
-        ctx.arc(0, 0, radius, 0.2 * Math.PI, 1.8 * Math.PI, false);
-        ctx.arc(radius * 0.4, 0, radius * 0.8, 1.6 * Math.PI, 0.4 * Math.PI, true);
-        ctx.closePath();
-    } else if (shape === "star" || shape === "musou_star") {
-        drawStar(ctx, 0, 0, shape === "musou_star" ? 8 : 5, radius, radius * 0.5);
-    } else {
-        ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    }
-
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold " + Math.round(radius * 0.5) + "px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(tierConfig.name, 0, 1);
-
-    // Tier badge
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.arc(radius * 0.7, -radius * 0.7, radius * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = tierConfig.color;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.fillStyle = "#FFD700";
-    ctx.font = "bold " + Math.round(radius * 0.35) + "px sans-serif";
-    ctx.fillText("T" + tierConfig.tier, radius * 0.7, -radius * 0.7 + 1);
-
-    ctx.restore();
-}
-
-function drawPolygon(ctx, x, y, radius, sides) {
-    const angle = (Math.PI * 2) / sides;
-    ctx.moveTo(x + radius * Math.sin(0), y - radius * Math.cos(0));
-    for (let i = 1; i < sides; i++) {
-        ctx.lineTo(x + radius * Math.sin(i * angle), y - radius * Math.cos(i * angle));
-    }
-    ctx.closePath();
-}
-
-function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
-    let rot = (Math.PI / 2) * 3;
-    let x = cx;
-    let y = cy;
-    const step = Math.PI / spikes;
-
-    ctx.moveTo(cx, cy - outerRadius);
-    for (let i = 0; i < spikes; i++) {
-        x = cx + Math.cos(rot) * outerRadius;
-        y = cy + Math.sin(rot) * outerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-
-        x = cx + Math.cos(rot) * innerRadius;
-        y = cy + Math.sin(rot) * innerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-    }
-    ctx.lineTo(cx, cy - outerRadius);
-    ctx.closePath();
-}
-
-/* ==========================================================================
-   4. Game State & Global Variables
-   ========================================================================== */
-
-const COLS = 5;
-const ROWS = 4;
-
-const gameState = {
-    gold: 100,
-    gateHp: 100,
-    maxGateHp: 100,
-    kills: 0,
-    wave: 1,
-    recruitCost: 20,
-    upgradeLevel: 1,
-    upgradeCost: 30,
-    atkBonusPercent: 0,
-    goldMultiplier: 1.0,
-    aspdBonusPercent: 0,
-    skillCooldown: 0,
-    paused: false,
-    gameOver: false,
-    perspectiveView: false,
-    grid: Array(ROWS * COLS).fill(null),
-    enemies: [],
-    projectiles: [],
-    particles: [],
-    floatingTexts: [],
-    shockwaves: [],
-    draggedItem: null,
-    hoveredHero: null,
-    waveInProgress: false,
-    enemiesToSpawn: 0,
-    spawnTimer: 0,
-    auraTimer: 0,
-    shakeTimer: 0,
-    shakeIntensity: 0,
-    synergies: {
-        shu: false,
-        wei: false,
-        qun: false
-    }
+// --- [3. GAME STATE & VARIABLES] ---
+const GAME_STATE = {
+  gold: 100,
+  gateHp: 100,
+  maxGateHp: 100,
+  kills: 0,
+  wave: 1,
+  upgradeLvl: 1,
+  recruitCost: 20,
+  upgradeCost: 30,
+  skillCooldown: 0,
+  maxSkillCooldown: 20,
+  isGameOver: false,
+  isPaused: false,
+  totalDps: 0,
+  // Synergy Buffs
+  synergies: { shu: false, wei: false, qun: false },
+  // Strategy Buffs
+  buffs: { atkMult: 1.0, aspMult: 1.0, rangeMult: 1.0, goldMult: 1.0, critChance: 0.15 }
 };
 
-const SKILL_MAX_COOLDOWN = 20;
+const GRID_COLS = 5;
+const GRID_ROWS = 4;
+const gridUnits = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+let gridTiles3D = [];
 
-// Parallax Background Stars & Embers
-const bgStars = [];
-for (let i = 0; i < 35; i++) {
-    bgStars.push({
-        x: Math.random(),
-        y: Math.random(),
-        size: Math.random() * 2 + 0.5,
-        alpha: Math.random()
-    });
-}
+// Three.js Scene Components
+let scene, camera, renderer, composer, bloomPass;
+let hudCanvas, hudCtx;
+let cameraMode = 0; // 0: 3D Quarter View, 1: Blueprint Top View, 2: Gate View
+const cameraPresets = [
+  { pos: new THREE.Vector3(0, 26, 22), look: new THREE.Vector3(0, 0, 1) },
+  { pos: new THREE.Vector3(0, 38, 0.1), look: new THREE.Vector3(0, 0, 0) },
+  { pos: new THREE.Vector3(0, 6, 14), look: new THREE.Vector3(0, 1, -10) }
+];
+let targetCamPos = cameraPresets[0].pos.clone();
+let targetCamLook = cameraPresets[0].look.clone();
+let currentCamLook = cameraPresets[0].look.clone();
 
-const bgEmbers = [];
-for (let i = 0; i < 18; i++) {
-    bgEmbers.push({
-        x: Math.random(),
-        y: Math.random(),
-        speed: Math.random() * 30 + 15,
-        size: Math.random() * 2.5 + 1
-    });
-}
+// Raycasting & Interaction
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2();
+let draggedHero = null;
+let dragSourcePos = { row: -1, col: -1 };
+let dragCurrentWorldPos = new THREE.Vector3();
 
-const CHAPTERS = [
-    { wave: 1, name: "제1장 황건적의 난", enemyName: "황건적", hp: 45, speed: 60, gold: 12, isBoss: false },
-    { wave: 2, name: "제2장 황건적 정예", enemyName: "황건적 장수", hp: 90, speed: 65, gold: 15, isBoss: false },
-    { wave: 3, name: "제3장 서량 기병대", enemyName: "서량 기병", hp: 180, speed: 75, gold: 20, isBoss: false },
-    { wave: 4, name: "제4장 동탁 선봉대", enemyName: "동탁 중장병", hp: 320, speed: 62, gold: 25, isBoss: false },
-    { wave: 5, name: "제5장 사곡의 결전 [보스: 화웅]", enemyName: "보스 화웅", hp: 1600, speed: 45, gold: 100, isBoss: true },
-    { wave: 6, name: "제6장 연합군 격돌", enemyName: "서량 정예기병", hp: 600, speed: 70, gold: 35, isBoss: false },
-    { wave: 7, name: "제7장 호뢰관 관문전", enemyName: "동탁 친위대", hp: 1000, speed: 65, gold: 45, isBoss: false },
-    { wave: 8, name: "제8장 하북의 강호", enemyName: "원소철기", hp: 1600, speed: 68, gold: 55, isBoss: false },
-    { wave: 9, name: "제9장 야망의 동탁군", enemyName: "동탁 근위대장", hp: 2500, speed: 60, gold: 70, isBoss: false },
-    { wave: 10, name: "제10장 호뢰관의 악몽 [보스: 무신 여포]", enemyName: "보스 무신 여포", hp: 10000, speed: 48, gold: 300, isBoss: true }
+// Entities
+let enemies = [];
+let projectiles = [];
+let vfxParticles = [];
+
+// S-Curve 3D Path Points
+const path3DPoints = [
+  new THREE.Vector3(-4.5, 0, -14.0),
+  new THREE.Vector3(4.5, 0, -10.5),
+  new THREE.Vector3(-4.5, 0, -7.0),
+  new THREE.Vector3(3.5, 0, -3.5),
+  new THREE.Vector3(0.0, 0, -1.0)
 ];
 
-function getWaveConfig(waveNum) {
-    if (waveNum <= CHAPTERS.length) {
-        return CHAPTERS[waveNum - 1];
-    }
-    const isBoss = waveNum % 5 === 0;
-    const baseHp = Math.round(1000 * Math.pow(1.4, waveNum - 5));
-    const bossName = isBoss ? `무신 여포 Lv.${waveNum / 5}` : `정예 대장 Lv.${waveNum}`;
-    return {
-        wave: waveNum,
-        name: `제${waveNum}장 ${isBoss ? '[보스전] ' + bossName : '천하패권전'}`,
-        enemyName: isBoss ? bossName : `패왕의 군사`,
-        hp: isBoss ? baseHp * 5 : baseHp,
-        speed: Math.min(100, 50 + waveNum * 1.2),
-        gold: Math.round(30 + waveNum * 8),
-        isBoss: isBoss
-    };
+// Screen Shake
+let shakeIntensity = 0;
+
+// --- [4. THREE.JS INITIALIZATION & SCENE SETUP] ---
+function initThreeJS() {
+  const container = document.getElementById('webgl-container');
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x040711);
+  scene.fog = new THREE.FogExp2(0x040711, 0.018);
+
+  camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+  camera.position.copy(targetCamPos);
+  camera.lookAt(targetCamLook);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // Post Processing Bloom Pipeline
+  const renderScene = new THREE.RenderPass(scene, camera);
+  bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(width, height), 1.25, 0.4, 0.2);
+  composer = new THREE.EffectComposer(renderer);
+  composer.addPass(renderScene);
+  composer.addPass(bloomPass);
+
+  // Lighting Setup
+  const ambientLight = new THREE.AmbientLight(0x38bdf8, 0.6);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  dirLight.position.set(10, 30, 15);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
+  scene.add(dirLight);
+
+  const gateLight = new THREE.PointLight(0x38bdf8, 2, 20);
+  gateLight.position.set(0, 3, -1.5);
+  scene.add(gateLight);
+
+  // Setup 2D HUD Canvas Overlay
+  hudCanvas = document.getElementById('hudCanvas');
+  hudCtx = hudCanvas.getContext('2d');
+  resizeCanvas();
+
+  window.addEventListener('resize', onWindowResize);
+
+  // Build Environment
+  build3DEnvironment();
+  build3DGridTiles();
 }
-
-/* ==========================================================================
-   5. Class Definitions (Entities & VFX)
-   ========================================================================== */
-
-class Hero {
-    constructor(tier) {
-        this.tier = tier;
-        this.config = HERO_CONFIG[tier];
-        this.attackCooldown = 0;
-    }
-
-    getAtk() {
-        let bonus = gameState.atkBonusPercent;
-        if (gameState.synergies.wei) bonus += 15;
-        return Math.round(this.config.atk * (1 + bonus / 100));
-    }
-
-    getAttackSpeed() {
-        let bonus = gameState.aspdBonusPercent;
-        if (gameState.synergies.shu) bonus += 25;
-        return this.config.attackSpeed * (1 + bonus / 100);
-    }
-
-    getRange() {
-        let r = this.config.range;
-        if (gameState.synergies.wei) r *= 1.15;
-        return r;
-    }
-}
-
-class Enemy {
-    constructor(config) {
-        this.name = config.enemyName;
-        this.maxHp = config.hp;
-        this.hp = config.hp;
-        this.speed = config.speed;
-        this.goldReward = config.gold;
-        this.isBoss = config.isBoss;
-        this.pathProgress = 0;
-        this.x = 0;
-        this.y = 0;
-        this.radius = config.isBoss ? 22 : 12;
-        this.slowTimer = 0;
-        this.slowFactor = 1.0;
-    }
-
-    update(dt, pathPoints) {
-        if (this.slowTimer > 0) {
-            this.slowTimer -= dt;
-            if (this.slowTimer <= 0) {
-                this.slowFactor = 1.0;
-            }
-        }
-
-        const effectiveSpeed = this.speed * this.slowFactor;
-        this.pathProgress += (effectiveSpeed * dt) / 260;
-
-        if (this.pathProgress >= 1) {
-            this.pathProgress = 1;
-            return true;
-        }
-
-        const pos = getPointOnPath(pathPoints, this.pathProgress);
-        this.x = pos.x;
-        this.y = pos.y;
-        return false;
-    }
-
-    draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-
-        if (this.isBoss) {
-            ctx.shadowColor = "#FF2222";
-            ctx.shadowBlur = 18;
-            ctx.fillStyle = "#B91C1C";
-            ctx.beginPath();
-            ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.fillStyle = this.slowTimer > 0 ? "#38BDF8" : (this.isBoss ? "#DC2626" : "#EAB308");
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.stroke();
-
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = `bold ${this.isBoss ? 13 : 10}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(this.name.substring(0, 2), 0, 0);
-
-        // HP Bar
-        const barW = this.radius * 2 + 4;
-        const barH = 4;
-        const hpPct = Math.max(0, this.hp / this.maxHp);
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(-barW / 2, -this.radius - 8, barW, barH);
-        ctx.fillStyle = hpPct > 0.5 ? "#22C55E" : (hpPct > 0.2 ? "#EAB308" : "#EF4444");
-        ctx.fillRect(-barW / 2, -this.radius - 8, barW * hpPct, barH);
-
-        ctx.restore();
-    }
-}
-
-class Projectile {
-    constructor(x, y, target, hero) {
-        this.x = x;
-        this.y = y;
-        this.target = target;
-        this.hero = hero;
-        this.type = hero.config.attackType;
-        this.damage = hero.getAtk();
-        this.speed = 520;
-        this.active = true;
-        this.color = hero.config.color;
-        this.trail = [];
-
-        if (this.type === 'pierce') {
-            const dx = target.x - x;
-            const dy = target.y - y;
-            const dist = Math.hypot(dx, dy) || 1;
-            this.vx = (dx / dist) * this.speed;
-            this.vy = (dy / dist) * this.speed;
-            this.hitEnemies = new Set();
-        }
-    }
-
-    update(dt, enemies) {
-        if (!this.active) return;
-
-        // Motion Trail
-        this.trail.push({ x: this.x, y: this.y });
-        if (this.trail.length > 6) this.trail.shift();
-
-        if (this.type === 'pierce') {
-            this.x += this.vx * dt;
-            this.y += this.vy * dt;
-
-            enemies.forEach(e => {
-                if (!this.hitEnemies.has(e) && Math.hypot(e.x - this.x, e.y - this.y) < e.radius + 12) {
-                    this.hitEnemies.add(e);
-                    performAttackHit(e, this.damage);
-                    createImpactParticles(e.x, e.y, this.color, 6);
-                }
-            });
-
-            if (this.x < 0 || this.x > canvasWidth || this.y < 0 || this.y > canvasHeight) {
-                this.active = false;
-            }
-        } else {
-            if (!enemies.includes(this.target)) {
-                if (enemies.length > 0) {
-                    this.target = enemies[0];
-                } else {
-                    this.active = false;
-                    return;
-                }
-            }
-
-            const dx = this.target.x - this.x;
-            const dy = this.target.y - this.y;
-            const dist = Math.hypot(dx, dy);
-
-            if (dist < 14) {
-                this.active = false;
-                performAttackHit(this.target, this.damage);
-                createImpactParticles(this.target.x, this.target.y, this.color, 8);
-            } else {
-                this.x += (dx / dist) * this.speed * dt;
-                this.y += (dy / dist) * this.speed * dt;
-            }
-        }
-    }
-
-    draw(ctx) {
-        if (!this.active) return;
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-
-        // Draw Motion Trail
-        for (let i = 0; i < this.trail.length; i++) {
-            const pt = this.trail[i];
-            const alpha = (i + 1) / this.trail.length;
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = alpha * 0.6;
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 3 * alpha, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.globalAlpha = 1.0;
-        ctx.fillStyle = this.color;
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-class Shockwave {
-    constructor(x, y, color = "#EF4444") {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.radius = 10;
-        this.maxRadius = 180;
-        this.alpha = 1.0;
-    }
-
-    update(dt) {
-        this.radius += 350 * dt;
-        this.alpha = Math.max(0, 1 - (this.radius / this.maxRadius));
-    }
-
-    draw(ctx) {
-        if (this.alpha <= 0) return;
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = this.alpha;
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 4;
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-    }
-}
-
-class Particle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 160 + 40;
-        this.vx = Math.cos(angle) * speed;
-        this.vy = Math.sin(angle) * speed;
-        this.life = 0.4 + Math.random() * 0.4;
-        this.maxLife = this.life;
-        this.radius = 2 + Math.random() * 3;
-    }
-
-    update(dt) {
-        this.x += this.vx * dt;
-        this.y += this.vy * dt;
-        this.life -= dt;
-    }
-
-    draw(ctx) {
-        if (this.life <= 0) return;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-class FloatingText {
-    constructor(x, y, text, color = "#FFD700", fontSize = 16) {
-        this.x = x;
-        this.y = y;
-        this.text = text;
-        this.color = color;
-        this.fontSize = fontSize;
-        this.life = 0.8;
-        this.maxLife = 0.8;
-    }
-
-    update(dt) {
-        this.y -= 32 * dt;
-        this.life -= dt;
-    }
-
-    draw(ctx) {
-        if (this.life <= 0) return;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
-        ctx.fillStyle = this.color;
-        ctx.font = `bold ${this.fontSize}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.shadowColor = "#000000";
-        ctx.shadowBlur = 6;
-        ctx.fillText(this.text, this.x, this.y);
-        ctx.restore();
-    }
-}
-
-/* ==========================================================================
-   6. DOM Elements, Canvas Setup & Pathing
-   ========================================================================== */
-
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-const waveTitleEl = document.getElementById("wave-title");
-const goldValEl = document.getElementById("gold-val");
-const hpValEl = document.getElementById("hp-val");
-const killValEl = document.getElementById("kill-val");
-const totalDpsValEl = document.getElementById("total-dps-val");
-const synergyBadgesContainer = document.getElementById("synergy-badges-container");
-const gateHpBarEl = document.getElementById("gate-hp-bar");
-
-const soundBtnEl = document.getElementById("sound-btn");
-const camToggleBtnEl = document.getElementById("cam-toggle-btn");
-
-const recruitBtn = document.getElementById("recruit-btn");
-const recruitCostEl = document.getElementById("recruit-cost");
-const upgradeBtn = document.getElementById("upgrade-btn");
-const upgradeLvlEl = document.getElementById("upgrade-lvl");
-const upgradeCostEl = document.getElementById("upgrade-cost");
-const skillBtn = document.getElementById("skill-btn");
-const skillSubEl = document.getElementById("skill-sub");
-
-const briefingPanel = document.getElementById("hero-briefing-panel");
-const briefingName = document.getElementById("briefing-name");
-const briefingTier = document.getElementById("briefing-tier");
-const briefingFaction = document.getElementById("briefing-faction");
-const briefingAtk = document.getElementById("briefing-atk");
-const briefingAspd = document.getElementById("briefing-aspd");
-const briefingRange = document.getElementById("briefing-range");
-const briefingDesc = document.getElementById("briefing-desc");
-
-const strategyModal = document.getElementById("strategy-modal");
-const strategyCardsContainer = document.getElementById("strategy-cards");
-
-const gameoverModal = document.getElementById("gameover-modal");
-const gameoverTitleEl = document.getElementById("gameover-title");
-const gameoverSubtitleEl = document.getElementById("gameover-subtitle");
-const finalWaveEl = document.getElementById("final-wave");
-const finalKillsEl = document.getElementById("final-kills");
-const restartBtn = document.getElementById("restart-btn");
-
-let canvasWidth = 0;
-let canvasHeight = 0;
-let gridStartY = 0;
-let gridHeight = 0;
-let cellWidth = 0;
-let cellHeight = 0;
-let pathPoints = [];
-let sellZoneRect = { x: 0, y: 0, width: 0, height: 0 };
 
 function resizeCanvas() {
-    const view = document.getElementById("game-view");
-    const cssWidth = view.clientWidth;
-    const cssHeight = view.clientHeight;
-    const dpr = window.devicePixelRatio || 1;
-
-    canvasWidth = cssWidth;
-    canvasHeight = cssHeight;
-
-    canvas.width = Math.round(cssWidth * dpr);
-    canvas.height = Math.round(cssHeight * dpr);
-
-    ctx.resetTransform();
-    ctx.scale(dpr, dpr);
-
-    gridHeight = canvasHeight * 0.38;
-    gridStartY = canvasHeight - gridHeight - 38;
-    cellWidth = canvasWidth / COLS;
-    cellHeight = gridHeight / ROWS;
-
-    sellZoneRect = {
-        x: 12,
-        y: gridStartY + gridHeight + 4,
-        width: canvasWidth - 24,
-        height: 30
-    };
-
-    const topY = 15;
-    const gateY = gridStartY - 25;
-    const midY1 = topY + (gateY - topY) * 0.3;
-    const midY2 = topY + (gateY - topY) * 0.65;
-
-    pathPoints = [
-        { x: canvasWidth * 0.15, y: topY },
-        { x: canvasWidth * 0.85, y: midY1 },
-        { x: canvasWidth * 0.15, y: midY2 },
-        { x: canvasWidth * 0.50, y: gateY }
-    ];
+  const container = document.getElementById('game-view');
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  hudCanvas.width = w;
+  hudCanvas.height = h;
+  if (renderer && composer) {
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
 }
 
-window.addEventListener("resize", resizeCanvas);
-
-function getPointOnPath(points, t) {
-    if (points.length < 4) return { x: 0, y: 0 };
-    const p0 = points[0];
-    const p1 = points[1];
-    const p2 = points[2];
-    const p3 = points[3];
-
-    const cx = 3 * (p1.x - p0.x);
-    const bx = 3 * (p2.x - p1.x) - cx;
-    const ax = p3.x - p0.x - cx - bx;
-
-    const cy = 3 * (p1.y - p0.y);
-    const by = 3 * (p2.y - p1.y) - cy;
-    const ay = p3.y - p0.y - cy - by;
-
-    const x = (ax * Math.pow(t, 3)) + (bx * Math.pow(t, 2)) + (cx * t) + p0.x;
-    const y = (ay * Math.pow(t, 3)) + (by * Math.pow(t, 2)) + (cy * t) + p0.y;
-
-    return { x, y };
+function onWindowResize() {
+  resizeCanvas();
 }
 
-function triggerScreenShake(intensity = 10, duration = 0.3) {
-    gameState.shakeIntensity = intensity;
-    gameState.shakeTimer = duration;
+// --- [5. 3D ENVIRONMENT & FIELD BUILDER] ---
+function build3DEnvironment() {
+  // S-Curve Energy Road
+  const curve = new THREE.CatmullRomCurve3(path3DPoints);
+  const roadGeo = new THREE.TubeGeometry(curve, 64, 0.6, 8, false);
+  const roadMat = new THREE.MeshStandardMaterial({
+    color: 0x0284c7,
+    emissive: 0x0369a1,
+    emissiveIntensity: 0.5,
+    roughness: 0.3,
+    metalness: 0.8
+  });
+  const roadMesh = new THREE.Mesh(roadGeo, roadMat);
+  roadMesh.position.y = -0.1;
+  scene.add(roadMesh);
+
+  // Road Holographic Border Rings
+  const points = curve.getPoints(30);
+  points.forEach((pt, i) => {
+    if (i % 2 === 0) {
+      const ringGeo = new THREE.RingGeometry(0.7, 0.85, 16);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.copy(pt);
+      ring.position.y = 0.01;
+      scene.add(ring);
+    }
+  });
+
+  // Hulao Gate Wall at z = -1
+  const gateGroup = new THREE.Group();
+  gateGroup.position.set(0, 0, -1.0);
+
+  // Wall Base
+  const wallGeo = new THREE.BoxGeometry(14, 3, 1.5);
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5, metalness: 0.8 });
+  const wall = new THREE.Mesh(wallGeo, wallMat);
+  wall.position.y = 1.5;
+  gateGroup.add(wall);
+
+  // Energy Wall Barrier
+  const barrierGeo = new THREE.PlaneGeometry(14, 4);
+  const barrierMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.25, side: THREE.DoubleSide });
+  const barrier = new THREE.Mesh(barrierGeo, barrierMat);
+  barrier.position.set(0, 2, 0.8);
+  gateGroup.add(barrier);
+
+  scene.add(gateGroup);
+
+  // Dismissal / Refund Area Mesh at Bottom
+  const dismissGeo = new THREE.BoxGeometry(12, 0.1, 2);
+  const dismissMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, emissive: 0x7f1d1d, emissiveIntensity: 0.4, transparent: true, opacity: 0.8 });
+  const dismissMesh = new THREE.Mesh(dismissGeo, dismissMat);
+  dismissMesh.position.set(0, 0, 12.8);
+  dismissMesh.name = "dismissZone";
+  scene.add(dismissMesh);
 }
 
-/* ==========================================================================
-   7. Grid Touch, Drag-and-Drop & Dismiss System
-   ========================================================================== */
+function build3DGridTiles() {
+  const startX = -4.0;
+  const spacingX = 2.0;
+  const startZ = 2.0;
+  const spacingZ = 2.2;
 
-function getCellCenter(index) {
-    const col = index % COLS;
-    const row = Math.floor(index / COLS);
-    return {
-        x: col * cellWidth + cellWidth / 2,
-        y: gridStartY + row * cellHeight + cellHeight / 2
-    };
+  gridTiles3D = [];
+
+  for (let r = 0; r < GRID_ROWS; r++) {
+    gridTiles3D[r] = [];
+    for (let c = 0; c < GRID_COLS; c++) {
+      const posX = startX + c * spacingX;
+      const posZ = startZ + r * spacingZ;
+
+      const tileGroup = new THREE.Group();
+      tileGroup.position.set(posX, 0, posZ);
+
+      // Tile Base Altar
+      const baseGeo = new THREE.BoxGeometry(1.7, 0.2, 1.8);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.8 });
+      const base = new THREE.Mesh(baseGeo, baseMat);
+      base.position.y = 0.1;
+      base.castShadow = true;
+      base.receiveShadow = true;
+      tileGroup.add(base);
+
+      // Tile Border Neon Outline
+      const borderGeo = new THREE.RingGeometry(0.7, 0.8, 4);
+      const borderMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+      const border = new THREE.Mesh(borderGeo, borderMat);
+      border.rotation.x = Math.PI / 2;
+      border.rotation.z = Math.PI / 4;
+      border.position.y = 0.21;
+      tileGroup.add(border);
+
+      tileGroup.userData = { row: r, col: c, borderMat: borderMat };
+      scene.add(tileGroup);
+      gridTiles3D[r][c] = tileGroup;
+    }
+  }
 }
 
-function getIndexFromCoords(x, y) {
-    if (y < gridStartY || y > gridStartY + gridHeight) return -1;
-    const col = Math.floor(x / cellWidth);
-    const row = Math.floor((y - gridStartY) / cellHeight);
-    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return -1;
-    return row * COLS + col;
+// --- [6. PROCEDURAL 3D HERO MESH ASSEMBLY (`createHero3DMesh`)] ---
+function createHero3DMesh(tier) {
+  const cfg = HERO_CONFIG[tier] || HERO_CONFIG[1];
+  const heroGroup = new THREE.Group();
+
+  // 1. Common Metallic Altar Pedestal Base
+  const baseGeo = new THREE.CylinderGeometry(0.75, 0.85, 0.2, 8);
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85, roughness: 0.2 });
+  const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+  baseMesh.position.y = 0.1;
+  heroGroup.add(baseMesh);
+
+  // Rotating Magic Circle Ring beneath unit
+  const ringGeo = new THREE.RingGeometry(0.5, 0.7, 16);
+  const ringMat = new THREE.MeshBasicMaterial({ color: cfg.color, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+  const magicRing = new THREE.Mesh(ringGeo, ringMat);
+  magicRing.rotation.x = Math.PI / 2;
+  magicRing.position.y = 0.22;
+  magicRing.name = "magicRing";
+  heroGroup.add(magicRing);
+
+  // 2. Procedural Tier Core Meshes
+  const coreMat = new THREE.MeshStandardMaterial({
+    color: cfg.color,
+    emissive: cfg.color,
+    emissiveIntensity: 0.6,
+    roughness: 0.2,
+    metalness: 0.9
+  });
+
+  const coreGroup = new THREE.Group();
+  coreGroup.position.y = 0.9;
+  coreGroup.name = "coreGroup";
+
+  if (tier === 1) { // 의용병: Pyramid core + satellite sphere
+    const pyrGeo = new THREE.ConeGeometry(0.4, 0.7, 4);
+    const pyr = new THREE.Mesh(pyrGeo, coreMat);
+    coreGroup.add(pyr);
+
+    const satGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    const sat = new THREE.Mesh(satGeo, coreMat);
+    sat.position.set(0.6, 0.2, 0);
+    sat.name = "satellite";
+    coreGroup.add(sat);
+  } else if (tier === 2) { // 정예 창병: Cube core + orbiting spear cone
+    const cubeGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const cube = new THREE.Mesh(cubeGeo, coreMat);
+    coreGroup.add(cube);
+
+    const spearGeo = new THREE.ConeGeometry(0.15, 0.6, 6);
+    const spear = new THREE.Mesh(spearGeo, coreMat);
+    spear.position.set(0.6, 0, 0);
+    spear.rotation.z = -Math.PI / 2;
+    spear.name = "satellite";
+    coreGroup.add(spear);
+  } else if (tier === 3) { // 황충: Double Gimbal Torus Rings + Spear Cone
+    const torus1Geo = new THREE.TorusGeometry(0.5, 0.05, 8, 24);
+    const torus1 = new THREE.Mesh(torus1Geo, coreMat);
+    coreGroup.add(torus1);
+
+    const torus2 = torus1.clone();
+    torus2.rotation.x = Math.PI / 2;
+    coreGroup.add(torus2);
+
+    const coneGeo = new THREE.ConeGeometry(0.2, 0.8, 8);
+    const cone = new THREE.Mesh(coneGeo, coreMat);
+    coreGroup.add(cone);
+  } else if (tier === 4) { // 조운: Triple Gimbal Torus + High Speed Spear
+    for (let i = 0; i < 3; i++) {
+      const tGeo = new THREE.TorusGeometry(0.55, 0.04, 8, 24);
+      const tMesh = new THREE.Mesh(tGeo, coreMat);
+      tMesh.rotation.set(i * Math.PI / 3, i * Math.PI / 4, 0);
+      coreGroup.add(tMesh);
+    }
+    const coneGeo = new THREE.ConeGeometry(0.22, 0.9, 8);
+    const cone = new THREE.Mesh(coneGeo, coreMat);
+    coreGroup.add(cone);
+  } else if (tier === 5) { // 관우: Emerald Core + 2 High-Speed Rotating Crescent Blades
+    const sphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const sphere = new THREE.Mesh(sphereGeo, coreMat);
+    coreGroup.add(sphere);
+
+    for (let i = 0; i < 2; i++) {
+      const crescentGeo = new THREE.TorusGeometry(0.7, 0.08, 8, 24, Math.PI * 1.2);
+      const crescent = new THREE.Mesh(crescentGeo, coreMat);
+      crescent.rotation.x = Math.PI / 2;
+      crescent.rotation.y = i * Math.PI;
+      crescent.name = "crescentBlade";
+      coreGroup.add(crescent);
+    }
+  } else if (tier === 6) { // 제갈량: Octahedron Crystal + 3-Layer Tilted Bagua Rings
+    const octGeo = new THREE.OctahedronGeometry(0.45);
+    const oct = new THREE.Mesh(octGeo, coreMat);
+    coreGroup.add(oct);
+
+    for (let i = 0; i < 3; i++) {
+      const rGeo = new THREE.TorusGeometry(0.65 + i * 0.15, 0.03, 8, 32);
+      const rMesh = new THREE.Mesh(rGeo, coreMat);
+      rMesh.rotation.set(Math.PI / 4 + i * 0.2, i * Math.PI / 3, 0);
+      rMesh.name = "baguaRing";
+      coreGroup.add(rMesh);
+    }
+  } else if (tier === 7) { // 무신 여포: Crimson Sun Core + 8-Way Fangtian Ji Blades
+    const sunGeo = new THREE.SphereGeometry(0.4, 16, 16);
+    const sun = new THREE.Mesh(sunGeo, coreMat);
+    coreGroup.add(sun);
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bladeGeo = new THREE.ConeGeometry(0.12, 0.7, 6);
+      const blade = new THREE.Mesh(bladeGeo, coreMat);
+      blade.position.set(Math.cos(angle) * 0.75, Math.sin(angle) * 0.75, 0);
+      blade.rotation.z = angle - Math.PI / 2;
+      coreGroup.add(blade);
+    }
+    const plasmaRingGeo = new THREE.TorusGeometry(0.9, 0.05, 8, 32);
+    const plasmaRing = new THREE.Mesh(plasmaRingGeo, coreMat);
+    plasmaRing.rotation.x = Math.PI / 2;
+    plasmaRing.name = "plasmaRing";
+    coreGroup.add(plasmaRing);
+  }
+
+  heroGroup.add(coreGroup);
+  return heroGroup;
 }
 
-function isInsideSellZone(x, y) {
-    return (
-        x >= sellZoneRect.x &&
-        x <= sellZoneRect.x + sellZoneRect.width &&
-        y >= sellZoneRect.y &&
-        y <= sellZoneRect.y + sellZoneRect.height
+// Hero Entity Wrapper Class
+class Hero {
+  constructor(tier, row, col) {
+    this.tier = tier;
+    this.row = row;
+    this.col = col;
+    this.config = HERO_CONFIG[tier];
+    this.lastAttackTime = 0;
+
+    this.mesh = createHero3DMesh(tier);
+    this.updateWorldPosition();
+    scene.add(this.mesh);
+  }
+
+  updateWorldPosition() {
+    const tile = gridTiles3D[this.row][this.col];
+    if (tile) {
+      this.mesh.position.set(tile.position.x, 0, tile.position.z);
+    }
+  }
+
+  getWorldPosition() {
+    return this.mesh.position.clone().add(new THREE.Vector3(0, 0.9, 0));
+  }
+
+  animate(dt) {
+    if (!this.mesh) return;
+    const coreGroup = this.mesh.getObjectByName("coreGroup");
+    const magicRing = this.mesh.getObjectByName("magicRing");
+
+    if (magicRing) magicRing.rotation.z += dt * 1.5;
+
+    if (coreGroup) {
+      coreGroup.rotation.y += dt * 1.2;
+
+      // Animate Tier specific elements
+      const sat = coreGroup.getObjectByName("satellite");
+      if (sat) {
+        const t = Date.now() * 0.003;
+        sat.position.x = Math.cos(t) * 0.6;
+        sat.position.z = Math.sin(t) * 0.6;
+      }
+
+      coreGroup.traverse((child) => {
+        if (child.name === "crescentBlade" || child.name === "baguaRing" || child.name === "plasmaRing") {
+          child.rotation.z += dt * 2.5;
+        }
+      });
+    }
+  }
+
+  destroy() {
+    if (this.mesh) {
+      scene.remove(this.mesh);
+    }
+  }
+}
+
+// --- [7. ENEMY & COMBAT SYSTEM] ---
+class Enemy {
+  constructor(wave) {
+    this.wave = wave;
+    this.isBoss = (wave % 5 === 0);
+    this.pathIndex = 0;
+    this.progress = 0; // 0.0 to 1.0 along spline path
+    this.speed = this.isBoss ? 0.025 : 0.045 + Math.min(wave * 0.002, 0.03);
+
+    const baseHp = 100 * Math.pow(1.3, wave - 1);
+    this.maxHp = Math.round(this.isBoss ? baseHp * 6 : baseHp);
+    this.hp = this.maxHp;
+
+    // Names
+    if (this.isBoss) {
+      const bosses = ["화웅", "안량", "문추", "동탁", "무신 여포"];
+      this.name = bosses[Math.floor((wave / 5 - 1) % bosses.length)];
+    } else {
+      const grunts = ["황건 병사", "서량 기병", "동탁 정예병", "조조 돌격병"];
+      this.name = grunts[(wave - 1) % grunts.length];
+    }
+
+    // 3D Mesh
+    const size = this.isBoss ? 1.2 : 0.6;
+    const geo = this.isBoss ? new THREE.DodecahedronGeometry(size) : new THREE.SphereGeometry(size, 12, 12);
+    const color = this.isBoss ? 0xef4444 : 0xf97316;
+    const mat = new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 0.4, roughness: 0.3 });
+    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.position.copy(path3DPoints[0]);
+    this.mesh.position.y = size;
+    this.mesh.castShadow = true;
+    scene.add(this.mesh);
+
+    this.curve = new THREE.CatmullRomCurve3(path3DPoints);
+  }
+
+  update(dt) {
+    this.progress += this.speed * dt;
+    if (this.progress >= 1.0) {
+      // Reached Gate
+      GAME_STATE.gateHp = Math.max(0, GAME_STATE.gateHp - (this.isBoss ? 25 : 10));
+      updateHUD();
+      triggerScreenShake(0.5);
+      this.destroy();
+      return false; // remove
+    }
+
+    const pos = this.curve.getPointAt(this.progress);
+    this.mesh.position.copy(pos);
+    this.mesh.position.y = this.isBoss ? 1.2 : 0.6;
+    this.mesh.rotation.y += dt * 3.0;
+
+    return true;
+  }
+
+  takeDamage(dmg, isCrit = false) {
+    this.hp -= dmg;
+
+    // Floating text
+    spawnFloatingText(this.mesh.position, `${isCrit ? '💥 ' : ''}${Math.round(dmg)}`, isCrit ? '#facc15' : '#ef4444');
+
+    if (this.hp <= 0) {
+      const reward = Math.round((this.isBoss ? 30 : 8) * GAME_STATE.buffs.goldMult);
+      GAME_STATE.gold += reward;
+      GAME_STATE.kills++;
+      updateHUD();
+
+      // Spawn Death Particle Explosion
+      spawnExplosionVFX(this.mesh.position, this.isBoss ? 0xef4444 : 0xf97316);
+      this.destroy();
+      return true; // dead
+    }
+    return false;
+  }
+
+  destroy() {
+    if (this.mesh) {
+      scene.remove(this.mesh);
+    }
+  }
+}
+
+// --- [8. PROJECTILES & VISUAL EFFECTS] ---
+class Projectile {
+  constructor(startPos, targetEnemy, hero) {
+    this.startPos = startPos.clone();
+    this.target = targetEnemy;
+    this.hero = hero;
+    this.pos = startPos.clone();
+    this.speed = 18.0;
+    this.tier = hero.tier;
+
+    // Mesh
+    const geo = new THREE.CylinderGeometry(0.08, 0.08, 0.6);
+    const mat = new THREE.MeshBasicMaterial({ color: hero.config.color });
+    this.mesh = new THREE.Mesh(geo, mat);
+    this.mesh.position.copy(this.pos);
+    scene.add(this.mesh);
+  }
+
+  update(dt) {
+    if (!this.target || !this.target.mesh || this.target.hp <= 0) {
+      this.destroy();
+      return false;
+    }
+
+    const targetPos = this.target.mesh.position.clone();
+    const dir = targetPos.clone().sub(this.pos);
+    const dist = dir.length();
+
+    if (dist < 0.8) {
+      // Hit target
+      this.onHit();
+      this.destroy();
+      return false;
+    }
+
+    dir.normalize();
+    this.pos.add(dir.clone().multiplyScalar(this.speed * dt));
+    this.mesh.position.copy(this.pos);
+    this.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+
+    return true;
+  }
+
+  onHit() {
+    let atk = this.hero.config.atk * GAME_STATE.buffs.atkMult * (1 + (GAME_STATE.upgradeLvl - 1) * 0.15);
+    if (GAME_STATE.synergies.wei) atk *= 1.15; // Wei Synergy ATK +15%
+
+    // Critical Hit calculation
+    let critChance = GAME_STATE.buffs.critChance;
+    if (GAME_STATE.synergies.qun) critChance += 0.25; // Qun Synergy +25% Crit
+    const isCrit = Math.random() < critChance;
+    if (isCrit) atk *= 2.0;
+
+    audioEngine.playHit();
+
+    if (this.tier === 5) { // Guan Yu Crescent Wave AoE
+      spawnCrescentWaveVFX(this.target.mesh.position);
+      enemies.forEach(e => {
+        if (e.mesh && e.mesh.position.distanceTo(this.target.mesh.position) < 3.5) {
+          e.takeDamage(atk, isCrit);
+        }
+      });
+    } else if (this.tier === 6) { // Zhuge Liang Lightning Strike
+      spawnLightningVFX(this.target.mesh.position);
+      this.target.takeDamage(atk, isCrit);
+      this.target.speed *= 0.6; // Slow enemy
+    } else if (this.tier === 7) { // Lu Bu Musou Shockwave
+      triggerScreenShake(0.4);
+      spawnShockwaveSphereVFX(this.target.mesh.position, 0xef4444);
+      enemies.forEach(e => {
+        if (e.mesh && e.mesh.position.distanceTo(this.target.mesh.position) < 5.0) {
+          e.takeDamage(atk, isCrit);
+        }
+      });
+    } else {
+      this.target.takeDamage(atk, isCrit);
+    }
+  }
+
+  destroy() {
+    if (this.mesh) scene.remove(this.mesh);
+  }
+}
+
+// Particle & Shockwave Generators
+function spawnExplosionVFX(pos, colorHex) {
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    const geo = new THREE.SphereGeometry(0.12, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1.0 });
+    const p = new THREE.Mesh(geo, mat);
+    p.position.copy(pos);
+    const vel = new THREE.Vector3(
+      (Math.random() - 0.5) * 6,
+      Math.random() * 6 + 2,
+      (Math.random() - 0.5) * 6
     );
+    scene.add(p);
+    vfxParticles.push({ mesh: p, vel: vel, life: 0.5, maxLife: 0.5 });
+  }
 }
 
-function showBriefingPanel(hero) {
-    if (!hero) {
-        briefingPanel.classList.add("hidden");
-        return;
+function spawnShockwaveSphereVFX(pos, colorHex) {
+  const geo = new THREE.SphereGeometry(0.5, 16, 16);
+  const mat = new THREE.MeshBasicMaterial({ color: colorHex, wireframe: true, transparent: true, opacity: 0.8 });
+  const shock = new THREE.Mesh(geo, mat);
+  shock.position.copy(pos);
+  scene.add(shock);
+  vfxParticles.push({
+    mesh: shock,
+    vel: new THREE.Vector3(0, 0, 0),
+    life: 0.4,
+    maxLife: 0.4,
+    customUpdate: (p, dt) => {
+      const scale = 1 + (1 - p.life / p.maxLife) * 12;
+      p.mesh.scale.set(scale, scale, scale);
+      p.mesh.material.opacity = p.life / p.maxLife;
     }
-    briefingName.innerText = hero.config.name;
-    briefingTier.innerText = "T" + hero.tier;
-    briefingFaction.innerText = hero.config.faction;
-    briefingAtk.innerText = hero.getAtk();
-    briefingAspd.innerText = hero.getAttackSpeed().toFixed(1) + "/초";
-    briefingRange.innerText = Math.round(hero.getRange());
-    briefingDesc.innerText = hero.config.desc;
-    briefingPanel.classList.remove("hidden");
+  });
 }
 
-function handleDragStart(clientX, clientY) {
-    if (gameState.gameOver || gameState.paused) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    const index = getIndexFromCoords(x, y);
-    if (index !== -1 && gameState.grid[index] !== null) {
-        const hero = gameState.grid[index];
-        gameState.draggedItem = {
-            sourceIndex: index,
-            hero: hero,
-            x: x,
-            y: y
-        };
-        showBriefingPanel(hero);
-        audioEngine.playSound('spear');
+function spawnCrescentWaveVFX(pos) {
+  const geo = new THREE.RingGeometry(0.8, 1.4, 16, 1, 0, Math.PI);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.copy(pos);
+  ring.position.y = 0.2;
+  scene.add(ring);
+  vfxParticles.push({
+    mesh: ring,
+    vel: new THREE.Vector3(0, 0, -4),
+    life: 0.4,
+    maxLife: 0.4,
+    customUpdate: (p, dt) => {
+      p.mesh.position.add(p.vel.clone().multiplyScalar(dt));
+      p.mesh.material.opacity = p.life / p.maxLife;
     }
+  });
 }
 
-function handleDragMove(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+function spawnLightningVFX(pos) {
+  const geo = new THREE.CylinderGeometry(0.1, 0.4, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.9 });
+  const cyl = new THREE.Mesh(geo, mat);
+  cyl.position.copy(pos);
+  cyl.position.y = 4.0;
+  scene.add(cyl);
+  vfxParticles.push({
+    mesh: cyl,
+    vel: new THREE.Vector3(0, 0, 0),
+    life: 0.25,
+    maxLife: 0.25,
+    customUpdate: (p, dt) => {
+      p.mesh.material.opacity = p.life / p.maxLife;
+    }
+  });
+}
 
-    if (gameState.draggedItem) {
-        gameState.draggedItem.x = x;
-        gameState.draggedItem.y = y;
+function updateVFX(dt) {
+  for (let i = vfxParticles.length - 1; i >= 0; i--) {
+    const p = vfxParticles[i];
+    p.life -= dt;
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      vfxParticles.splice(i, 1);
+      continue;
+    }
+    if (p.customUpdate) {
+      p.customUpdate(p, dt);
     } else {
-        const index = getIndexFromCoords(x, y);
-        if (index !== -1 && gameState.grid[index] !== null) {
-            showBriefingPanel(gameState.grid[index]);
+      p.mesh.position.add(p.vel.clone().multiplyScalar(dt));
+      p.mesh.material.opacity = p.life / p.maxLife;
+    }
+  }
+}
+
+// --- [9. FLOATING TEXT & HUD OVERLAY RENDERER] ---
+let floatingTexts = [];
+
+function spawnFloatingText(worldPos, text, colorStr) {
+  floatingTexts.push({
+    worldPos: worldPos.clone(),
+    text: text,
+    color: colorStr,
+    life: 1.0,
+    maxLife: 1.0,
+    offsetY: 0
+  });
+}
+
+function renderHUDOverlay() {
+  hudCtx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+
+  // 1. Render Floating Damage Texts
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    const ft = floatingTexts[i];
+    ft.life -= 0.016;
+    ft.offsetY += 0.8;
+
+    if (ft.life <= 0) {
+      floatingTexts.splice(i, 1);
+      continue;
+    }
+
+    // Convert 3D World position to 2D Screen Coordinates
+    const screenPos = ft.worldPos.clone().project(camera);
+    const x = (screenPos.x * 0.5 + 0.5) * hudCanvas.width;
+    const y = (-(screenPos.y * 0.5) + 0.5) * hudCanvas.height - ft.offsetY;
+
+    hudCtx.save();
+    hudCtx.font = "900 16px monospace";
+    hudCtx.fillStyle = ft.color;
+    hudCtx.shadowColor = '#000000';
+    hudCtx.shadowBlur = 6;
+    hudCtx.globalAlpha = Math.min(1.0, ft.life / ft.maxLife);
+    hudCtx.fillText(ft.text, x, y);
+    hudCtx.restore();
+  }
+
+  // 2. Render Drag Vector Arrow when dragging unit
+  if (draggedHero && dragCurrentWorldPos) {
+    const startScreen = draggedHero.getWorldPosition().project(camera);
+    const endScreen = dragCurrentWorldPos.clone().project(camera);
+
+    const sx = (startScreen.x * 0.5 + 0.5) * hudCanvas.width;
+    const sy = (-(startScreen.y * 0.5) + 0.5) * hudCanvas.height;
+    const ex = (endScreen.x * 0.5 + 0.5) * hudCanvas.width;
+    const ey = (-(endScreen.y * 0.5) + 0.5) * hudCanvas.height;
+
+    hudCtx.save();
+    hudCtx.strokeStyle = '#38bdf8';
+    hudCtx.lineWidth = 3;
+    hudCtx.setLineDash([6, 6]);
+    hudCtx.beginPath();
+    hudCtx.moveTo(sx, sy);
+    hudCtx.lineTo(ex, ey);
+    hudCtx.stroke();
+    hudCtx.restore();
+  }
+}
+
+// --- [10. TOUCH & RAYCASTING INTERACTION] ---
+function setupInteraction() {
+  const container = document.getElementById('webgl-container');
+
+  function getNDC(e) {
+    const rect = container.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width) * 2 - 1,
+      y: -((clientY - rect.top) / rect.height) * 2 + 1
+    };
+  }
+
+  function onPointerDown(e) {
+    if (GAME_STATE.isGameOver || GAME_STATE.isPaused) return;
+    audioEngine.init();
+
+    const ndc = getNDC(e);
+    mouseVec.set(ndc.x, ndc.y);
+    raycaster.setFromCamera(mouseVec, camera);
+
+    // Collect all Hero meshes
+    const heroMeshes = [];
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        if (gridUnits[r][c]) {
+          heroMeshes.push(gridUnits[r][c].mesh);
+        }
+      }
+    }
+
+    const intersects = raycaster.intersectObjects(heroMeshes, true);
+    if (intersects.length > 0) {
+      let topMesh = intersects[0].object;
+      while (topMesh.parent && topMesh.parent.type !== 'Scene' && !topMesh.userData.heroRef) {
+        if (topMesh.userData.row !== undefined) break;
+        topMesh = topMesh.parent;
+      }
+
+      // Find associated Hero entity
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const h = gridUnits[r][c];
+          if (h && h.mesh === topMesh) {
+            draggedHero = h;
+            dragSourcePos = { row: r, col: c };
+            draggedHero.mesh.position.y = 2.5; // Lift up elevation
+            showUnitInspector(h);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  function onPointerMove(e) {
+    if (!draggedHero) return;
+
+    const ndc = getNDC(e);
+    mouseVec.set(ndc.x, ndc.y);
+    raycaster.setFromCamera(mouseVec, camera);
+
+    // Plane at elevation y = 2.5
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
+    const target = new THREE.Vector3();
+    raycaster.ray.intersectPlane(plane, target);
+    if (target) {
+      dragCurrentWorldPos.copy(target);
+      draggedHero.mesh.position.copy(target);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!draggedHero) return;
+
+    // Check Raycast against 3D Grid Tiles or Dismiss Zone
+    const allTiles = [];
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        allTiles.push(gridTiles3D[r][c]);
+      }
+    }
+    const dismissZone = scene.getObjectByName("dismissZone");
+    if (dismissZone) allTiles.push(dismissZone);
+
+    const intersects = raycaster.intersectObjects(allTiles, true);
+
+    if (intersects.length > 0) {
+      let targetObj = intersects[0].object;
+      while (targetObj.parent && targetObj.parent.type !== 'Scene' && !targetObj.userData.row) {
+        if (targetObj.name === "dismissZone") break;
+        targetObj = targetObj.parent;
+      }
+
+      if (targetObj.name === "dismissZone") {
+        // Dismiss unit & refund gold
+        const refund = Math.round(GAME_STATE.recruitCost * draggedHero.tier * 0.5);
+        GAME_STATE.gold += refund;
+        gridUnits[dragSourcePos.row][dragSourcePos.col] = null;
+        draggedHero.destroy();
+        updateHUD();
+        spawnFloatingText(draggedHero.mesh.position, `🌾 +${refund} 환급`, '#22c55e');
+      } else if (targetObj.userData.row !== undefined) {
+        const tr = targetObj.userData.row;
+        const tc = targetObj.userData.col;
+
+        const targetHero = gridUnits[tr][tc];
+
+        if (tr === dragSourcePos.row && tc === dragSourcePos.col) {
+          // Dropped on same tile -> Reset position
+          draggedHero.updateWorldPosition();
+        } else if (!targetHero) {
+          // Move to empty tile
+          gridUnits[dragSourcePos.row][dragSourcePos.col] = null;
+          gridUnits[tr][tc] = draggedHero;
+          draggedHero.row = tr;
+          draggedHero.col = tc;
+          draggedHero.updateWorldPosition();
+        } else if (targetHero.tier === draggedHero.tier && draggedHero.tier < 7) {
+          // Merge units!
+          gridUnits[dragSourcePos.row][dragSourcePos.col] = null;
+          targetHero.destroy();
+
+          const newTier = draggedHero.tier + 1;
+          draggedHero.destroy();
+
+          const newHero = new Hero(newTier, tr, tc);
+          gridUnits[tr][tc] = newHero;
+
+          audioEngine.playMerge();
+          spawnExplosionVFX(newHero.getWorldPosition(), newHero.config.color);
+          spawnFloatingText(newHero.getWorldPosition(), `🌟 TIER UP! [${newHero.config.name}]`, '#facc15');
         } else {
-            showBriefingPanel(null);
+          // Swap positions
+          gridUnits[dragSourcePos.row][dragSourcePos.col] = targetHero;
+          gridUnits[tr][tc] = draggedHero;
+
+          targetHero.row = dragSourcePos.row;
+          targetHero.col = dragSourcePos.col;
+          draggedHero.row = tr;
+          draggedHero.col = tc;
+
+          targetHero.updateWorldPosition();
+          draggedHero.updateWorldPosition();
         }
-    }
-}
-
-function handleDragEnd() {
-    if (!gameState.draggedItem) return;
-    const { sourceIndex, hero, x, y } = gameState.draggedItem;
-
-    if (isInsideSellZone(x, y)) {
-        const refundGold = Math.round(gameState.recruitCost * hero.tier * 0.5);
-        gameState.gold += refundGold;
-        gameState.grid[sourceIndex] = null;
-
-        audioEngine.playSound('merge');
-        createImpactParticles(x, y, "#FFD700", 16);
-        gameState.floatingTexts.push(new FloatingText(x, y - 10, `+${refundGold}🌾 환급!`, "#FFD700", 18));
+      } else {
+        draggedHero.updateWorldPosition();
+      }
     } else {
-        const targetIndex = getIndexFromCoords(x, y);
-
-        if (targetIndex !== -1 && targetIndex !== sourceIndex) {
-            const targetHero = gameState.grid[targetIndex];
-
-            if (targetHero === null) {
-                gameState.grid[targetIndex] = hero;
-                gameState.grid[sourceIndex] = null;
-            } else if (targetHero.tier === hero.tier && hero.tier < 7) {
-                const nextTier = hero.tier + 1;
-                const newHero = new Hero(nextTier);
-                gameState.grid[targetIndex] = newHero;
-                gameState.grid[sourceIndex] = null;
-
-                const targetPos = getCellCenter(targetIndex);
-                createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 24);
-                gameState.floatingTexts.push(new FloatingText(targetPos.x, targetPos.y - 15, `${newHero.config.name} 승급!`, newHero.config.color, 18));
-
-                if (nextTier === 7) {
-                    audioEngine.playSound('lubu');
-                    triggerScreenShake(12, 0.5);
-                    gameState.shockwaves.push(new Shockwave(targetPos.x, targetPos.y, "#EF4444"));
-                } else {
-                    audioEngine.playSound('merge');
-                }
-            } else {
-                gameState.grid[targetIndex] = hero;
-                gameState.grid[sourceIndex] = targetHero;
-            }
-        }
+      draggedHero.updateWorldPosition();
     }
 
-    gameState.draggedItem = null;
-    showBriefingPanel(null);
-    updateSynergies();
+    draggedHero = null;
+    calculateFactionSynergies();
+    updateHUD();
+  }
+
+  container.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+
+  container.addEventListener('touchstart', onPointerDown, { passive: true });
+  window.addEventListener('touchmove', onPointerMove, { passive: true });
+  window.addEventListener('touchend', onPointerUp);
 }
 
-// Touch & Mouse Event Listeners
-canvas.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    audioEngine.init();
-    if (e.touches.length > 0) {
-        handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+// --- [11. FACTION SYNERGIES & INSPECTOR PANEL] ---
+function calculateFactionSynergies() {
+  const counts = { "촉": 0, "위": 0, "오": 0, "군웅": 0 };
+  let dps = 0;
+
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const h = gridUnits[r][c];
+      if (h) {
+        counts[h.config.faction] = (counts[h.config.faction] || 0) + 1;
+        dps += Math.round(h.config.atk * h.config.asp);
+      }
     }
-}, { passive: false });
+  }
 
-canvas.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-    if (e.touches.length > 0) {
-        handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
-    }
-}, { passive: false });
+  GAME_STATE.synergies.shu = counts["촉"] >= 3;
+  GAME_STATE.synergies.wei = counts["위"] >= 2;
+  GAME_STATE.synergies.qun = counts["군웅"] >= 3;
+  GAME_STATE.totalDps = dps;
 
-canvas.addEventListener("touchend", (e) => {
-    e.preventDefault();
-    handleDragEnd();
-}, { passive: false });
+  // Update Synergy Badges in DOM
+  const synShu = document.getElementById('syn-shu');
+  const synWei = document.getElementById('syn-wei');
+  const synQun = document.getElementById('syn-qun');
 
-canvas.addEventListener("mousedown", (e) => {
-    audioEngine.init();
-    handleDragStart(e.clientX, e.clientY);
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    handleDragMove(e.clientX, e.clientY);
-});
-
-canvas.addEventListener("mouseup", () => {
-    handleDragEnd();
-});
-
-/* ==========================================================================
-   8. Faction Synergies & Combat System
-   ========================================================================== */
-
-function updateSynergies() {
-    let shu = 0;
-    let wei = 0;
-    let qun = 0;
-    let totalDps = 0;
-
-    for (let i = 0; i < gameState.grid.length; i++) {
-        const hero = gameState.grid[i];
-        if (!hero) continue;
-        const faction = hero.config.faction;
-        if (faction === "촉") shu++;
-        else if (faction === "위") wei++;
-        else if (faction === "군웅") qun++;
-
-        totalDps += hero.getAtk() * hero.getAttackSpeed();
-    }
-
-    gameState.synergies.shu = (shu >= 3);
-    gameState.synergies.wei = (wei >= 2);
-    gameState.synergies.qun = (qun >= 3);
-
-    totalDpsValEl.innerText = Math.round(totalDps) + " DPS";
-
-    // Update Telemetry Badges in HUD
-    synergyBadgesContainer.innerHTML = "";
-    const badges = [
-        { active: gameState.synergies.shu, text: "🟢촉의 의지", color: "#10b981" },
-        { active: gameState.synergies.wei, text: "🔵위의 군율", color: "#3b82f6" },
-        { active: gameState.synergies.qun, text: "🔴패왕기세", color: "#ef4444" }
-    ];
-
-    badges.forEach(b => {
-        if (b.active) {
-            const span = document.createElement("span");
-            span.style.cssText = `background: rgba(15,23,42,0.8); color: ${b.color}; border: 1px solid ${b.color}; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: bold;`;
-            span.innerText = b.text;
-            synergyBadgesContainer.appendChild(span);
-        }
-    });
+  if (synShu) {
+    synShu.textContent = `촉(공속) ${counts["촉"]}/3`;
+    synShu.classList.toggle('active', GAME_STATE.synergies.shu);
+  }
+  if (synWei) {
+    synWei.textContent = `위(사거리) ${counts["위"]}/2`;
+    synWei.classList.toggle('active', GAME_STATE.synergies.wei);
+  }
+  if (synQun) {
+    synQun.textContent = `군웅(치명) ${counts["군웅"]}/3`;
+    synQun.classList.toggle('active', GAME_STATE.synergies.qun);
+  }
 }
 
-function performAttackHit(enemy, baseDamage, forceCrit = false) {
-    let critChance = 0.15;
-    if (gameState.synergies.qun) critChance += 0.25;
+function showUnitInspector(hero) {
+  const panel = document.getElementById('unit-inspector');
+  if (!panel) return;
 
-    const isCrit = forceCrit || (Math.random() < critChance);
-    const finalDamage = isCrit ? baseDamage * 2 : baseDamage;
+  document.getElementById('insp-name').textContent = `${hero.config.name} [Tier ${hero.tier}]`;
+  document.getElementById('insp-desc').textContent = hero.config.desc;
 
-    applyDamage(enemy, finalDamage, isCrit);
+  let atk = Math.round(hero.config.atk * GAME_STATE.buffs.atkMult * (1 + (GAME_STATE.upgradeLvl - 1) * 0.15));
+  let asp = (hero.config.asp * GAME_STATE.buffs.aspMult * (GAME_STATE.synergies.shu ? 1.25 : 1.0)).toFixed(1);
+  let range = Math.round(hero.config.range * 10 * (GAME_STATE.synergies.wei ? 1.15 : 1.0));
+
+  document.getElementById('insp-atk').textContent = atk;
+  document.getElementById('insp-spd').textContent = `${asp}/s`;
+  document.getElementById('insp-rng').textContent = `${range}m`;
+
+  panel.classList.remove('hidden');
+  setTimeout(() => panel.classList.add('hidden'), 3500);
 }
 
-function applyDamage(enemy, amount, isCrit = false) {
-    enemy.hp -= amount;
-    audioEngine.playSound('hit');
-
-    if (isCrit) {
-        gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 12, `💥 -${amount}!`, "#FFD700", 18));
-    } else {
-        gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 10, `-${amount}`, "#FF5555", 13));
-    }
-
-    if (enemy.hp <= 0) {
-        const reward = Math.round(enemy.goldReward * gameState.goldMultiplier);
-        gameState.gold += reward;
-        gameState.kills += 1;
-        gameState.floatingTexts.push(new FloatingText(enemy.x, enemy.y - 20, `+${reward}🌾`, "#FFD700", 14));
-        createImpactParticles(enemy.x, enemy.y, "#FFD700", 10);
-    }
-}
-
-function createImpactParticles(x, y, color, count = 8) {
-    for (let i = 0; i < count; i++) {
-        gameState.particles.push(new Particle(x, y, color));
-    }
-}
-
-function updateCombat(dt) {
-    const aliveEnemies = gameState.enemies.filter(e => e.hp > 0);
-
-    for (let i = 0; i < gameState.grid.length; i++) {
-        const hero = gameState.grid[i];
-        if (!hero) continue;
-
-        const pos = getCellCenter(i);
-        hero.attackCooldown -= dt;
-
-        if (hero.attackCooldown <= 0 && aliveEnemies.length > 0) {
-            let target = null;
-            let maxProgress = -1;
-
-            aliveEnemies.forEach(e => {
-                const dist = Math.hypot(e.x - pos.x, e.y - pos.y);
-                if (dist <= hero.getRange()) {
-                    if (e.pathProgress > maxProgress) {
-                        maxProgress = e.pathProgress;
-                        target = e;
-                    }
-                }
-            });
-
-            if (target) {
-                hero.attackCooldown = 1.0 / hero.getAttackSpeed();
-                const type = hero.config.attackType;
-
-                if (type === 'single' || type === 'rapid' || type === 'pierce') {
-                    audioEngine.playSound('bow');
-                    gameState.projectiles.push(new Projectile(pos.x, pos.y, target, hero));
-                } else if (type === 'rapid_spear') {
-                    audioEngine.playSound('spear');
-                    performAttackHit(target, hero.getAtk());
-                    createImpactParticles(target.x, target.y, hero.config.color, 6);
-                } else if (type === 'aoe') {
-                    // Guan Yu Green Crescent Moon Blade Wave
-                    audioEngine.playSound('spear');
-                    aliveEnemies.forEach(e => {
-                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
-                            performAttackHit(e, hero.getAtk());
-                            createImpactParticles(e.x, e.y, "#10B981", 6);
-                        }
-                    });
-                } else if (type === 'slow_aoe') {
-                    // Zhuge Liang Eight Trigram Lightning Magic
-                    audioEngine.playSound('boss');
-                    aliveEnemies.forEach(e => {
-                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.getRange()) {
-                            performAttackHit(e, hero.getAtk());
-                            e.slowTimer = 2.5;
-                            e.slowFactor = 0.5;
-                            createImpactParticles(e.x, e.y, "#8B5CF6", 8);
-                        }
-                    });
-                } else if (type === 'musou') {
-                    // Lu Bu Musou Strike
-                    audioEngine.playSound('lubu');
-                    triggerScreenShake(14, 0.4);
-                    gameState.shockwaves.push(new Shockwave(pos.x, pos.y, "#EF4444"));
-
-                    aliveEnemies.forEach(e => {
-                        performAttackHit(e, hero.getAtk());
-                        createImpactParticles(e.x, e.y, "#EF4444", 12);
-                    });
-                    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.3, "천하무쌍 방천화극!!", "#EF4444", 22));
-                }
-            }
-        }
-    }
-}
-
-/* ==========================================================================
-   9. Spawning & Wave Engine
-   ========================================================================== */
-
-function startNextWave() {
-    gameState.waveInProgress = true;
-    const waveConfig = getWaveConfig(gameState.wave);
-    waveTitleEl.innerText = waveConfig.name;
-
-    if (waveConfig.isBoss) {
-        audioEngine.playSound('boss');
-        triggerScreenShake(10, 0.4);
-        gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.25, "⚠️ 보스 출현 ⚠️", "#FF2222", 24));
-        gameState.enemiesToSpawn = 1;
-    } else {
-        gameState.enemiesToSpawn = 8 + Math.floor(gameState.wave * 1.5);
-    }
-    gameState.spawnTimer = 0;
-}
-
-function updateWave(dt) {
-    if (!gameState.waveInProgress) return;
-
-    const waveConfig = getWaveConfig(gameState.wave);
-
-    if (gameState.enemiesToSpawn > 0) {
-        gameState.spawnTimer -= dt;
-        if (gameState.spawnTimer <= 0) {
-            gameState.spawnTimer = waveConfig.isBoss ? 1.0 : 0.9;
-            gameState.enemies.push(new Enemy(waveConfig));
-            gameState.enemiesToSpawn -= 1;
-        }
-    }
-
-    gameState.enemies = gameState.enemies.filter(e => {
-        if (e.hp <= 0) return false;
-
-        const reachedGate = e.update(dt, pathPoints);
-        if (reachedGate) {
-            const dmg = e.isBoss ? 30 : 10;
-            gameState.gateHp = Math.max(0, gameState.gateHp - dmg);
-            createImpactParticles(e.x, e.y, "#FF0000", 12);
-            audioEngine.playSound('hit');
-            triggerScreenShake(6, 0.2);
-
-            if (gameState.gateHp <= 0) {
-                triggerGameOver();
-            }
-            return false;
-        }
-        return true;
-    });
-
-    if (gameState.enemiesToSpawn <= 0 && gameState.enemies.length === 0) {
-        gameState.waveInProgress = false;
-        showStrategyModal();
-    }
-}
-
-/* ==========================================================================
-   10. Roguelike Strategy Cards ("제갈량의 금낭묘계")
-   ========================================================================== */
-
-const STRATEGY_POOL = [
-    { id: "atk_up", name: "도원결의", desc: "전체 장수 공격력 +25% 증가", icon: "🍶", apply: () => gameState.atkBonusPercent += 25 },
-    { id: "gold_up", name: "병량 확보", desc: "적 처치 시 군량미 획득량 +30%", icon: "🌾", apply: () => gameState.goldMultiplier += 0.3 },
-    { id: "aspd_up", name: "연노 개량", desc: "전체 장수 공격속도 +20% 증가", icon: "🏹", apply: () => gameState.aspdBonusPercent += 20 },
-    { id: "gate_repair", name: "성벽 보수", desc: "관문 내구도 40 회복", icon: "🏯", apply: () => gameState.gateHp = Math.min(gameState.maxGateHp, gameState.gateHp + 40) },
-    { id: "free_gold", name: "군자금 조달", desc: "즉시 군량미 150🌾 획득", icon: "💰", apply: () => gameState.gold += 150 }
-];
-
-function showStrategyModal() {
-    gameState.paused = true;
-    strategyCardsContainer.innerHTML = "";
-
-    const shuffled = [...STRATEGY_POOL].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, 3);
-
-    selected.forEach(card => {
-        const cardEl = document.createElement("div");
-        cardEl.className = "strategy-card";
-        cardEl.innerHTML = `
-            <div class="card-icon">${card.icon}</div>
-            <div class="card-info">
-                <div class="card-name">${card.name}</div>
-                <div class="card-desc">${card.desc}</div>
-            </div>
-        `;
-        cardEl.onclick = () => {
-            card.apply();
-            audioEngine.playSound('merge');
-            strategyModal.classList.add("hidden");
-            gameState.paused = false;
-            gameState.wave += 1;
-            startNextWave();
-            updateSynergies();
-        };
-        strategyCardsContainer.appendChild(cardEl);
-    });
-
-    strategyModal.classList.remove("hidden");
-}
-
-/* ==========================================================================
-   11. Recruitment, Active Skill & Actions
-   ========================================================================== */
+// --- [12. GAMEPLAY LOOP & WAVES] ---
+let spawnTimer = 0;
+let spawnedEnemiesInWave = 0;
+const totalEnemiesPerWave = 12;
 
 function recruitHero() {
-    if (gameState.gold < gameState.recruitCost) return;
+  if (GAME_STATE.gold < GAME_STATE.recruitCost) return;
 
-    const emptyIndices = [];
-    for (let i = 0; i < gameState.grid.length; i++) {
-        if (gameState.grid[i] === null) emptyIndices.push(i);
+  // Find empty cell
+  const emptyCells = [];
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      if (!gridUnits[r][c]) emptyCells.push({ r, c });
     }
+  }
 
-    if (emptyIndices.length === 0) {
-        gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, gridStartY - 20, "진영에 빈 자리가 없습니다!", "#FF4444", 16));
-        return;
-    }
+  if (emptyCells.length === 0) return;
 
-    gameState.gold -= gameState.recruitCost;
-    gameState.recruitCost = Math.round(gameState.recruitCost * 1.15);
+  GAME_STATE.gold -= GAME_STATE.recruitCost;
 
-    const targetSlot = emptyIndices[0];
+  // Roll probabilities: 80% Tier 1, 16% Tier 2, 4% Tier 3
+  const roll = Math.random();
+  let tier = 1;
+  if (roll > 0.96) tier = 3;
+  else if (roll > 0.80) tier = 2;
 
-    // Probabilistic recruitment (80% T1, 16% T2, 4% T3)
-    const roll = Math.random();
-    let recruitedTier = 1;
-    let recruitText = null;
-    let recruitTextColor = "#4AE3B5";
+  const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  const newHero = new Hero(tier, cell.r, cell.c);
+  gridUnits[cell.r][cell.c] = newHero;
 
-    if (roll < 0.80) {
-        recruitingTier = 1;
-    } else if (roll < 0.96) {
-        recruitingTier = 2;
-        recruitText = "⚡ 정예 발탁!";
-        recruitTextColor = "#3B82F6";
-    } else {
-        recruitingTier = 3;
-        recruitText = "🌟 명장 초고속 등용!!";
-        recruitTextColor = "#FFD700";
-    }
+  audioEngine.playMerge();
+  spawnExplosionVFX(newHero.getWorldPosition(), newHero.config.color);
 
-    const newHero = new Hero(recruitingTier);
-    gameState.grid[targetSlot] = newHero;
+  if (tier > 1) {
+    spawnFloatingText(newHero.getWorldPosition(), tier === 3 ? "🌟 명장 초고속 등용!!" : "⚡ 정예 발탁!", "#facc15");
+  }
 
-    const pos = getCellCenter(targetSlot);
-
-    if (recruitingTier === 3) {
-        createImpactParticles(pos.x, pos.y, "#FFD700", 30);
-        audioEngine.playSound('merge');
-        triggerScreenShake(8, 0.3);
-        gameState.shockwaves.push(new Shockwave(pos.x, pos.y, "#FFD700"));
-    } else {
-        createImpactParticles(pos.x, pos.y, newHero.config.color, 12);
-        audioEngine.playSound('spear');
-    }
-
-    if (recruitText) {
-        gameState.floatingTexts.push(new FloatingText(pos.x, pos.y - 20, recruitText, recruitTextColor, 18));
-    }
-
-    updateSynergies();
+  calculateFactionSynergies();
+  updateHUD();
 }
 
-function upgradeForce() {
-    if (gameState.gold < gameState.upgradeCost) return;
-
-    gameState.gold -= gameState.upgradeCost;
-    gameState.upgradeLevel += 1;
-    gameState.atkBonusPercent += 10;
-    gameState.upgradeCost = Math.round(gameState.upgradeCost * 1.3);
-
-    audioEngine.playSound('merge');
-    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight / 2, `전체 무력 강화 Lv.${gameState.upgradeLevel}!`, "#FFD700", 20));
-    updateSynergies();
+function upgradePower() {
+  if (GAME_STATE.gold < GAME_STATE.upgradeCost) return;
+  GAME_STATE.gold -= GAME_STATE.upgradeCost;
+  GAME_STATE.upgradeLvl++;
+  GAME_STATE.upgradeCost = Math.round(GAME_STATE.upgradeCost * 1.4);
+  updateHUD();
 }
 
 function triggerRedCliffSkill() {
-    if (gameState.skillCooldown > 0 || gameState.paused || gameState.gameOver) return;
+  if (GAME_STATE.skillCooldown > 0) return;
 
-    gameState.skillCooldown = SKILL_MAX_COOLDOWN;
-    const fireDamage = gameState.wave * 120;
+  GAME_STATE.skillCooldown = GAME_STATE.maxSkillCooldown;
+  audioEngine.playSkill();
+  triggerScreenShake(1.2);
 
-    audioEngine.playSound('fire');
-    triggerScreenShake(16, 0.6);
-    gameState.shockwaves.push(new Shockwave(canvasWidth / 2, canvasHeight * 0.35, "#FF4400"));
+  // 3D Firestorm Shockwave
+  spawnShockwaveSphereVFX(new THREE.Vector3(0, 0, -6), 0xf97316);
 
-    gameState.enemies.forEach(e => {
-        applyDamage(e, fireDamage, true);
-        e.slowTimer = 3.0;
-        e.slowFactor = 0.4;
-    });
+  // Massive Damage & Slow to all alive enemies
+  const dmg = 800 * Math.pow(1.25, GAME_STATE.wave);
+  enemies.forEach(e => {
+    e.takeDamage(dmg, true);
+    e.speed *= 0.4;
+  });
 
-    createImpactParticles(canvasWidth / 2, canvasHeight * 0.35, "#FF4400", 50);
-    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.35, "🔥 적벽의 화공이 적진을 불태웁니다!!", "#FF4400", 22));
+  updateHUD();
 }
 
-recruitBtn.addEventListener("click", recruitHero);
-upgradeBtn.addEventListener("click", upgradeForce);
-skillBtn.addEventListener("click", triggerRedCliffSkill);
+function triggerScreenShake(intensity) {
+  shakeIntensity = intensity;
+}
 
-camToggleBtnEl.addEventListener("click", () => {
-    gameState.perspectiveView = !gameState.perspectiveView;
-    camToggleBtnEl.innerText = gameState.perspectiveView ? "🎥 시점: 입체뷰" : "🎥 시점: 전술뷰";
-});
+function updateHUD() {
+  document.getElementById('gold-val').textContent = GAME_STATE.gold;
+  document.getElementById('hp-val').textContent = `${GAME_STATE.gateHp}/${GAME_STATE.maxGateHp}`;
+  document.getElementById('kill-val').textContent = GAME_STATE.kills;
+  document.getElementById('dps-val').textContent = GAME_STATE.totalDps;
 
-soundBtnEl.addEventListener("click", () => {
-    SOUND_CONFIG.enabled = !SOUND_CONFIG.enabled;
-    soundBtnEl.innerText = SOUND_CONFIG.enabled ? "🔊" : "🔇";
-});
+  document.getElementById('recruit-cost').textContent = GAME_STATE.recruitCost;
+  document.getElementById('upgrade-lvl').textContent = GAME_STATE.upgradeLvl;
+  document.getElementById('upgrade-cost').textContent = GAME_STATE.upgradeCost;
+
+  const hpBar = document.getElementById('gate-hp-bar');
+  if (hpBar) {
+    const pct = Math.max(0, (GAME_STATE.gateHp / GAME_STATE.maxGateHp) * 100);
+    hpBar.style.width = `${pct}%`;
+  }
+
+  const skillCdLabel = document.getElementById('skill-cd');
+  if (skillCdLabel) {
+    if (GAME_STATE.skillCooldown > 0) {
+      skillCdLabel.textContent = `${Math.ceil(GAME_STATE.skillCooldown)}s`;
+    } else {
+      skillCdLabel.textContent = "즉시 발동";
+    }
+  }
+
+  if (GAME_STATE.gateHp <= 0 && !GAME_STATE.isGameOver) {
+    triggerGameOver();
+  }
+}
+
+// Wave & Roguelike Modal
+function triggerStrategyModal() {
+  GAME_STATE.isPaused = true;
+  const modal = document.getElementById('strategy-modal');
+  const cardContainer = document.getElementById('strategy-cards');
+  cardContainer.innerHTML = '';
+
+  const strats = [
+    { title: "도원결의", desc: "전체 아군 장수의 공격력 +25%", apply: () => { GAME_STATE.buffs.atkMult *= 1.25; } },
+    { title: "병량 확보", desc: "적 처치 시 획득 군량미 +30%", apply: () => { GAME_STATE.buffs.goldMult *= 1.30; } },
+    { title: "연노 개량", desc: "전체 아군 장수의 공격속도 +20%", apply: () => { GAME_STATE.buffs.aspMult *= 1.20; } },
+    { title: "성벽 보강", desc: "호로관 내구도 +30 즉시 회복", apply: () => { GAME_STATE.gateHp = Math.min(GAME_STATE.maxGateHp, GAME_STATE.gateHp + 30); } },
+    { title: "무신 기세", desc: "치명타 확률 +15% 증가", apply: () => { GAME_STATE.buffs.critChance += 0.15; } }
+  ];
+
+  // Pick 3 random cards
+  const shuffled = strats.sort(() => 0.5 - Math.random()).slice(0, 3);
+  shuffled.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'strat-card';
+    div.innerHTML = `
+      <div class="strat-card-title">${card.title}</div>
+      <div class="strat-card-desc">${card.desc}</div>
+    `;
+    div.onclick = () => {
+      card.apply();
+      modal.classList.add('hidden');
+      GAME_STATE.isPaused = false;
+      GAME_STATE.wave++;
+      spawnedEnemiesInWave = 0;
+      document.getElementById('wave-title').textContent = `제${GAME_STATE.wave}장 ${GAME_STATE.wave % 5 === 0 ? '보스 호로관 결전' : '전선 공방전'}`;
+      updateHUD();
+    };
+    cardContainer.appendChild(div);
+  });
+
+  modal.classList.remove('hidden');
+}
 
 function triggerGameOver() {
-    gameState.gameOver = true;
-    gameState.paused = true;
-    finalWaveEl.innerText = getWaveConfig(gameState.wave).name;
-    finalKillsEl.innerText = gameState.kills;
-    gameoverModal.classList.remove("hidden");
+  GAME_STATE.isGameOver = true;
+  document.getElementById('final-wave').textContent = `제${GAME_STATE.wave}장`;
+  document.getElementById('final-kills').textContent = GAME_STATE.kills;
+  document.getElementById('gameover-modal').classList.remove('hidden');
 }
 
-restartBtn.addEventListener("click", () => {
-    location.reload();
-});
-
-/* ==========================================================================
-   12. High-End Canvas Render Loop
-   ========================================================================== */
-
-function updateUI() {
-    goldValEl.innerText = gameState.gold;
-    hpValEl.innerText = `${gameState.gateHp}/${gameState.maxGateHp}`;
-    killValEl.innerText = gameState.kills;
-    gateHpBarEl.style.width = `${Math.max(0, (gameState.gateHp / gameState.maxGateHp) * 100)}%`;
-
-    recruitCostEl.innerText = gameState.recruitCost;
-    upgradeLvlEl.innerText = gameState.upgradeLevel;
-    upgradeCostEl.innerText = gameState.upgradeCost;
-
-    recruitBtn.classList.toggle("disabled", gameState.gold < gameState.recruitCost);
-    upgradeBtn.classList.toggle("disabled", gameState.gold < gameState.upgradeCost);
-
-    if (gameState.skillCooldown > 0) {
-        skillBtn.classList.add("disabled");
-        skillSubEl.innerText = `${Math.ceil(gameState.skillCooldown)}초 후 가능`;
-    } else {
-        skillBtn.classList.remove("disabled");
-        skillSubEl.innerText = "필살기 발동";
-    }
-}
-
-function drawGame() {
-    ctx.save();
-
-    // Camera Screen Shake Offset
-    if (gameState.shakeTimer > 0) {
-        const dx = (Math.random() - 0.5) * gameState.shakeIntensity;
-        const dy = (Math.random() - 0.5) * gameState.shakeIntensity;
-        ctx.translate(dx, dy);
-    }
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    // 2.5D Isometric Perspective Tilt View Transformation
-    if (gameState.perspectiveView) {
-        ctx.translate(canvasWidth / 2, canvasHeight / 2);
-        ctx.scale(1.0, 0.72);
-        ctx.translate(-canvasWidth / 2, -canvasHeight / 2 + 35);
-    }
-
-    // 1. Parallax Night Battlefield Background & Stars
-    ctx.save();
-    bgStars.forEach(s => {
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.2 + Math.sin(gameState.auraTimer * 2 + s.alpha) * 0.3})`;
-        ctx.beginPath();
-        ctx.arc(s.x * canvasWidth, s.y * canvasHeight * 0.5, s.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    bgEmbers.forEach(e => {
-        ctx.fillStyle = `rgba(255, 120, 0, ${0.4 + Math.sin(gameState.auraTimer * 3 + e.x) * 0.3})`;
-        ctx.beginPath();
-        ctx.arc(e.x * canvasWidth, (e.y * canvasHeight - gameState.auraTimer * e.speed) % canvasHeight, e.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-    ctx.restore();
-
-    // 2. Torch Flickering Lights at Gate Flanks
-    ctx.save();
-    const torch1Glow = ctx.createRadialGradient(25, gridStartY - 15, 2, 25, gridStartY - 15, 35);
-    torch1Glow.addColorStop(0, "rgba(255, 140, 0, 0.4)");
-    torch1Glow.addColorStop(1, "transparent");
-    ctx.fillStyle = torch1Glow;
-    ctx.beginPath();
-    ctx.arc(25, gridStartY - 15, 35, 0, Math.PI * 2);
-    ctx.fill();
-
-    const torch2Glow = ctx.createRadialGradient(canvasWidth - 25, gridStartY - 15, 2, canvasWidth - 25, gridStartY - 15, 35);
-    torch2Glow.addColorStop(0, "rgba(255, 140, 0, 0.4)");
-    torch2Glow.addColorStop(1, "transparent");
-    ctx.fillStyle = torch2Glow;
-    ctx.beginPath();
-    ctx.arc(canvasWidth - 25, gridStartY - 15, 35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // 3. Draw S-Curve Defense Path
-    ctx.save();
-    ctx.strokeStyle = "rgba(212, 175, 55, 0.25)";
-    ctx.lineWidth = 26;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    for (let t = 0; t <= 1; t += 0.02) {
-        const pt = getPointOnPath(pathPoints, t);
-        if (t === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.5)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-
-    // 4. Draw Gate Line
-    const gateY = gridStartY - 15;
-    ctx.save();
-    ctx.fillStyle = "#1e140a";
-    ctx.fillRect(0, gateY, canvasWidth, 12);
-    ctx.strokeStyle = "#d4af37";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, gateY, canvasWidth, 12);
-    ctx.fillStyle = "#FFD700";
-    ctx.font = "bold 12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("🏯 성문 관문 방어선", canvasWidth / 2, gateY + 9);
-    ctx.restore();
-
-    // 5. Draw Enemies & Projectiles
-    gameState.enemies.forEach(e => e.draw(ctx));
-    gameState.projectiles.forEach(p => p.draw(ctx));
-
-    // 6. Draw 5x4 Grid Tiles as 3D Bevelled Obsidian Altars
-    for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-            const x = col * cellWidth;
-            const y = gridStartY + row * cellHeight;
-            const index = row * COLS + col;
-
-            ctx.save();
-            // Bevelled Obsidian Tile Base
-            const grad = ctx.createLinearGradient(x, y, x, y + cellHeight);
-            grad.addColorStop(0, "#1e293b");
-            grad.addColorStop(1, "#0f172a");
-            ctx.fillStyle = grad;
-            ctx.fillRect(x + 3, y + 3, cellWidth - 6, cellHeight - 6);
-
-            ctx.strokeStyle = "rgba(212, 175, 55, 0.35)";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x + 3, y + 3, cellWidth - 6, cellHeight - 6);
-
-            const hero = gameState.grid[index];
-            const centerX = x + cellWidth / 2;
-            const centerY = y + cellHeight / 2;
-
-            if (hero) {
-                // Rotating Magic Circle Floor Effect
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(gameState.auraTimer * 1.2);
-                ctx.strokeStyle = hero.config.color;
-                ctx.globalAlpha = 0.4;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(0, 0, Math.min(cellWidth, cellHeight) * 0.4, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-
-                if (!gameState.draggedItem || gameState.draggedItem.sourceIndex !== index) {
-                    const radius = Math.min(cellWidth, cellHeight) * 0.35;
-                    drawHeroVisual(ctx, centerX, centerY, radius, hero.config, gameState.auraTimer);
-                }
-            }
-            ctx.restore();
-        }
-    }
-
-    // 7. Draw Dismiss Drop Zone when dragging
-    if (gameState.draggedItem) {
-        ctx.save();
-        ctx.fillStyle = "rgba(220, 38, 38, 0.35)";
-        ctx.strokeStyle = "#EF4444";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(sellZoneRect.x, sellZoneRect.y, sellZoneRect.width, sellZoneRect.height, 6);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 13px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const refundAmt = Math.round(gameState.recruitCost * gameState.draggedItem.hero.tier * 0.5);
-        ctx.fillText(`🌾 장수 해산 (+${refundAmt}🌾 환급)`, sellZoneRect.x + sellZoneRect.width / 2, sellZoneRect.y + sellZoneRect.height / 2);
-        ctx.restore();
-
-        // Draw Dragged Hero Following Cursor
-        const { hero, x, y } = gameState.draggedItem;
-        const radius = Math.min(cellWidth, cellHeight) * 0.4;
-        drawHeroVisual(ctx, x, y, radius, hero.config, gameState.auraTimer);
-    }
-
-    // 8. Draw Shockwaves, Particles & Floating Text
-    gameState.shockwaves.forEach(sw => sw.draw(ctx));
-    gameState.particles.forEach(p => p.draw(ctx));
-    gameState.floatingTexts.forEach(ft => ft.draw(ctx));
-
-    ctx.restore();
-}
-
+// --- [13. MAIN ANIMATION LOOP] ---
 let lastTime = performance.now();
-function gameLoop(now) {
-    const dt = Math.min(0.1, (now - lastTime) / 1000);
-    lastTime = now;
 
-    if (!gameState.paused && !gameState.gameOver) {
-        gameState.auraTimer += dt;
-        if (gameState.shakeTimer > 0) {
-            gameState.shakeTimer -= dt;
-        }
-        if (gameState.skillCooldown > 0) {
-            gameState.skillCooldown = Math.max(0, gameState.skillCooldown - dt);
-        }
+function animateLoop() {
+  requestAnimationFrame(animateLoop);
 
-        updateWave(dt);
-        updateCombat(dt);
+  const now = performance.now();
+  const dt = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime = now;
 
-        gameState.projectiles.forEach(p => p.update(dt, gameState.enemies));
-        gameState.projectiles = gameState.projectiles.filter(p => p.active);
+  if (GAME_STATE.isPaused || GAME_STATE.isGameOver) return;
 
-        gameState.shockwaves.forEach(sw => sw.update(dt));
-        gameState.shockwaves = gameState.shockwaves.filter(sw => sw.alpha > 0);
+  // Smooth Camera Interpolation
+  camera.position.lerp(targetCamPos, dt * 4.0);
+  currentCamLook.lerp(targetCamLook, dt * 4.0);
+  camera.lookAt(currentCamLook);
 
-        gameState.particles.forEach(p => p.update(dt));
-        gameState.particles = gameState.particles.filter(p => p.life > 0);
+  // Screen Shake Effect
+  if (shakeIntensity > 0) {
+    shakeIntensity -= dt * 2.0;
+    camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+    camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+  }
 
-        gameState.floatingTexts.forEach(ft => ft.update(dt));
-        gameState.floatingTexts = gameState.floatingTexts.filter(ft => ft.life > 0);
+  // Cooldown timer
+  if (GAME_STATE.skillCooldown > 0) {
+    GAME_STATE.skillCooldown = Math.max(0, GAME_STATE.skillCooldown - dt);
+    updateHUD();
+  }
+
+  // 1. Enemy Spawner
+  spawnTimer += dt;
+  if (spawnedEnemiesInWave < totalEnemiesPerWave && spawnTimer > (GAME_STATE.wave % 5 === 0 ? 3.0 : 1.5)) {
+    spawnTimer = 0;
+    const enemy = new Enemy(GAME_STATE.wave);
+    enemies.push(enemy);
+    spawnedEnemiesInWave++;
+
+    if (enemy.isBoss) {
+      audioEngine.playBossAlert();
+      spawnFloatingText(new THREE.Vector3(0, 3, -10), `⚠️ 보스 [${enemy.name}] 출현!`, "#ef4444");
     }
+  }
 
-    updateUI();
-    drawGame();
-    requestAnimationFrame(gameLoop);
+  // 2. Wave Clear Check
+  if (spawnedEnemiesInWave >= totalEnemiesPerWave && enemies.length === 0) {
+    triggerStrategyModal();
+  }
+
+  // 3. Update Heroes
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const hero = gridUnits[r][c];
+      if (hero) {
+        hero.animate(dt);
+
+        // Attack Target Check
+        const attackInterval = 1.0 / (hero.config.asp * GAME_STATE.buffs.aspMult * (GAME_STATE.synergies.shu ? 1.25 : 1.0));
+        if (now - hero.lastAttackTime > attackInterval * 1000) {
+          // Find target enemy within range
+          const heroPos = hero.getWorldPosition();
+          let bestTarget = null;
+          let maxProgress = -1;
+
+          enemies.forEach(e => {
+            const dist = heroPos.distanceTo(e.mesh.position);
+            const range = hero.config.range * (GAME_STATE.synergies.wei ? 1.15 : 1.0);
+            if (dist <= range && e.progress > maxProgress) {
+              maxProgress = e.progress;
+              bestTarget = e;
+            }
+          });
+
+          if (bestTarget) {
+            hero.lastAttackTime = now;
+            audioEngine.playBow();
+            projectiles.push(new Projectile(heroPos, bestTarget, hero));
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Update Enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    if (!enemies[i].update(dt)) {
+      enemies.splice(i, 1);
+    }
+  }
+
+  // 5. Update Projectiles
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    if (!projectiles[i].update(dt)) {
+      projectiles.splice(i, 1);
+    }
+  }
+
+  // 6. Update VFX
+  updateVFX(dt);
+
+  // 7. Render 3D Scene + PostProcessing
+  composer.render();
+
+  // 8. Render 2D HUD Canvas Overlay
+  renderHUDOverlay();
 }
 
-/* ==========================================================================
-   13. Initialization
-   ========================================================================== */
+// --- [14. INITIALIZATION & BINDINGS] ---
+window.addEventListener('DOMContentLoaded', () => {
+  initThreeJS();
+  setupInteraction();
 
-function initGame() {
-    resizeCanvas();
-    gameState.grid[7] = new Hero(1);
-    gameState.grid[12] = new Hero(1);
-    updateSynergies();
-    startNextWave();
-    requestAnimationFrame(gameLoop);
-}
+  // Button Listeners
+  document.getElementById('recruit-btn').onclick = recruitHero;
+  document.getElementById('upgrade-btn').onclick = upgradePower;
+  document.getElementById('skill-btn').onclick = triggerRedCliffSkill;
 
-window.onload = initGame;
+  document.getElementById('cam-btn').onclick = () => {
+    cameraMode = (cameraMode + 1) % 3;
+    targetCamPos.copy(cameraPresets[cameraMode].pos);
+    targetCamLook.copy(cameraPresets[cameraMode].look);
+    document.getElementById('cam-btn').textContent = cameraMode === 0 ? "🎥 3D뷰" : cameraMode === 1 ? "📐 탑뷰" : "🏯 성문뷰";
+  };
+
+  document.getElementById('sound-btn').onclick = () => {
+    audioEngine.enabled = !audioEngine.enabled;
+    document.getElementById('sound-btn').textContent = audioEngine.enabled ? "🔊" : "🔇";
+  };
+
+  document.getElementById('restart-btn').onclick = () => {
+    window.location.reload();
+  };
+
+  // Initial Recruit
+  recruitHero();
+  recruitHero();
+
+  // Start Loop
+  animateLoop();
+});
