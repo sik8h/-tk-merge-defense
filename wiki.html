@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>삼국지 3D 머지 디펜스 - 공식 전술 위키 & 3D DB</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #060a12; color: #e2e8f0; font-family: 'Pretendard', system-ui, sans-serif; display: flex; flex-direction: column; min-height: 100dvh; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(56,189,248,0.35); gap: 10px; flex-wrap: wrap; }
+    .brand { color: #fbbf24; font-weight: 900; text-decoration: none; font-size: 16px; }
+    .brand small { display: block; font-size: 10px; color: #38bdf8; }
+    #wiki-search { flex: 1; min-width: 180px; max-width: 360px; padding: 7px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .badge { font-size: 12px; padding: 5px 10px; border-radius: 6px; background: rgba(251,191,36,0.15); border: 1px solid #fbbf24; color: #fde68a; font-weight: 700; }
+    .play-btn { background: #0284c7; color: #fff; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; }
+    .layout { display: flex; flex: 1; }
+    aside { width: 240px; background: #0b1120; border-right: 1px solid rgba(148,163,184,0.2); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .nav-link { display: block; padding: 8px 10px; color: #cbd5e1; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 700; }
+    .nav-link:hover, .nav-link.active { background: rgba(56,189,248,0.15); color: #38bdf8; }
+    main { flex: 1; padding: 20px; max-width: 960px; overflow-y: auto; }
+    h1 { color: #fbbf24; font-size: 22px; margin-bottom: 12px; }
+    h2 { color: #38bdf8; font-size: 16px; margin: 18px 0 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 13px; }
+    th, td { border: 1px solid #1e293b; padding: 8px 10px; text-align: left; }
+    th { background: #0f172a; color: #fbbf24; }
+    .hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+    .hero-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; }
+    .hero-card.unlocked { border-color: #fbbf24; }
+    .hanja-badge { font-size: 28px; font-weight: 900; font-family: serif; margin-bottom: 4px; }
+    @media (max-width: 720px) { .layout { flex-direction: column; } aside { width: 100%; flex-direction: row; overflow-x: auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="#/tree" class="brand">삼국지 3D 머지 디펜스 <small>ZERO-VOICE ARGON WIKI & DB</small></a>
+    <input type="search" id="wiki-search" placeholder="장수명, 한자, 사자성어 낙관 검색...">
+    <div class="header-right">
+      <span id="sync-badge" class="badge">📖 도감 동기화: 0/28</span>
+      <a href="index.html" class="play-btn">🎮 전장 복귀</a>
+    </div>
+  </header>
+  <div class="layout">
+    <aside>
+      <a href="#/tree" class="nav-link" id="nav-tree">📖 1. 전술 위키 & 공식</a>
+      <a href="#/audio" class="nav-link" id="nav-audio">🥁 2. 국악 신디 & 한자 낙관</a>
+      <a href="#/siege" class="nav-link" id="nav-siege">🏹 3. 성루 공성 병기</a>
+      <a href="#/db" class="nav-link" id="nav-db">🗂️ 4. 28인 명장 DB</a>
+    </aside>
+    <main id="wiki-main"></main>
+  </div>
+  <script src="wiki.js"></script>
+</body>
+</html>
