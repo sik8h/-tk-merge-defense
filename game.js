@@ -1,1304 +1,1271 @@
-/* ==========================================================================
-   Three Kingdoms 3D Merge Defense - 120 Heroes & Bagua Tactical Engine
-   ========================================================================== */
+// ============================================================================
+// 삼국지 3D 택티컬 머지 디펜스 - 100% Argon Zero-Asset & Zero-Voice Engine
+// ============================================================================
 
-/* 1. 120-Hero Compact DB Parser */
-const RAW_HEROES_COMPACT = [
-  // id|tier|name|hanja|faction|weapon|mount|head|beard|isCoreLocked|unlockCost|unlockCond|skillDesc
-  // --- Tier 1: 16 Default Troops (All Unlocked) ---
-  "1|1|촉나라 단궁병|劉|촉|bow|none|headband|none|0|0||기본 촉나라 의용 궁병",
-  "2|1|촉나라 창수|關|촉|spear|none|headband|none|0|0||기본 촉나라 보병",
-  "3|1|위나라 단도병|曹|위|sword|none|headband|none|0|0||기본 위나라 단도병",
-  "4|1|위나라 보병|夏|위|spear|none|headband|none|0|0||기본 위나라 장창병",
-  "5|1|오나라 수병|孫|오|sword|none|headband|none|0|0||기본 오나라 수병",
-  "6|1|오나라 궁병|甘|오|bow|none|headband|none|0|0||기본 오나라 강궁병",
-  "7|1|군웅 의용병|黃|군웅|bow|none|headband|none|0|0||기본 황건적 의용병",
-  "8|1|군웅 산적|張|군웅|sword|none|headband|beard_short|0|0||기본 군웅 산적",
-  "9|1|촉나라 낭선병|張|촉|spear|none|headband|none|0|0||촉나라 대나무 낭선병",
-  "10|1|위나라 돌격병|許|위|sword|none|headband|none|0|0||위나라 경갑 돌격병",
-  "11|1|오나라 노수|陸|오|bow|none|headband|none|0|0||오나라 석궁 노수",
-  "12|1|군웅 기병|董|군웅|spear|horse|headband|none|0|0||기본 동탁군 서량 기병",
-  "13|1|촉나라 신궁병|趙|촉|bow|none|headband|none|0|0||촉나라 훈련 신궁병",
-  "14|1|위나라 철갑병|張|위|spear|none|helmet|none|0|0||위나라 중장 철갑병",
-  "15|1|오나라 화병|周|오|fan|none|headband|none|0|0||오나라 화염 투척병",
-  "16|1|군웅 주술사|張|군웅|staff|none|headband|beard_white|0|0||군웅 태평도 주술사",
+const FACTION_META = {
+  shu: { name: '촉', hanja: '蜀', color: '#10B981', hex: 0x10B981 },
+  wei: { name: '위', hanja: '魏', color: '#3B82F6', hex: 0x3B82F6 },
+  wu:  { name: '오', hanja: '吳', color: '#F97316', hex: 0xF97316 },
+  qun: { name: '군웅', hanja: '群', color: '#EF4444', hex: 0xEF4444 }
+};
 
-  // --- Tier 2: 20 Novice Generals (All Unlocked) ---
-  "17|2|미축|彌|촉|sword|none|headband|none|0|0||촉나라 재정 및 보급 보좌",
-  "18|2|손건|孫|촉|sword|none|headband|none|0|0||촉나라 외교 및 내정 보좌",
-  "19|2|간옹|簡|촉|sword|none|headband|beard_short|0|0||촉나라 유비의 고향 벗",
-  "20|2|유봉|劉|촉|spear|none|helmet|none|0|0||유비의 양자 장수",
-  "21|2|관평(청년)|關|촉|crescent|none|helmet|none|0|0||관우의 장남 용맹 장수",
-  "22|2|조홍|曹|위|sword|none|helmet|none|0|0||위나라 조조의 충직한 사촌",
-  "23|2|조휴|曹|위|spear|horse|helmet|none|0|0||위나라 천리마 호위 장수",
-  "24|2|조진|曹|위|spear|horse|helmet|beard_short|0|0||위나라 대도독 기병 장수",
-  "25|2|하후무|夏|위|sword|none|helmet|none|0|0||위나라 하후돈의 아들",
-  "26|2|곽회|郭|위|spear|none|helmet|beard_short|0|0||위나라 서북 방어명장",
-  "27|2|한당|韓|오|spear|none|helmet|beard_short|0|0||오나라 삼대를 모신 베테랑",
-  "28|2|정보|程|오|spear|none|helmet|beard_white|0|0||오나라 손견 시절 최고참",
-  "29|2|주치|朱|오|sword|none|headband|beard_short|0|0||오나라 내정 겸 수군 장수",
-  "30|2|장흠|蔣|오|sword|none|helmet|none|0|0||오나라 수군 돌격장",
-  "31|2|전종|全|오|spear|none|helmet|none|0|0||오나라 손권의 사위 장수",
-  "32|2|장보|張|군웅|staff|none|headband|beard_wild|0|0||태평도 지공장군",
-  "33|2|장량|張|군웅|staff|none|headband|beard_wild|0|0||태평도 인공장군",
-  "34|2|이각|李|군웅|spear|horse|helmet|beard_short|0|0||동탁군 서량 기병 장수",
-  "35|2|곽사|郭|군웅|sword|horse|helmet|beard_short|0|0||동탁군 서량 흉악 장수",
-  "36|2|번조|樊|군웅|spear|none|helmet|none|0|0||동탁군 서량 보병 장수",
-
-  // --- Tier 3: 24 Skilled Generals (12 Unlocked, 12 Core Locked) ---
-  "37|3|관흥|關|촉|crescent|none|helmet|none|0|0||관우의 의지를 이은 명장",
-  "38|3|장포|張|촉|spear|none|helmet|beard_short|0|0||장비의 아들 장팔사모 장수",
-  "39|3|마속|馬|촉|fan|none|crown|none|0|0||가정 전투의 읍참마속 책사",
-  "40|3|서서|徐|촉|sword|none|crown|beard_short|1|80|제3장 클리어|촉나라 초기 신산 책사",
-  "41|3|황월영|黃|촉|fan|none|hairpin|none|1|80|제3장 클리어|제갈량의 지혜로운 부인",
-  "42|3|법정|法|촉|fan|none|crown|beard_short|1|80|제3장 클리어|한중 공방전 촉나라 최고 책사",
-  "43|3|이전|李|위|spear|none|helmet|beard_short|0|0||위나라 학식과 무예의 명장",
-  "44|3|악진|樂|위|sword|none|helmet|none|0|0||위나라 오자양장 선봉장",
-  "45|3|우금|于|위|spear|none|helmet|beard_short|0|0||위나라 엄격한 규율의 명장",
-  "46|3|서황|徐|위|spear|none|helmet|beard_short|1|80|제3장 클리어|대부끼의 위나라 오자양장",
-  "47|3|하후연|夏|위|bow|horse|helmet|beard_short|1|80|제3장 클리어|정군산의 초고속 신궁장수",
-  "48|3|순욱|荀|위|fan|none|crown|beard_short|1|80|제3장 클리어|조조의 왕佐지재 대책사",
-  "49|3|황개|黃|오|spear|none|helmet|beard_white|0|0||적벽대전 고육지계 노장",
-  "50|3|서성|徐|오|spear|none|helmet|beard_short|0|0||오나라 철벽 방어 대도독",
-  "51|3|정봉|丁|오|sword|none|helmet|beard_short|0|0||오나라 단도 돌격 노장",
-  "52|3|능통|凌|오|spear|none|helmet|none|1|80|제3장 클리어|오나라 협기 넘치는 명장",
-  "53|3|손상향|孫|오|bow|none|hairpin|none|1|80|제3장 클리어|오나라 궁요공주 여걸",
-  "54|3|대교|大|오|fan|none|hairpin|none|1|80|제3장 클리어|강동의 미인 대교",
-  "55|3|고순|高|군웅|spear|none|helmet|beard_short|0|0||여포군 함진영 특공장수",
-  "56|3|장임|張|군웅|bow|none|helmet|beard_short|0|0||유장군 낙봉파 충신 장수",
-  "57|3|엄안|嚴|군웅|bow|none|helmet|beard_white|0|0||파서의 백발 호걸 노장",
-  "58|3|화웅|華|군웅|spear|horse|helmet|beard_wild|1|80|제5장 보스 화웅 격파|사곡 관문의 거구 사마장군",
-  "59|3|안량|顔|군웅|spear|horse|helmet|beard_wild|1|80|제5장 보스 화웅 격파|원소군 최고 용맹 상장군",
-  "60|3|문추|文|군웅|spear|horse|helmet|beard_wild|1|80|제5장 보스 화웅 격파|원소군 백마의 호걸 장수",
-
-  // --- Tier 4: 24 Famous Generals & Strategists (20 Core Locked) ---
-  "61|4|위연|魏|촉|sword|none|helmet|beard_wild|0|0||촉나라 자오곡 계책의 맹장",
-  "62|4|강유|姜|촉|spear|horse|dragon_helm|beard_short|0|0||제갈량의 후계자 문무겸비",
-  "63|4|황충|黃|촉|bow|none|gold_helm|beard_white|0|0||오호대장군 백발 신궁 노장",
-  "64|4|왕평|王|촉|spear|none|helmet|beard_short|1|100|명성 100🎖️|촉나라 무당飛軍 총사령관",
-  "65|4|장억|張|촉|spear|none|helmet|beard_short|1|100|명성 100🎖️|촉나라 남만 평정 맹장",
-  "66|4|마충|馬|촉|bow|none|helmet|none|1|100|명성 100🎖️|촉나라 포박의 달인 장수",
-  "67|4|장합|張|위|spear|horse|helmet|beard_short|0|0||위나라 오자양장 변幻무쌍",
-  "68|4|조인|曹|위|spear|none|gold_helm|beard_short|0|0||위나라 번성 철벽 방어 대장군",
-  "69|4|방덕|龐|위|sword|horse|helmet|beard_short|1|100|명성 100🎖️|관우와 맞선 백마장군",
-  "70|4|가후|賈|위|fan|none|crown|beard_white|1|100|명성 100🎖️|위나라 신산 칠숙 책사",
-  "71|4|순유|荀|위|fan|none|crown|beard_short|1|100|명성 100🎖️|조조의 12가지 묘책 책사",
-  "72|4|정욱|程|위|staff|none|crown|beard_white|1|100|명성 100🎖️|위나라 강직한 십면매복 책사",
-  "73|4|주태|周|오|sword|none|helmet|beard_wild|0|0||손권을 온몸으로 구한 불사신",
-  "74|4|감녕|甘|오|twin_blade|none|helmet|beard_short|0|0||오나라 방울 소리의 해적 호걸",
-  "75|4|태사자|太|오|bow|horse|helmet|beard_short|1|100|명성 100🎖️|소패왕과 맞선 활의 달인",
-  "76|4|소교|小|오|fan|none|hairpin|none|1|100|명성 100🎖️|주유의 아름다운 부인 소교",
-  "77|4|보연사|步|오|fan|none|hairpin|none|1|100|명성 100🎖️|손권의 덕망 높은 황후",
-  "78|4|주치(대도독)|朱|오|spear|none|helmet|beard_short|1|100|명성 100🎖️|오나라 육손 이전의 지장",
-  "79|4|공손찬|公|군웅|spear|white_horse|helmet|beard_short|1|100|명성 100🎖️|백마의종의 북방 패왕",
-  "80|4|초선|貂|군웅|twin_blade|none|hairpin|none|1|100|명성 100🎖️|삼국지 경국지색 여걸",
-  "81|4|맹획|孟|군웅|spear|elephant|helmet|beard_wild|1|100|명성 100🎖️|남만 칠종칠금의 야성 왕",
-  "82|4|축융|祝|군웅|twin_blade|none|hairpin|none|1|100|명성 100🎖️|남만 비도 여걸 왕후",
-  "83|4|진궁|陳|군웅|fan|none|crown|beard_short|1|100|명성 100🎖️|여포의 강직한 책사",
-  "84|4|이유|李|군웅|staff|none|crown|beard_short|1|100|명성 100🎖️|동탁의 책사 독사 가후급",
-
-  // --- Tier 5: 20 Great Generals & Grand Admirals (20 Core Locked) ---
-  "85|5|조운|趙|촉|spear|white_horse|dragon_helm|none|1|150|명성 150🎖️|장판파 단기필마 오호대장군",
-  "86|5|장비|張|촉|spear|none|helmet|beard_wild|1|150|명성 150🎖️|장판교 일성호통 오호대장군",
-  "87|5|마초|馬|촉|spear|white_horse|helmet|none|1|150|명성 150🎖️|서량의 서경 서황 오호대장군",
-  "88|5|방통|龐|촉|staff|none|crown|beard_short|1|150|명성 150🎖️|봉추 신산 낙봉파 책사",
-  "89|5|관우(청년)|關|촉|crescent|none|guan_cap|beard_long|1|150|명성 150🎖️|의형제 청룡언월도 무신",
-  "90|5|하후돈|夏|위|sword|none|helmet|beard_short|1|150|명성 150🎖️|외눈 안대의 위나라 맹장",
-  "91|5|장료|張|위|spear|horse|helmet|beard_short|1|150|명성 150🎖️|합비 전투 료래료래 오자양장",
-  "92|5|허저|許|위|sword|none|helmet|beard_wild|1|150|명성 150🎖️|호치 조조의 천하무적 호위",
-  "93|5|전위|典|위|twin_blade|none|helmet|beard_wild|1|150|명성 150🎖️|완성 전투의 악래 충신",
-  "94|5|곽가|郭|위|fan|none|crown|none|1|150|명성 150🎖️|봉효 십승십패 신산 책사",
-  "95|5|손책|孫|오|spear|horse|helmet|none|1|150|명성 150🎖️|강동의 소패왕 패기 정복자",
-  "96|5|손견|孫|오|sword|horse|helmet|beard_short|1|150|명성 150🎖️|강동의 호랑이 반동탁 선봉",
-  "97|5|육손|陸|오|sword|none|crown|none|1|150|명성 150🎖️|이릉대전 화공 대도독",
-  "98|5|여몽|呂|오|spear|none|helmet|beard_short|1|150|명성 150🎖️|괄목상대 형주 공략 대도독",
-  "99|5|노숙|魯|오|fan|none|crown|beard_short|1|150|명성 150🎖️|손촉연합 결성 덕망 대도독",
-  "100|5|장각|張|군웅|staff|none|crown|beard_wild|1|150|명성 150🎖️|황건적의 난 천공장군",
-  "101|5|원소|袁|군웅|sword|horse|crown|beard_short|1|150|명성 150🎖️|하북 명문 명주 명사 사세삼공",
-  "102|5|동탁|董|군웅|sword|horse|crown|beard_wild|1|150|명성 150🎖️|낙양을 초토화한 마왕 패왕",
-  "103|5|유표|劉|군웅|sword|none|crown|beard_white|1|150|명성 150🎖️|형주 팔성 팔주 군주",
-  "104|5|유장|劉|군웅|sword|none|crown|beard_short|1|150|명성 150🎖️|익주 세력 서천 군주",
-
-  // --- Tier 6: 12 Ultimate Strategists & Divine Generals (12 Core Locked) ---
-  "105|6|무성 관우|關|촉|crescent|red_hare|guan_cap|beard_long|1|300|제5장 보스 격파 또는 300🎖️|만인지적 신화적인 무성",
-  "106|6|와룡 제갈량|諸|촉|fan|none|crown|beard_short|1|300|촉 시너지 6인 또는 300🎖️|팔진도 적벽화공 천하삼분지계",
-  "107|6|중달 사마의|司|위|fan|none|crown|beard_short|1|300|위 시너지 6인 또는 300🎖️|낭고상 위나라 최고 신산",
-  "108|6|기린 등애|鄧|위|spear|horse|helmet|beard_short|1|300|명성 300🎖️|음평 절벽을 넘어선 장수",
-  "109|6|야심 종회|鍾|위|sword|none|crown|none|1|300|명성 300🎖️|촉나라를 함락시킨 위나라 천재",
-  "110|6|미주랑 주유|周|오|fan|none|crown|none|1|300|적벽 화공 10회 또는 300🎖️|적벽대전 천하무적 미주랑 대도독",
-  "111|6|진국 육항|陸|오|sword|none|crown|beard_short|1|300|명성 300🎖️|오나라 마지막 보루 명장",
-  "112|6|신선 좌자|左|군웅|staff|none|crown|beard_white|1|300|명성 300🎖️|조조를 신통력으로 골탕먹인 신선",
-  "113|6|태평 우길|于|군웅|staff|none|crown|beard_white|1|300|명성 300🎖️|손책을 시달리게 한 태평도 도사",
-  "114|6|신의 화타|華|군웅|staff|none|headband|beard_white|1|300|명성 300🎖️|관우의 팔을 수술한 의성",
-  "115|6|수경 선생|水|촉|staff|none|crown|beard_white|1|300|명성 300🎖️|와룡과 봉추를 추천한 사마휘",
-  "116|6|채염|蔡|군웅|fan|none|hairpin|none|1|300|명성 300🎖️|호가十八拍 천재 여류 시인",
-
-  // --- Tier 7: 4 Supreme Warlords & Emperors (4 Core Locked) ---
-  "117|7|무신 여포|呂|군웅|halberd|red_hare|lubu_crown|none|1|600|제10장 보스 여포 격파 또는 600🎖️|적토마 탑승 천하무쌍 방천화극",
-  "118|7|소열제 유비|劉|촉|twin_blade|white_horse|crown|beard_short|1|600|도원결의 시너지 또는 600🎖️|촉한 건국 덕망의 소열황제",
-  "119|7|무제 조조|曹|위|sword|horse|crown|beard_short|1|600|제15장 도달 또는 600🎖️|위나라 건국 난세의 간웅 무제",
-  "120|7|대제 손권|孫|오|sword|horse|crown|beard_short|1|600|오나라 화염 200회 또는 600🎖️|동오 건국 자염목 강동의 대제"
+// 4세력 × 7티어 = 28인 정예 매트릭스 (성우 없음, 사자성어 낙관 내장)
+const HERO_DB = [
+  // Tier 1
+  { id: 'shu_1', tier: 1, faction: 'shu', name: '백이병', hanja: '白', weapon: 'spear', atk: 24, spd: 1.0, range: 8.5, stamp: '百毦精兵', desc: '유비 친위 장창병' },
+  { id: 'wei_1', tier: 1, faction: 'wei', name: '청주병', hanja: '青', weapon: 'spear', atk: 26, spd: 0.95, range: 8.5, stamp: '青州強兵', desc: '조조 직속 정예병' },
+  { id: 'wu_1',  tier: 1, faction: 'wu',  name: '강동수군', hanja: '水', weapon: 'bow',   atk: 22, spd: 1.1, range: 9.5, stamp: '江東水軍', desc: '장강의 화살 사수' },
+  { id: 'qun_1', tier: 1, faction: 'qun', name: '황건병', hanja: '黃', weapon: 'mace',  atk: 28, spd: 0.9, range: 8.0, stamp: '蒼天已死', desc: '태평도 선봉대' },
+  // Tier 2
+  { id: 'shu_2', tier: 2, faction: 'shu', name: '관평', hanja: '平', weapon: 'glaive', atk: 55, spd: 1.05, range: 9.0, stamp: '忠義少將', desc: '관우의 양자·청룡의 후예' },
+  { id: 'wei_2', tier: 2, faction: 'wei', name: '악진', hanja: '樂', weapon: 'sword',  atk: 58, spd: 1.0, range: 9.0, stamp: '先登陷陣', desc: '위나라 선등 대장' },
+  { id: 'wu_2',  tier: 2, faction: 'wu',  name: '주태', hanja: '泰', weapon: 'sword',  atk: 54, spd: 1.15, range: 8.5, stamp: '全身刀痕', desc: '손권을 지킨 강철 방패' },
+  { id: 'qun_2', tier: 2, faction: 'qun', name: '화웅', hanja: '華', weapon: 'axe',    atk: 65, spd: 0.9, range: 8.5, stamp: '汜水猛將', desc: '사수관의 거대 도끼장군' },
+  // Tier 3
+  { id: 'shu_3', tier: 3, faction: 'shu', name: '황충', hanja: '黃', weapon: 'bow',    atk: 120, spd: 1.2, range: 11.5, stamp: '百步穿楊', desc: '백보천양 신궁 노장' },
+  { id: 'wei_3', tier: 3, faction: 'wei', name: '서황', hanja: '徐', weapon: 'axe',    atk: 135, spd: 1.0, range: 9.5, stamp: '周亞夫風', desc: '대부 개산부를 휘두르는 명장' },
+  { id: 'wu_3',  tier: 3, faction: 'wu',  name: '감녕', hanja: '甘', weapon: 'mace',   atk: 125, spd: 1.25, range: 9.5, stamp: '錦帆遊俠', desc: '방울 소리의 금범적 두령' },
+  { id: 'qun_3', tier: 3, faction: 'qun', name: '초선', hanja: '貂', weapon: 'fan',    atk: 115, spd: 1.35, range: 10.5, stamp: '閉月連環', desc: '달을 가리는 연환계의 무희', female: true },
+  // Tier 4
+  { id: 'shu_4', tier: 4, faction: 'shu', name: '조운', hanja: '趙', weapon: 'spear',  atk: 260, spd: 1.35, range: 10.5, stamp: '一身是膽', desc: '장판파의 백마 은창 상산 조자룡', mount: 'white' },
+  { id: 'wei_4', tier: 4, faction: 'wei', name: '하후돈', hanja: '夏', weapon: 'sword', atk: 285, spd: 1.15, range: 10.0, stamp: '拔矢啖睛', desc: '화살 박힌 눈을 삼킨 맹장', eyepatch: true },
+  { id: 'wu_4',  tier: 4, faction: 'wu',  name: '손상향', hanja: '香', weapon: 'bow',   atk: 250, spd: 1.4, range: 11.5, stamp: '弓腰姬君', desc: '강동의 호걸 궁요희', female: true },
+  { id: 'qun_4', tier: 4, faction: 'qun', name: '맹획', hanja: '孟', weapon: 'mace',   atk: 310, spd: 1.0, range: 9.5, stamp: '南蠻獸王', desc: '전투 코끼리를 탄 남만왕', mount: 'elephant' },
+  // Tier 5
+  { id: 'shu_5', tier: 5, faction: 'shu', name: '장비', hanja: '張', weapon: 'snake',  atk: 560, spd: 1.3, range: 10.5, stamp: '萬夫不當', desc: '장판교의 포효·장팔사모', beard: 'wild' },
+  { id: 'wei_5', tier: 5, faction: 'wei', name: '장료', hanja: '遼', weapon: 'glaive', atk: 590, spd: 1.25, range: 11.0, stamp: '威震逍遙', desc: '합비에서 손권을떤 오자양장 필두' },
+  { id: 'wu_5',  tier: 5, faction: 'wu',  name: '육손', hanja: '陸', weapon: 'dual',   atk: 540, spd: 1.45, range: 11.0, stamp: '火燒連營', desc: '이릉 대첩 화공의 대도독' },
+  { id: 'qun_5', tier: 5, faction: 'qun', name: '장각', hanja: '角', weapon: 'staff',  atk: 620, spd: 1.15, range: 12.0, stamp: '黃天當立', desc: '태평요술의 천공장군' },
+  // Tier 6
+  { id: 'shu_6', tier: 6, faction: 'shu', name: '관우', hanja: '關', weapon: 'glaive', atk: 1250, spd: 1.35, range: 11.5, stamp: '義薄雲天', desc: '청룡언월도와 적토마의 무성(武聖)', redFace: true, beard: 'long', mount: 'red' },
+  { id: 'wei_6', tier: 6, faction: 'wei', name: '사마의', hanja: '司', weapon: 'fan',  atk: 1320, spd: 1.3, range: 12.5, stamp: '塚虎奇謀', desc: '중달의 심연 계략과 낙뢰' },
+  { id: 'wu_6',  tier: 6, faction: 'wu',  name: '주유', hanja: '周', weapon: 'fan',    atk: 1200, spd: 1.5, range: 12.0, stamp: '赤壁業火', desc: '적벽을 불태운 미주랑' },
+  { id: 'qun_6', tier: 6, faction: 'qun', name: '동탁', hanja: '董', weapon: 'mace',   atk: 1400, spd: 1.15, range: 10.5, stamp: '暴虐魔王', desc: '낙양을 집어삼킨 폭군', mount: 'black' },
+  // Tier 7 (신화)
+  { id: 'shu_7', tier: 7, faction: 'shu', name: '제갈량', hanja: '諸', weapon: 'fan',  atk: 2900, spd: 1.6, range: 13.5, stamp: '臥龍出世', desc: '팔진도 천뢰를 부르는 와룡 승상', halo: true },
+  { id: 'wei_7', tier: 7, faction: 'wei', name: '무제 조조', hanja: '曹', weapon: 'sword', atk: 3100, spd: 1.5, range: 13.0, stamp: '唯才是擧', desc: '천하를 호령하는 난세의 간웅', mount: 'black', halo: true },
+  { id: 'wu_7',  tier: 7, faction: 'wu',  name: '대제 손권', hanja: '孫', weapon: 'sword', atk: 2850, spd: 1.7, range: 13.0, stamp: '江東猛虎', desc: '벽안자염의 오나라 황제', halo: true },
+  { id: 'qun_7', tier: 7, faction: 'qun', name: '무신 여포', hanja: '呂', weapon: 'halberd', atk: 3600, spd: 1.65, range: 13.0, stamp: '天下無雙', desc: '적토마와 방천화극의 인중여포', mount: 'red', plumes: true, halo: true }
 ];
 
-/* 2. Parse Compact DB */
-const HERO_120_DB = {};
-RAW_HEROES_COMPACT.forEach(row => {
-  const [idStr, tierStr, name, hanja, faction, weapon, mount, head, beard, isCoreLockedStr, unlockCostStr, unlockCond, skillDesc] = row.split("|");
-  const id = parseInt(idStr);
-  HERO_120_DB[id] = {
-    id,
-    tier: parseInt(tierStr),
-    name, hanja, faction, weapon, mount, head, beard,
-    isCoreLocked: isCoreLockedStr === "1",
-    unlockCost: parseInt(unlockCostStr) || 0,
-    unlockCond: unlockCond || "",
-    skillDesc: skillDesc || "",
-    color: faction === "촉" ? "#34d399" : (faction === "위" ? "#60a5fa" : (faction === "오" ? "#facc15" : "#f87171")),
-    hex: faction === "촉" ? 0x34d399 : (faction === "위" ? 0x60a5fa : (faction === "오" ? 0xfacc15 : 0xf87171))
-  };
-});
+const STRATEGY_CARDS = [
+  { id: 'oat', title: '🍑 도원결의', desc: '전체 장수 공격속도 영구 +20% 상승', apply: (s) => { s.buffSpd *= 1.2; } },
+  { id: 'sup', title: '🌾 군량 징발', desc: '즉시 군량미 +220 획득 및 호로관 체력 30 회복', apply: (s) => { s.gold += 220; s.hp = Math.min(s.maxHp, s.hp + 30); } },
+  { id: 'bow', title: '🏹 제갈연노 개량', desc: '전체 장수 공격력 +25% 및 사거리 +1.5m', apply: (s) => { s.buffAtk *= 1.25; s.buffRange += 1.5; } },
+  { id: 'crt', title: '⚡ 패왕의 기세', desc: '치명타 확률 +15% 영구 증가', apply: (s) => { s.buffCrit += 0.15; } },
+  { id: 'rec', title: '📜 구품관인법', desc: '장수 모집 시 2~3티어 등장 확률 2배 증가', apply: (s) => { s.highRecruitBonus += 0.12; } }
+];
 
-/* 3. Audio Engine Synthesizer */
-class SoundEngine {
-  constructor() { this.ctx = null; this.initialized = false; }
-  init() {
-    if (this.initialized) return;
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
-      this.initialized = true;
-    } catch (e) {}
+// ============================================================================
+// 1. 순수 수식 기반 국악·전장 타악 신디사이저 (Zero-Voice / Pure Web Audio)
+// ============================================================================
+class BattlefieldAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+    this.bgmTimer = 0;
+    this.pentatonic = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
   }
-  playSound(type) {
-    if (!this.initialized) this.init();
+
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) this.ctx = new AudioCtx();
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  // 전장 대북 (War Drum: 65Hz -> 24Hz 지수 감쇠 + 로우패스 타격 노이즈)
+  playWarDrum() {
+    if (!this.enabled) return;
+    this.init();
     if (!this.ctx) return;
-    if (this.ctx.state === "suspended") this.ctx.resume();
-    const t = this.ctx.currentTime;
-    if (type === "bow" || type === "spear" || type === "sword") {
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(68, now);
+    osc.frequency.exponentialRampToValueAtTime(24, now + 0.28);
+    gain.gain.setValueAtTime(0.55, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.33);
+  }
+
+  // 전장 청동 징 (Battle Gong: 비정수 금속 배음 4중 합성)
+  playGong() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const ratios = [210, 296.1, 405.3, 560.7];
+    ratios.forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(type === "bow" ? 520 : 680, t);
-      osc.frequency.exponentialRampToValueAtTime(120, t + 0.1);
-      gain.gain.setValueAtTime(0.18, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-      osc.connect(gain); gain.connect(this.ctx.destination);
-      osc.start(t); osc.stop(t + 0.1);
-    } else if (type === "merge") {
-      [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(f, t + idx * 0.045);
-        gain.gain.setValueAtTime(0.2, t + idx * 0.045);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.045 + 0.22);
-        osc.connect(gain); gain.connect(this.ctx.destination);
-        osc.start(t + idx * 0.045); osc.stop(t + idx * 0.045 + 0.22);
-      });
-    } else if (type === "lubu" || type === "boss") {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(220, t);
-      osc.frequency.exponentialRampToValueAtTime(40, t + 0.6);
-      gain.gain.setValueAtTime(0.35, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-      osc.connect(gain); gain.connect(this.ctx.destination);
-      osc.start(t); osc.stop(t + 0.6);
+      osc.type = idx % 2 === 0 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.18 / (idx + 1), now);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 1.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.45);
+    });
+  }
+
+  // 동양 5음계(궁상각치우) 현악 탄현음
+  playGuqinNote(freq) {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq * 0.98, now);
+    osc.frequency.linearRampToValueAtTime(freq, now + 0.04);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.56);
+  }
+
+  // 창검 타격음
+  playBladeSlash() {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.07);
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.085);
+  }
+
+  // 화공/벽력거 대폭발음
+  playCatapultBoom() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    this.playWarDrum();
+    this.playGong();
+  }
+
+  updateBgm(dt) {
+    if (!this.enabled || !this.ctx) return;
+    this.bgmTimer += dt;
+    if (this.bgmTimer >= 0.65) {
+      this.bgmTimer = 0;
+      const note = this.pentatonic[Math.floor(Math.random() * this.pentatonic.length)];
+      this.playGuqinNote(note);
     }
   }
 }
-const audioEngine = new SoundEngine();
 
-/* 4. CanvasTexture Hanja Banner Cache (`bannerCache`) */
-const bannerCache = new Map();
-function getHeroBannerTexture(heroData) {
-  const key = `${heroData.id}_${heroData.hanja}`;
-  if (bannerCache.has(key)) return bannerCache.get(key);
+const sound = new BattlefieldAudioEngine();
 
-  const canvas = document.createElement("canvas");
-  canvas.width = 128; canvas.height = 256;
-  const ctx = canvas.getContext("2d");
+// ============================================================================
+// 2. 무쌍 한자 사자성어 낙관(Stamp) 연출기
+// ============================================================================
+let stampTimeout = null;
+function triggerHanjaStamp(hanja4, subtitle) {
+  const overlay = document.getElementById('hanja-stamp-overlay');
+  const hanjaEl = document.getElementById('stamp-hanja');
+  const subEl = document.getElementById('stamp-sub');
+  if (!overlay || !hanjaEl || !subEl) return;
 
-  ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-  ctx.fillRect(8, 8, 112, 240);
-  ctx.strokeStyle = heroData.color;
-  ctx.lineWidth = 6;
-  ctx.strokeRect(8, 8, 112, 240);
+  hanjaEl.textContent = hanja4;
+  subEl.textContent = subtitle;
+  overlay.classList.remove('stamp-hidden');
+  sound.playWarDrum();
+  sound.playGong();
+  gameState.screenShake = 0.45;
 
-  ctx.fillStyle = heroData.color;
-  ctx.font = "bold 90px serif";
-  ctx.textAlign = "center";
-  ctx.fillText(heroData.hanja, 64, 110);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 22px sans-serif";
-  ctx.fillText(heroData.name.substring(0, 5), 64, 180);
-
-  ctx.fillStyle = heroData.color;
-  ctx.font = "bold 18px sans-serif";
-  ctx.fillText(`[${heroData.faction}]`, 64, 215);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  bannerCache.set(key, texture);
-  return texture;
+  if (stampTimeout) clearTimeout(stampTimeout);
+  stampTimeout = setTimeout(() => {
+    overlay.classList.add('stamp-hidden');
+  }, 1500);
 }
 
-/* 5. Procedural 3D Hero Character Assembly Engine */
+// ============================================================================
+// 3. 게임 상태 및 Safe localStorage 연동
+// ============================================================================
+const SAVE_KEY = 'TK_ARGON_SAVE_V4';
+
+const gameState = {
+  gold: 120,
+  hp: 100,
+  maxHp: 100,
+  wave: 1,
+  kills: 0,
+  recruitCost: 20,
+  upgradeLvl: 1,
+  upgradeCost: 35,
+  buffAtk: 1.0,
+  buffSpd: 1.0,
+  buffRange: 0,
+  buffCrit: 0.12,
+  highRecruitBonus: 0,
+  skillCd: 0,
+  gameSpeed: 1,
+  camMode: 0,
+  screenShake: 0,
+  siegeLeftLv: 0,
+  siegeRightLv: 0,
+  siegeLeftTimer: 0,
+  siegeRightTimer: 0,
+  supplyCartTimer: 0,
+  unlockedIds: ['shu_1', 'wei_1', 'wu_1', 'qun_1'],
+  grid: new Array(20).fill(null),
+  enemies: [],
+  projectiles: [],
+  floatingTexts: [],
+  supplyCart: null,
+  draggedIndex: -1,
+  dragWorldPos: new THREE.Vector3(),
+  selectedIndex: -1,
+  spawnTimer: 0,
+  waveRemaining: 10,
+  isGameOver: false
+};
+
+function saveGameSafe() {
+  try {
+    const payload = {
+      gold: gameState.gold,
+      wave: gameState.wave,
+      kills: gameState.kills,
+      recruitCost: gameState.recruitCost,
+      upgradeLvl: gameState.upgradeLvl,
+      upgradeCost: gameState.upgradeCost,
+      siegeLeftLv: gameState.siegeLeftLv,
+      siegeRightLv: gameState.siegeRightLv,
+      unlockedIds: gameState.unlockedIds,
+      gridIds: gameState.grid.map(h => h ? h.data.id : null)
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+  } catch (e) {
+    // 저장소 에러 무시
+  }
+}
+
+function loadGameSafe() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.unlockedIds)) return false;
+    gameState.gold = Number(data.gold) || 120;
+    gameState.wave = Number(data.wave) || 1;
+    gameState.kills = Number(data.kills) || 0;
+    gameState.recruitCost = Number(data.recruitCost) || 20;
+    gameState.upgradeLvl = Number(data.upgradeLvl) || 1;
+    gameState.upgradeCost = Number(data.upgradeCost) || 35;
+    gameState.siegeLeftLv = Number(data.siegeLeftLv) || 0;
+    gameState.siegeRightLv = Number(data.siegeRightLv) || 0;
+    gameState.unlockedIds = data.unlockedIds;
+    gameState.waveRemaining = 8 + gameState.wave * 3;
+    return data.gridIds || null;
+  } catch (e) {
+    localStorage.removeItem(SAVE_KEY);
+    return false;
+  }
+}
+
+// ============================================================================
+// 4. Three.js 3D 렌더러 + 절차적 한자 등깃발 캐시 + 3D 조형
+// ============================================================================
+let scene, camera, renderer, composer;
+let gridTiles3D = [];
+let siegeLeftMesh = null, siegeRightMesh = null;
+const bannerTextureCache = {};
+
+const CAM_PRESETS = [
+  { pos: new THREE.Vector3(0, 27, 25), look: new THREE.Vector3(0, 0, 1) },
+  { pos: new THREE.Vector3(0, 40, 0.1), look: new THREE.Vector3(0, 0, 0) },
+  { pos: new THREE.Vector3(0, 8, 16), look: new THREE.Vector3(0, 1, -10) }
+];
+
+// 절차적 한자 군기 텍스처 생성 (캐싱)
+function getHeroBannerTexture(heroData) {
+  if (bannerTextureCache[heroData.id]) return bannerTextureCache[heroData.id];
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  const fMeta = FACTION_META[heroData.faction];
+
+  ctx.fillStyle = fMeta.color;
+  ctx.fillRect(0, 0, 128, 256);
+  ctx.strokeStyle = '#fbbf24';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(6, 6, 116, 244);
+
+  ctx.fillStyle = '#fef08a';
+  ctx.font = 'bold 28px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`[${fMeta.hanja}]`, 64, 42);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 92px serif';
+  ctx.fillText(heroData.hanja, 64, 148);
+
+  ctx.fillStyle = '#fde68a';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText(heroData.name, 64, 215);
+
+  const tex = new THREE.CanvasTexture(c);
+  bannerTextureCache[heroData.id] = tex;
+  return tex;
+}
+
+// 3D 장수 입체 조립
 function buildHeroCharacter3D(heroData) {
   const root = new THREE.Group();
+  const fMeta = FACTION_META[heroData.faction];
 
-  const pedMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.2 });
-  const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.98, 0.18, 8), pedMat);
-  pedestal.position.y = 0.09;
-  root.add(pedestal);
+  // 1. 팔각 제단 받침대 & 마법진
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.25 });
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.1, 0.3, 8), baseMat);
+  base.position.y = 0.15;
+  root.add(base);
 
-  const runeRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.72, 0.86, 6),
-    new THREE.MeshBasicMaterial({ color: heroData.hex, side: THREE.DoubleSide, transparent: true, opacity: 0.75 })
-  );
-  runeRing.rotation.x = -Math.PI / 2;
-  runeRing.position.y = 0.2;
-  root.add(runeRing);
+  const ringMat = new THREE.MeshBasicMaterial({ color: fMeta.hex, side: THREE.DoubleSide });
+  const auraRing = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.05, 16), ringMat);
+  auraRing.rotation.x = -Math.PI / 2;
+  auraRing.position.y = 0.32;
+  root.add(auraRing);
+  root.userData.auraRing = auraRing;
 
-  const charGroup = new THREE.Group();
-  root.add(charGroup);
+  let yOffset = 0.3;
 
-  const skinMat = new THREE.MeshStandardMaterial({ color: heroData.name.includes("관우") ? 0xc0392b : 0xf5cba7, roughness: 0.4 });
-  const armorMat = new THREE.MeshStandardMaterial({ color: heroData.hex, metalness: 0.6, roughness: 0.3, emissive: heroData.hex, emissiveIntensity: 0.18 });
-  const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.15, emissive: 0xd97706, emissiveIntensity: 0.25 });
-  const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.8, roughness: 0.2 });
-  const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
-  const blackHairMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.6 });
-
-  if (heroData.mount !== "none") {
-    const mountGroup = new THREE.Group();
-    if (heroData.mount === "elephant") {
-      const eleMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-      const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.8, 1.4), eleMat);
-      body.position.y = 0.7;
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), eleMat);
-      head.position.set(0, 0.9, 0.7);
-      mountGroup.add(body, head);
-      charGroup.position.set(0, 0.8, 0);
-    } else {
-      const horseColor = heroData.mount === "red_hare" ? 0x991b1b : (heroData.mount === "white_horse" ? 0xe2e8f0 : 0x451a03);
-      const horseMat = new THREE.MeshStandardMaterial({ color: horseColor, roughness: 0.4 });
-      const hBody = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.52, 1.3), horseMat);
-      hBody.position.y = 0.7;
-      mountGroup.add(hBody);
-      charGroup.position.set(0, 0.68, -0.05);
+  // 2. 탈것 (적토마, 백마, 흑마, 남만 코끼리)
+  if (heroData.mount) {
+    const mountColor = heroData.mount === 'red' ? 0xb91c1c : heroData.mount === 'white' ? 0xf8fafc : heroData.mount === 'elephant' ? 0x64748b : 0x1e293b;
+    const mMat = new THREE.MeshStandardMaterial({ color: mountColor, roughness: 0.5 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.65, 1.25), mMat);
+    body.position.set(0, 0.65, 0);
+    root.add(body);
+    if (heroData.mount === 'elephant') {
+      const tuskMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const t1 = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.6, 6), tuskMat);
+      t1.rotation.x = Math.PI / 3;
+      t1.position.set(-0.22, 0.7, 0.75);
+      const t2 = t1.clone();
+      t2.position.x = 0.22;
+      root.add(t1, t2);
     }
-    root.add(mountGroup);
+    yOffset = 0.95;
   }
 
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.24, 0.6, 8), armorMat);
-  torso.position.y = 0.85;
-  const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.1, 8), goldMat);
-  belt.position.y = 0.62;
-  charGroup.add(torso, belt);
+  // 3. 몸통 갑주 & 머리
+  const armorMat = new THREE.MeshStandardMaterial({ color: fMeta.hex, metalness: 0.6, roughness: 0.3 });
+  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.9, 8), armorMat);
+  torso.position.y = yOffset + 0.45;
+  root.add(torso);
 
-  const headGroup = new THREE.Group();
-  headGroup.position.set(0, 1.35, 0);
-  const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), skinMat);
-  headGroup.add(headMesh);
+  const faceColor = heroData.redFace ? 0xdc2626 : 0xfde68a;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({ color: faceColor }));
+  head.position.y = yOffset + 1.15;
+  root.add(head);
 
-  if (heroData.head === "crown" || heroData.head === "lubu_crown") {
-    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.25, 8), goldMat);
-    crown.position.y = 0.2;
-    headGroup.add(crown);
-  } else if (heroData.head === "dragon_helm" || heroData.head === "gold_helm" || heroData.head === "helmet") {
-    const helmMat = heroData.head === "gold_helm" ? goldMat : (heroData.head === "dragon_helm" ? whiteMat : armorMat);
-    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), helmMat);
-    helm.position.y = 0.04;
-    headGroup.add(helm);
+  // 수염 / 여포 꿩깃 / 신화 후광
+  if (heroData.beard === 'long') {
+    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 6), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+    beard.rotation.x = Math.PI;
+    beard.position.set(0, yOffset + 0.85, 0.26);
+    root.add(beard);
   }
-  charGroup.add(headGroup);
-
-  if (heroData.beard !== "none") {
-    const beardLen = heroData.beard === "beard_long" ? 0.75 : (heroData.beard === "beard_white" ? 0.5 : 0.35);
-    const beardMat = heroData.beard === "beard_white" ? whiteMat : blackHairMat;
-    const beardMesh = new THREE.Mesh(new THREE.ConeGeometry(0.16, beardLen, 6), beardMat);
-    beardMesh.rotation.x = Math.PI;
-    beardMesh.position.set(0, -0.22, 0.16);
-    headGroup.add(beardMesh);
+  if (heroData.plumes) {
+    const pMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.01, 1.2), pMat);
+    p1.position.set(-0.18, yOffset + 1.8, -0.15);
+    p1.rotation.z = 0.3;
+    const p2 = p1.clone();
+    p2.position.x = 0.18;
+    p2.rotation.z = -0.3;
+    root.add(p1, p2);
   }
-
-  const rightArmPivot = new THREE.Group();
-  rightArmPivot.position.set(0.36, 1.05, 0);
-  const armMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.42, 8), armorMat);
-  armMesh.position.set(0, -0.18, 0.1);
-  armMesh.rotation.x = Math.PI / 3;
-  rightArmPivot.add(armMesh);
-
-  const weaponGroup = new THREE.Group();
-  weaponGroup.position.set(0, -0.32, 0.22);
-  rightArmPivot.add(weaponGroup);
-  charGroup.add(rightArmPivot);
-
-  const wType = heroData.weapon;
-  if (wType === "crescent") {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.1, 8), goldMat);
-    pole.rotation.x = Math.PI / 2; pole.position.z = 0.4;
-    const blade = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.07, 6, 16, Math.PI * 0.8), new THREE.MeshBasicMaterial({ color: 0x34d399 }));
-    blade.rotation.x = Math.PI / 2; blade.position.set(0.1, 0, 1.5);
-    weaponGroup.add(pole, blade);
-  } else if (wType === "halberd") {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.4, 8), goldMat);
-    pole.rotation.x = Math.PI / 2; pole.position.z = 0.5;
-    const spear = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.55, 6), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-    spear.rotation.x = Math.PI / 2; spear.position.z = 1.8;
-    weaponGroup.add(pole, spear);
-  } else if (wType === "bow") {
-    const bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.04, 6, 16, Math.PI), goldMat);
-    bowArc.rotation.z = -Math.PI / 2; bowArc.position.set(0, 0, 0.2);
-    weaponGroup.add(bowArc);
-  } else if (wType === "fan") {
-    const fan = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.45, 6), whiteMat);
-    fan.rotation.x = Math.PI / 3;
-    weaponGroup.add(fan);
-  } else {
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 6), darkMetalMat);
-    shaft.rotation.x = Math.PI / 2; shaft.position.z = 0.3;
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.35, 6), whiteMat);
-    tip.rotation.x = Math.PI / 2; tip.position.z = 1.2;
-    weaponGroup.add(shaft, tip);
+  if (heroData.halo) {
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 8, 24), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
+    halo.position.set(0, yOffset + 1.2, -0.25);
+    root.add(halo);
+    root.userData.halo = halo;
   }
 
-  const bannerMat = new THREE.MeshBasicMaterial({ map: getHeroBannerTexture(heroData), side: THREE.DoubleSide, transparent: true });
-  const bannerMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 1.1), bannerMat);
-  bannerMesh.position.set(-0.35, 1.25, -0.32);
-  bannerMesh.rotation.y = Math.PI / 6;
-  charGroup.add(bannerMesh);
+  // 4. 오른팔 무기 피벗
+  const armPivot = new THREE.Group();
+  armPivot.position.set(0.5, yOffset + 0.7, 0);
+  const wMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.15, emissive: fMeta.hex, emissiveIntensity: 0.35 });
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.7, 6), wMat);
+  pole.position.y = 0.4;
+  armPivot.add(pole);
+  const blade = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.65, 4), wMat);
+  blade.position.y = 1.35;
+  armPivot.add(blade);
+  root.add(armPivot);
+  root.userData.armPivot = armPivot;
 
-  root.userData = { heroData, charGroup, rightArmPivot, weaponGroup, runeRing, animPhase: Math.random() * Math.PI * 2 };
+  // 5. 등 뒤 한자 군기 (CanvasTexture)
+  const flagPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.3, 6), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
+  flagPole.position.set(-0.35, yOffset + 1.1, -0.35);
+  root.add(flagPole);
+
+  const bannerTex = getHeroBannerTexture(heroData);
+  const bannerMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.85, 1.5),
+    new THREE.MeshBasicMaterial({ map: bannerTex, side: THREE.DoubleSide })
+  );
+  bannerMesh.position.set(-0.35, yOffset + 1.65, -0.42);
+  root.add(bannerMesh);
+
   return root;
 }
 
-/* 6. Game State & Persistence */
-const SAVE_KEY = "3k_defense_save_v2";
-const gameState = {
-  gold: 100,
-  reputation: 0,
-  gateHp: 100,
-  maxGateHp: 100,
-  kills: 0,
-  wave: 1,
-  enemiesSpawnedInWave: 0,
-  maxEnemiesPerWave: 10,
-  recruitCost: 20,
-  upgradeLevel: 1,
-  upgradeCost: 30,
-  unlockedHeroes: new Set(),
-  favorites: new Set(),
-  taixue: { goldBonus: 0, recruitBonus: 0, gateBonus: 0, atkBonus: 0 },
-  buffs: { atk: 0, aspd: 0, goldMult: 1.0, skillDmg: 1.0 },
-  relics: new Set(),
-  terrainGrid: [],
-  grid: Array(20).fill(null),
-  enemies: [],
-  projectiles: [],
-  effects3D: [],
-  floatingTexts: [],
-  draggedHero: null,
-  dragSourcePos: { row: -1, col: -1 },
-  dragCurrentWorldPos: new THREE.Vector3(),
-  waveInProgress: true,
-  spawnTimer: 0,
-  bossEntity: null,
-  duelActive: false,
-  duelProgress: 50,
-  duelTimer: 5.0,
-  activeFilterFaction: "all",
-  skillCooldown: 0,
-  paused: false,
-  gameOver: false
-};
+// 성루 3D 공성 병기 조립 (좌성루 제갈연노 / 우성루 벽력거)
+function buildSiegeWeapons3D() {
+  // 좌성루 제갈연노
+  siegeLeftMesh = new THREE.Group();
+  siegeLeftMesh.position.set(-8.2, 2.2, -1.2);
+  const baseL = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+  const bowArc = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.08, 6, 16, Math.PI), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+  bowArc.rotation.x = Math.PI / 2;
+  bowArc.position.y = 0.6;
+  siegeLeftMesh.add(baseL, bowArc);
+  siegeLeftMesh.visible = gameState.siegeLeftLv > 0;
+  scene.add(siegeLeftMesh);
 
-// Default Unlocked Heroes (48)
-Object.values(HERO_120_DB).forEach(h => {
-  if (!h.isCoreLocked) gameState.unlockedHeroes.add(h.id);
-});
-
-function loadSave() {
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.reputation !== undefined) gameState.reputation = data.reputation;
-      if (data.unlocked) data.unlocked.forEach(id => gameState.unlockedHeroes.add(id));
-      if (data.favorites) data.favorites.forEach(id => gameState.favorites.add(id));
-      if (data.taixue) gameState.taixue = data.taixue;
-    }
-  } catch(e) {}
+  // 우성루 벽력거 (투석기)
+  siegeRightMesh = new THREE.Group();
+  siegeRightMesh.position.set(8.2, 2.2, -1.2);
+  const baseR = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.8), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2.2), new THREE.MeshBasicMaterial({ color: 0xf97316 }));
+  arm.position.y = 1.0;
+  arm.rotation.x = -0.5;
+  siegeRightMesh.add(baseR, arm);
+  siegeRightMesh.userData.arm = arm;
+  siegeRightMesh.visible = gameState.siegeRightLv > 0;
+  scene.add(siegeRightMesh);
 }
 
-function triggerSave() {
-  try {
-    const data = {
-      reputation: gameState.reputation,
-      unlocked: Array.from(gameState.unlockedHeroes),
-      favorites: Array.from(gameState.favorites),
-      taixue: gameState.taixue
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch(e) {}
-}
-
-/* 7. Tactical Terrain Grid System (팔진도 지형) */
-const TERRAIN_TYPES = [
-  { name: "⛰️고지", color: 0x38bdf8, desc: "사거리 +35%, 치명타 +20%" },
-  { name: "🔥화염", color: 0xef4444, desc: "폭발 화염 데미지 +30%" },
-  { name: "⚡신속", color: 0x10b981, desc: "공격속도 +40%" },
-  { name: "☯️팔진", color: 0xa855f7, desc: "합성 시 25% 확률 대성공(+2 Tier)" },
-  { name: "🌾보급", color: 0xfacc15, desc: "5초마다 군량미 자동 생산" }
+// S자 적 진격 경로 좌표
+const ENEMY_PATH = [
+  new THREE.Vector3(-8, 0, -13),
+  new THREE.Vector3(8, 0, -10),
+  new THREE.Vector3(-8, 0, -6.5),
+  new THREE.Vector3(8, 0, -3.5),
+  new THREE.Vector3(0, 0, -1.2)
 ];
 
-function initTacticalTerrainGrid() {
-  gameState.terrainGrid = Array(20).fill(null);
-  const slots = Array.from({ length: 20 }, (_, i) => i).sort(() => 0.5 - Math.random());
-  for (let i = 0; i < 5; i++) {
-    gameState.terrainGrid[slots[i]] = TERRAIN_TYPES[i];
-  }
-}
-
-/* 8. Scene & Camera Setup */
-const webglContainer = document.getElementById("webgl-container");
-const hudCanvas = document.getElementById("hudCanvas");
-const hudCtx = hudCanvas.getContext("2d");
-
-const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x030712, 0.014);
-
-const CAM_PRESETS = [
-  { name: "🎥 쿼터뷰", pos: new THREE.Vector3(0, 26, 23), look: new THREE.Vector3(0, 0, 1.2) },
-  { name: "🎥 탑뷰", pos: new THREE.Vector3(0, 37, 2.5), look: new THREE.Vector3(0, 0, 0.5) },
-  { name: "🎥 성문뷰", pos: new THREE.Vector3(0, 10.5, 16.5), look: new THREE.Vector3(0, 1.0, -6) }
-];
-let currentCamIdx = 0;
-
-const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 500);
-camera.position.copy(CAM_PRESETS[0].pos);
-camera.lookAt(CAM_PRESETS[0].look);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-renderer.setPixelRatio(1);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-webglContainer.appendChild(renderer.domElement);
-
-let composer = null;
-try {
-  const renderPass = new THREE.RenderPass(scene, camera);
-  const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth || 480, window.innerHeight || 800), 0.95, 0.4, 0.2);
-  composer = new THREE.EffectComposer(renderer);
-  composer.addPass(renderPass); composer.addPass(bloomPass);
-} catch (e) { composer = null; }
-
-const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.85);
-scene.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.35);
-dirLight.position.set(12, 28, 18);
-scene.add(dirLight);
-
-const pathCurve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-4.8, 0.1, -12.5),
-  new THREE.Vector3(4.8, 0.1, -9.2),
-  new THREE.Vector3(-4.8, 0.1, -5.6),
-  new THREE.Vector3(3.8, 0.1, -3.0),
-  new THREE.Vector3(0.0, 0.1, -0.8)
-]);
-
-const gridSlotPositions = [];
-const tileMeshes = [];
-
-function buildBattlefield3D() {
-  const groundMesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0x050914, roughness: 0.9 }));
-  groundMesh.rotation.x = -Math.PI / 2; groundMesh.position.y = -0.15;
-  scene.add(groundMesh);
-
-  const tubeGeo = new THREE.TubeGeometry(pathCurve, 64, 0.85, 8, false);
-  const roadMesh = new THREE.Mesh(tubeGeo, new THREE.MeshStandardMaterial({ color: 0x332411, emissive: 0x78350f, emissiveIntensity: 0.25 }));
-  roadMesh.scale.set(1, 0.12, 1);
-  scene.add(roadMesh);
-
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 5; c++) {
-      const idx = r * 5 + c;
-      const wx = (c - 2) * 2.75;
-      const wz = 2.2 + r * 2.55;
-      gridSlotPositions.push(new THREE.Vector3(wx, 0, wz));
-
-      const tileGroup = new THREE.Group();
-      tileGroup.position.set(wx, 0, wz);
-
-      const baseGeo = new THREE.BoxGeometry(2.35, 0.24, 2.15);
-      const tAttr = gameState.terrainGrid[idx];
-      const baseMat = new THREE.MeshStandardMaterial({
-        color: tAttr ? tAttr.color : 0x0f172a,
-        metalness: 0.7, roughness: 0.3,
-        emissive: tAttr ? tAttr.color : 0x0c4a6e,
-        emissiveIntensity: tAttr ? 0.35 : 0.15
-      });
-      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-      baseMesh.userData = { tileIndex: idx };
-
-      const borderLine = new THREE.LineSegments(
-        new THREE.EdgesGeometry(baseGeo),
-        new THREE.LineBasicMaterial({ color: tAttr ? tAttr.color : 0x38bdf8 })
-      );
-      baseMesh.add(borderLine);
-      tileGroup.add(baseMesh);
-      scene.add(tileGroup);
-      tileMeshes.push(baseMesh);
-    }
-  }
-
-  // Dismissal Zone
-  const dismissGeo = new THREE.BoxGeometry(12, 0.1, 2);
-  const dismissMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, emissive: 0x7f1d1d, emissiveIntensity: 0.4, transparent: true, opacity: 0.8 });
-  const dismissMesh = new THREE.Mesh(dismissGeo, dismissMat);
-  dismissMesh.position.set(0, 0, 12.8);
-  dismissMesh.name = "dismissZone";
-  scene.add(dismissMesh);
-}
-
-function onResize() {
-  const container = document.getElementById('game-view');
-  if (!container) return;
-  const w = container.clientWidth || 480;
-  const h = container.clientHeight || 700;
-  hudCanvas.width = w;
-  hudCanvas.height = h;
-  if (renderer && composer) {
-    renderer.setSize(w, h);
-    composer.setSize(w, h);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-}
-window.addEventListener("resize", onResize);
-
-/* 9. Hero Instance Class */
-class Hero {
-  constructor(heroData, slotIndex) {
-    this.heroData = heroData;
-    this.tier = heroData.tier;
-    this.slotIndex = slotIndex;
-    this.kills = 0;
-    this.rank = 1;
-    this.attackCooldown = 0;
-    this.mesh = buildHeroCharacter3D(heroData);
-    this.mesh.position.copy(gridSlotPositions[slotIndex]);
-    scene.add(this.mesh);
-  }
-  getAtk() {
-    const encBonus = gameState.unlockedHeroes.size * 1.5;
-    const relicAtk = gameState.relics.has("청강검") ? 20 : 0;
-    const rankMult = this.rank === 3 ? 1.35 : (this.rank === 2 ? 1.15 : 1.0);
-    const taixueAtk = gameState.taixue.atkBonus * 10;
-    const synAtk = (gameState.synergyBuffs && gameState.synergyBuffs.atk) || 0;
-    const roguelikeAtk = gameState.buffs.atk || 0;
-    const tAttr = gameState.terrainGrid[this.slotIndex];
-    const terrainAtk = (tAttr && tAttr.name === "🔥화염") ? 1.3 : 1.0;
-    return Math.round((this.heroData.tier * 22 + 10) * (1 + (gameState.upgradeLevel * 15 + encBonus + relicAtk + taixueAtk + synAtk + roguelikeAtk) / 100) * rankMult * terrainAtk);
-  }
-  getAttackSpeed() {
-    const relicSpd = gameState.relics.has("한혈마 등자") ? 0.2 : 0;
-    const synSpd = (gameState.synergyBuffs && gameState.synergyBuffs.aspd) || 0;
-    const roguelikeSpd = gameState.buffs.aspd || 0;
-    const tAttr = gameState.terrainGrid[this.slotIndex];
-    const terrainSpd = (tAttr && tAttr.name === "⚡신속") ? 0.4 : 0;
-    return (1.0 + this.tier * 0.15 + relicSpd + synSpd + roguelikeSpd + terrainSpd) * (this.rank === 3 ? 1.35 : 1.0);
-  }
-  getRange() {
-    const tAttr = gameState.terrainGrid[this.slotIndex];
-    const terrainRng = (tAttr && tAttr.name === "⛰️고지") ? 1.35 : 1.0;
-    return (14 + this.tier * 2) * terrainRng;
-  }
-  addKill() {
-    this.kills++;
-    if (this.kills >= 10 && this.rank < 3) {
-      this.rank = 3;
-      this.mesh.scale.set(1.2, 1.2, 1.2);
-    } else if (this.kills >= 4 && this.rank < 2) {
-      this.rank = 2;
-    }
-  }
-  update(dt) {
-    if (this.mesh && this.mesh.children[1]) {
-      this.mesh.children[1].rotation.y += dt * 0.8;
-    }
-  }
-  destroy() { scene.remove(this.mesh); }
-}
-
-class Projectile {
-  constructor(startPos, targetEnemy, color, damage, attackerHero) {
-    this.startPos = startPos.clone();
-    this.target = targetEnemy;
-    this.progress = 0;
-    this.speed = 5.5;
-    this.damage = damage;
-    this.attacker = attackerHero;
-    const geo = new THREE.SphereGeometry(0.25, 8, 8);
-    const mat = new THREE.MeshBasicMaterial({ color: color });
-    this.mesh = new THREE.Mesh(geo, mat);
-    this.mesh.position.copy(startPos);
-    scene.add(this.mesh);
-  }
-  update(dt) {
-    if (!this.target || this.target.hp <= 0) {
-      this.destroy();
-      return false;
-    }
-    this.progress += this.speed * dt;
-    this.mesh.position.lerpVectors(this.startPos, this.target.mesh.position, Math.min(1.0, this.progress));
-    if (this.progress >= 1.0) {
-      if (this.target && this.target.hp > 0) {
-        this.target.hp -= this.damage;
-        if (this.target.hp <= 0 && this.attacker) {
-          this.attacker.addKill();
-        }
-      }
-      this.destroy();
-      return false;
-    }
-    return true;
-  }
-  destroy() {
-    scene.remove(this.mesh);
-  }
-}
-
-/* 10. Enemy Class */
-class Enemy {
-  constructor(wave) {
-    this.wave = wave;
-    this.isBoss = wave % 5 === 0;
-    const baseHp = Math.round(55 * Math.pow(1.35, wave - 1));
-    this.maxHp = this.isBoss ? baseHp * 5.5 : baseHp;
-    this.hp = this.maxHp;
-    this.speed = this.isBoss ? 0.022 : 0.042;
-    this.progress = 0;
-    this.stunTimer = 0;
-    this.bossRoarTimer = 8.0;
-
-    const size = this.isBoss ? 1.3 : 0.65;
-    this.mesh = new THREE.Mesh(
-      this.isBoss ? new THREE.DodecahedronGeometry(size) : new THREE.SphereGeometry(size, 8, 8),
-      new THREE.MeshStandardMaterial({ color: this.isBoss ? 0xef4444 : 0xf97316, emissive: this.isBoss ? 0xef4444 : 0x000000, emissiveIntensity: 0.3 })
-    );
-    this.mesh.position.copy(pathCurve.getPointAt(0));
-    scene.add(this.mesh);
-  }
-  update(dt) {
-    if (this.stunTimer > 0) {
-      this.stunTimer -= dt;
-      return true;
-    }
-    this.progress += this.speed * dt;
-    if (this.progress >= 1.0) {
-      gameState.gateHp = Math.max(0, gameState.gateHp - (this.isBoss ? 30 : 10));
-      this.destroy();
-      return false;
-    }
-    this.mesh.position.copy(pathCurve.getPointAt(this.progress));
-    this.mesh.position.y = this.isBoss ? 1.2 : 0.65;
-
-    if (this.isBoss) {
-      this.bossRoarTimer -= dt;
-      if (this.bossRoarTimer <= 0) {
-        this.bossRoarTimer = 8.0;
-        const occupied = gameState.grid.filter(h => h !== null);
-        if (occupied.length > 0) {
-          const victim = occupied[Math.floor(Math.random() * occupied.length)];
-          victim.attackCooldown = 2.5;
-          audioEngine.playSound("boss");
-        }
-      }
-    }
-    return true;
-  }
-  destroy() { scene.remove(this.mesh); }
-}
-
-/* 11. Raycaster Drag-and-Drop, Merge & Sell */
-const raycaster = new THREE.Raycaster();
-const mouseVec = new THREE.Vector2();
-
-function setupInteraction() {
+function initThreeScene() {
   const container = document.getElementById('webgl-container');
+  const w = container.clientWidth || 420;
+  const h = container.clientHeight || 680;
 
-  function getNDC(e) {
-    const rect = container.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-      x: ((clientX - rect.left) / rect.width) * 2 - 1,
-      y: -((clientY - rect.top) / rect.height) * 2 + 1
-    };
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x040812);
+  scene.fog = new THREE.FogExp2(0x040812, 0.015);
+
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 200);
+  camera.position.copy(CAM_PRESETS[0].pos);
+  camera.lookAt(CAM_PRESETS[0].look);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.innerHTML = '';
+  container.appendChild(renderer.domElement);
+
+  // UnrealBloomPass 안전 초기화 (실패 시 기본 렌더러 폴백)
+  try {
+    composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), 0.95, 0.35, 0.25);
+    composer.addPass(bloom);
+  } catch (e) {
+    composer = null;
   }
 
-  function onPointerDown(e) {
-    if (gameState.gameOver || gameState.paused) return;
-    audioEngine.init();
+  scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  const dirLight = new THREE.DirectionalLight(0xfef08a, 1.2);
+  dirLight.position.set(12, 25, 18);
+  scene.add(dirLight);
 
-    const ndc = getNDC(e);
-    mouseVec.set(ndc.x, ndc.y);
-    raycaster.setFromCamera(mouseVec, camera);
+  // 호로관 성벽 및 에너지 방어선
+  const wall = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 2.0, 1.0),
+    new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
+  );
+  wall.position.set(0, 1.0, -1.2);
+  scene.add(wall);
 
-    const heroMeshes = [];
-    gameState.grid.forEach(h => { if (h) heroMeshes.push(h.mesh); });
+  const laserLine = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 0.12, 0.12),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+  );
+  laserLine.position.set(0, 2.05, -1.2);
+  scene.add(laserLine);
 
-    const intersects = raycaster.intersectObjects(heroMeshes, true);
-    if (intersects.length > 0) {
-      let topMesh = intersects[0].object;
-      while (topMesh.parent && topMesh.parent.type !== 'Scene') {
-        topMesh = topMesh.parent;
-      }
-      for (let i = 0; i < gameState.grid.length; i++) {
-        const h = gameState.grid[i];
-        if (h && h.mesh === topMesh) {
-          gameState.draggedHero = h;
-          gameState.dragSourcePos = { index: i };
-          h.mesh.position.y = 2.5;
-          showInspector(h);
-          break;
-        }
-      }
-    } else {
-      showInspector(null);
+  // 적 이동 경로 라인 표시
+  const pathGeo = new THREE.BufferGeometry().setFromPoints(ENEMY_PATH);
+  const pathLine = new THREE.Line(pathGeo, new THREE.LineBasicMaterial({ color: 0xef4444 }));
+  pathLine.position.y = 0.15;
+  scene.add(pathLine);
+
+  // 하단 5x4 전술 그리드 타일 생성
+  gridTiles3D = [];
+  const startX = -5.6, startZ = 1.6, gapX = 2.8, gapZ = 2.8;
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 5; col++) {
+      const idx = row * 5 + col;
+      const tileMat = new THREE.MeshStandardMaterial({
+        color: (row + col) % 2 === 0 ? 0x0f172a : 0x1e293b,
+        metalness: 0.5,
+        roughness: 0.4
+      });
+      const tile = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.25, 2.45), tileMat);
+      tile.position.set(startX + col * gapX, 0, startZ + row * gapZ);
+      tile.userData.gridIndex = idx;
+      scene.add(tile);
+      gridTiles3D.push(tile);
     }
   }
 
-  function onPointerMove(e) {
-    if (!gameState.draggedHero) return;
-    const ndc = getNDC(e);
-    mouseVec.set(ndc.x, ndc.y);
-    raycaster.setFromCamera(mouseVec, camera);
-
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -2.5);
-    const target = new THREE.Vector3();
-    raycaster.ray.intersectPlane(plane, target);
-    if (target) {
-      gameState.dragCurrentWorldPos.copy(target);
-      gameState.draggedHero.mesh.position.copy(target);
-    }
-  }
-
-  function onPointerUp(e) {
-    if (!gameState.draggedHero) return;
-    const sourceIdx = gameState.dragSourcePos.index;
-    const hero = gameState.draggedHero;
-
-    const allTargets = [...tileMeshes];
-    const dismissZone = scene.getObjectByName("dismissZone");
-    if (dismissZone) allTargets.push(dismissZone);
-
-    const intersects = raycaster.intersectObjects(allTargets, true);
-    if (intersects.length > 0) {
-      let obj = intersects[0].object;
-      while (obj.parent && obj.parent.type !== 'Scene' && obj.userData.tileIndex === undefined) {
-        if (obj.name === "dismissZone") break;
-        obj = obj.parent;
-      }
-
-      if (obj.name === "dismissZone") {
-        const refund = Math.round(gameState.recruitCost * hero.tier * 0.5);
-        gameState.gold += refund;
-        gameState.grid[sourceIdx] = null;
-        hero.destroy();
-        audioEngine.playSound("merge");
-      } else if (obj.userData.tileIndex !== undefined) {
-        const targetIdx = obj.userData.tileIndex;
-        const targetHero = gameState.grid[targetIdx];
-
-        if (targetIdx === sourceIdx) {
-          hero.mesh.position.copy(gridSlotPositions[sourceIdx]);
-        } else if (!targetHero) {
-          gameState.grid[sourceIdx] = null;
-          gameState.grid[targetIdx] = hero;
-          hero.slotIndex = targetIdx;
-          hero.mesh.position.copy(gridSlotPositions[targetIdx]);
-        } else if (targetHero.heroData.tier === hero.heroData.tier && hero.heroData.tier < 7) {
-          // Merge Hero! Check Bagua Core 25% skip
-          const tAttr = gameState.terrainGrid[targetIdx];
-          const isBagua = tAttr && tAttr.name === "☯️팔진";
-          const skipTier = (isBagua && Math.random() < 0.25) ? 2 : 1;
-          const nextTier = Math.min(7, hero.heroData.tier + skipTier);
-
-          gameState.grid[sourceIdx] = null;
-          hero.destroy();
-          targetHero.destroy();
-
-          // Pick candidate for nextTier using favorite boost
-          const candidates = Object.values(HERO_120_DB).filter(h => h.tier === nextTier && gameState.unlockedHeroes.has(h.id));
-          const chosenData = selectWeightedHeroFromPool(candidates) || Object.values(HERO_120_DB).find(h => h.tier === nextTier);
-
-          const promoted = new Hero(chosenData, targetIdx);
-          gameState.grid[targetIdx] = promoted;
-          audioEngine.playSound("merge");
-          updateFactionSynergies();
-        } else {
-          // Swap positions
-          gameState.grid[sourceIdx] = targetHero;
-          gameState.grid[targetIdx] = hero;
-          targetHero.slotIndex = sourceIdx;
-          hero.slotIndex = targetIdx;
-          targetHero.mesh.position.copy(gridSlotPositions[sourceIdx]);
-          hero.mesh.position.copy(gridSlotPositions[targetIdx]);
-        }
-      } else {
-        hero.mesh.position.copy(gridSlotPositions[sourceIdx]);
-      }
-    } else {
-      hero.mesh.position.copy(gridSlotPositions[sourceIdx]);
-    }
-
-    gameState.draggedHero = null;
-  }
-
-  container.addEventListener('mousedown', onPointerDown);
-  window.addEventListener('mousemove', onPointerMove);
-  window.addEventListener('mouseup', onPointerUp);
-
-  container.addEventListener('touchstart', onPointerDown, { passive: true });
-  window.addEventListener('touchmove', onPointerMove, { passive: true });
-  window.addEventListener('touchend', onPointerUp);
+  buildSiegeWeapons3D();
 }
 
-function showInspector(hero) {
-  const panel = document.getElementById('unit-inspector');
-  if (!panel) return;
-  if (!hero) {
-    panel.classList.add('hidden');
+// ============================================================================
+// 5. 핵심 게임플레이 로직 (모집, 세력 계승 합성, 해산, 공성 병기, 목우유마)
+// ============================================================================
+function spawnHeroAtGrid(idx, heroData) {
+  if (gameState.grid[idx] && gameState.grid[idx].mesh) {
+    scene.remove(gameState.grid[idx].mesh);
+  }
+  const mesh = buildHeroCharacter3D(heroData);
+  mesh.position.copy(gridTiles3D[idx].position);
+  scene.add(mesh);
+
+  gameState.grid[idx] = {
+    data: heroData,
+    mesh,
+    cooldown: 0
+  };
+
+  if (!gameState.unlockedIds.includes(heroData.id)) {
+    gameState.unlockedIds.push(heroData.id);
+    addFloatingText(`📖 신장 해금: ${heroData.name}!`, gridTiles3D[idx].position, '#fbbf24');
+  }
+  updateSynergyAndHUD();
+  saveGameSafe();
+}
+
+function getHeroByFactionAndTier(faction, tier) {
+  return HERO_DB.find(h => h.faction === faction && h.tier === tier) || HERO_DB[0];
+}
+
+function recruitHero() {
+  sound.init();
+  if (gameState.gold < gameState.recruitCost) return;
+  const emptyIndices = [];
+  gameState.grid.forEach((cell, i) => { if (!cell) emptyIndices.push(i); });
+  if (emptyIndices.length === 0) {
+    addFloatingText('진영 포화! 장수를 합치거나 하단으로 해산하세요', new THREE.Vector3(0, 2, 6), '#f87171');
     return;
   }
-  document.getElementById('insp-name').textContent = `${hero.heroData.name} [Tier ${hero.tier}]`;
-  document.getElementById('insp-desc').textContent = hero.heroData.skillDesc;
-  document.getElementById('insp-atk').textContent = hero.getAtk();
-  document.getElementById('insp-spd').textContent = hero.getAttackSpeed().toFixed(1) + "/s";
-  document.getElementById('insp-rank').textContent = `★${hero.rank}`;
-  panel.classList.remove('hidden');
-}
-
-/* 12. Faction Synergy Calculation & Merge Helper */
-gameState.synergyBuffs = { atk: 0, aspd: 0 };
-
-function updateFactionSynergies() {
-  const counts = { 촉: 0, 위: 0, 오: 0, 군웅: 0 };
-  gameState.grid.forEach(h => {
-    if (h) counts[h.heroData.faction] = (counts[h.heroData.faction] || 0) + 1;
-  });
-
-  document.getElementById("syn-shu").innerText = `촉(공속+25%) ${counts['촉']}/3`;
-  document.getElementById("syn-wei").innerText = `위(화력+15%) ${counts['위']}/2`;
-  document.getElementById("syn-qun").innerText = `군웅(치명+25%) ${counts['군웅']}/3`;
-
-  document.getElementById("syn-shu").classList.toggle("active", counts['촉'] >= 3);
-  document.getElementById("syn-wei").classList.toggle("active", counts['위'] >= 2);
-  document.getElementById("syn-qun").classList.toggle("active", counts['군웅'] >= 3);
-
-  gameState.synergyBuffs.aspd = counts['촉'] >= 3 ? 0.25 : 0;
-  gameState.synergyBuffs.atk = (counts['위'] >= 2 ? 15 : 0) + (counts['군웅'] >= 3 ? 25 : 0);
-}
-
-function selectWeightedHeroFromPool(candidates) {
-  if (!candidates || candidates.length === 0) return null;
-  let totalWeight = 0;
-  const weighted = candidates.map(h => {
-    const weight = gameState.favorites.has(h.id) ? 3 : 1;
-    totalWeight += weight;
-    return { hero: h, weight };
-  });
-  let roll = Math.random() * totalWeight;
-  for (const item of weighted) {
-    if (roll <= item.weight) return item.hero;
-    roll -= item.weight;
-  }
-  return candidates[0];
-}
-
-/* 12. Recruitment with Favorite Probability Boost (3x) */
-function recruitHero() {
-  if (gameState.gold < gameState.recruitCost) return;
-
-  const emptySlots = [];
-  gameState.grid.forEach((h, idx) => { if (!h) emptySlots.push(idx); });
-  if (emptySlots.length === 0) return;
 
   gameState.gold -= gameState.recruitCost;
-  gameState.recruitCost = Math.round(gameState.recruitCost * 1.12);
+  gameState.recruitCost = Math.floor(gameState.recruitCost * 1.12) + 2;
 
-  const pool = Array.from(gameState.unlockedHeroes).map(id => HERO_120_DB[id]);
-  const candidates = pool.filter(h => h.tier <= 3);
-  const chosenData = selectWeightedHeroFromPool(candidates) || candidates[0];
+  const targetIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+  const factions = ['shu', 'wei', 'wu', 'qun'];
+  const f = factions[Math.floor(Math.random() * factions.length)];
 
-  const slot = emptySlots[Math.floor(Math.random() * emptySlots.length)];
-  const newHero = new Hero(chosenData, slot);
-  gameState.grid[slot] = newHero;
-  audioEngine.playSound("spear");
-  updateFactionSynergies();
-}
+  const roll = Math.random();
+  let tier = 1;
+  if (roll < 0.03 + gameState.highRecruitBonus * 0.3) tier = 3;
+  else if (roll < 0.18 + gameState.highRecruitBonus) tier = 2;
 
-/* 13. 1:1 Duel System (연타 대결) */
-let duelInterval = null;
-function checkDuelTrigger(boss) {
-  if (!gameState.duelActive && boss.isBoss && (boss.hp / boss.maxHp) <= 0.7) {
-    document.getElementById("duel-banner").classList.remove("hidden");
-    document.getElementById("start-duel-btn").classList.remove("hidden");
-    document.getElementById("duel-gauge-box").classList.add("hidden");
+  const heroData = getHeroByFactionAndTier(f, tier);
+  spawnHeroAtGrid(targetIdx, heroData);
+  sound.playWarDrum();
+
+  if (tier >= 2) {
+    addFloatingText(`⚡ ${heroData.name} 초고속 발탁!`, gridTiles3D[targetIdx].position, '#38bdf8');
   }
 }
 
-document.getElementById("start-duel-btn").onclick = () => {
-  document.getElementById("start-duel-btn").classList.add("hidden");
-  document.getElementById("duel-gauge-box").classList.remove("hidden");
-  gameState.duelActive = true;
-  gameState.duelProgress = 50;
-  gameState.duelTimer = 5.0;
+// 세력 계승 합성 (동일 세력 = 100% 계승, 타 세력 = 50:50)
+function tryMergeOrMove(fromIdx, toIdx) {
+  if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0) return;
+  const src = gameState.grid[fromIdx];
+  const dst = gameState.grid[toIdx];
+  if (!src) return;
 
-  audioEngine.playSound("lubu");
-  duelInterval = setInterval(() => {
-    gameState.duelTimer -= 0.1;
-    gameState.duelProgress = Math.max(0, gameState.duelProgress - 1.2);
-    document.getElementById("duel-gauge-fill").style.width = `${gameState.duelProgress}%`;
-    document.getElementById("duel-timer").innerText = `남은 시간: ${gameState.duelTimer.toFixed(1)}초`;
+  if (!dst) {
+    // 빈 칸으로 이동
+    src.mesh.position.copy(gridTiles3D[toIdx].position);
+    gameState.grid[toIdx] = src;
+    gameState.grid[fromIdx] = null;
+    updateSynergyAndHUD();
+    saveGameSafe();
+    return;
+  }
 
-    if (gameState.duelTimer <= 0) {
-      clearInterval(duelInterval);
-      endDuel(gameState.duelProgress >= 60);
+  if (src.data.tier === dst.data.tier && src.data.tier < 7) {
+    const nextTier = src.data.tier + 1;
+    let nextFaction = src.data.faction;
+    if (src.data.faction !== dst.data.faction) {
+      nextFaction = Math.random() < 0.5 ? src.data.faction : dst.data.faction;
     }
-  }, 100);
-};
+    const nextHero = getHeroByFactionAndTier(nextFaction, nextTier);
 
-document.getElementById("tap-duel-btn").onclick = () => {
-  if (gameState.duelActive) {
-    gameState.duelProgress = Math.min(100, gameState.duelProgress + 8);
-    audioEngine.playSound("sword");
-  }
-};
+    scene.remove(src.mesh);
+    scene.remove(dst.mesh);
+    gameState.grid[fromIdx] = null;
+    spawnHeroAtGrid(toIdx, nextHero);
 
-function endDuel(success) {
-  gameState.duelActive = false;
-  document.getElementById("duel-banner").classList.add("hidden");
-  if (success && gameState.bossEntity) {
-    gameState.bossEntity.hp -= gameState.bossEntity.maxHp * 0.25;
-    gameState.bossEntity.stunTimer = 4.0;
-    gameState.reputation += 25;
-
-    const relicPool = ["청강검", "태평요술서", "손자병법", "한혈마 등자", "전국옥새", "양유기의 활"];
-    const drop = relicPool[Math.floor(Math.random() * relicPool.length)];
-    gameState.relics.add(drop);
-    renderRelicBar();
-  }
-}
-
-function renderRelicBar() {
-  const container = document.getElementById("relic-icons");
-  container.innerHTML = "";
-  gameState.relics.forEach(r => {
-    const chip = document.createElement("span");
-    chip.className = "relic-chip";
-    chip.innerText = r;
-    container.appendChild(chip);
-  });
-}
-
-/* 14. Roguelike Strategy Modal (제갈량의 금낭묘계) */
-const ROGUELIKE_OPTIONS = [
-  { title: "도원결의", desc: "전체 아군 공격력 +25%", apply: () => { gameState.buffs.atk += 25; } },
-  { title: "연노 개량", desc: "전체 아군 공격속도 +20%", apply: () => { gameState.buffs.aspd += 0.20; } },
-  { title: "병량 확보", desc: "적 처치 골드 획득량 +30%", apply: () => { gameState.buffs.goldMult *= 1.30; } },
-  { title: "적벽 대화재", desc: "적벽 화공 계책 피해 +50%", apply: () => { gameState.buffs.skillDmg += 0.50; } },
-  { title: "호로관 보수", desc: "성문 HP +50 회복 및 최대 HP +20", apply: () => { gameState.maxGateHp += 20; gameState.gateHp = Math.min(gameState.maxGateHp, gameState.gateHp + 50); } }
-];
-
-function showStrategyModal() {
-  gameState.paused = true;
-  const container = document.getElementById("strategy-cards");
-  container.innerHTML = "";
-
-  const shuffled = [...ROGUELIKE_OPTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
-  shuffled.forEach(opt => {
-    const card = document.createElement("div");
-    card.className = "strategy-card";
-    card.style.cssText = "background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 10px; padding: 16px; margin-bottom: 12px; cursor: pointer; color: #fff; text-align: center; transition: transform 0.2s;";
-    card.innerHTML = `<h3 style="color:#fde047; margin-bottom:6px;">${opt.title}</h3><p style="font-size:13px; color:#cbd5e1;">${opt.desc}</p>`;
-    card.onclick = () => {
-      opt.apply();
-      document.getElementById("strategy-modal").classList.add("hidden");
-      gameState.paused = false;
-      gameState.waveInProgress = true;
-    };
-    container.appendChild(card);
-  });
-
-  document.getElementById("strategy-modal").classList.remove("hidden");
-}
-
-/* 15. Wave Completion & Game Over Checks */
-function checkWaveProgression() {
-  const maxEnemies = 10 + gameState.wave * 2;
-  if (gameState.waveInProgress && gameState.enemiesSpawnedInWave >= maxEnemies && gameState.enemies.length === 0) {
-    gameState.waveInProgress = false;
-    gameState.wave++;
-    gameState.enemiesSpawnedInWave = 0;
-
-    const waveTitle = document.getElementById("wave-title");
-    if (waveTitle) {
-      waveTitle.innerText = `제${gameState.wave}장 ${gameState.wave % 5 === 0 ? "보스전" : "전장"}`;
-    }
-
-    showStrategyModal();
-  }
-}
-
-function checkGameOver() {
-  if (!gameState.gameOver && gameState.gateHp <= 0) {
-    gameState.gameOver = true;
-    document.getElementById("final-wave").innerText = `제${gameState.wave}장`;
-    document.getElementById("final-rep").innerText = gameState.reputation;
-    document.getElementById("final-kills").innerText = gameState.kills;
-    document.getElementById("gameover-modal").classList.remove("hidden");
-  }
-}
-
-document.getElementById("restart-btn").onclick = () => {
-  location.reload();
-};
-
-/* 16. Encyclopedia & Taixue UI */
-function renderEncyclopedia() {
-  const grid = document.getElementById("hero-grid");
-  grid.innerHTML = "";
-
-  const list = Object.values(HERO_120_DB).filter(h => {
-    if (gameState.activeFilterFaction === "all") return true;
-    return h.faction === gameState.activeFilterFaction;
-  });
-
-  list.forEach(h => {
-    const isUnlocked = gameState.unlockedHeroes.has(h.id);
-    const isFav = gameState.favorites.has(h.id);
-
-    const card = document.createElement("div");
-    card.className = `hero-card ${isUnlocked ? '' : 'locked'} ${isFav ? 'fav' : ''}`;
-    card.innerHTML = `
-      <div class="card-top">
-        <span class="card-title" style="color:${h.color}">[T${h.tier}] ${h.name} (${h.hanja})</span>
-        ${isUnlocked ? `<button class="card-fav-btn">${isFav ? '⭐' : '☆'}</button>` : ''}
-      </div>
-      <div class="card-body">
-        세력: ${h.faction}<br>
-        ${isUnlocked ? `특기: ${h.skillDesc}` : `해금: ${h.unlockCond} (소모 🎖️${h.unlockCost})`}
-      </div>
-      ${!isUnlocked ? `<button class="unlock-btn">🎖️ ${h.unlockCost} 삼고초려 영입</button>` : ''}
-    `;
-
-    if (isUnlocked) {
-      const favBtn = card.querySelector(".card-fav-btn");
-      favBtn.onclick = () => {
-        if (gameState.favorites.has(h.id)) gameState.favorites.delete(h.id);
-        else gameState.favorites.add(h.id);
-        triggerSave();
-        renderEncyclopedia();
-      };
+    addFloatingText(`✨ ${nextHero.name} [T${nextTier}] 승급!`, gridTiles3D[toIdx].position, '#fde047');
+    if (nextTier >= 4) {
+      triggerHanjaStamp(nextHero.stamp, `${nextHero.name} [Tier ${nextTier}] 출진!`);
     } else {
-      const unlockBtn = card.querySelector(".unlock-btn");
-      unlockBtn.onclick = () => {
-        if (gameState.reputation >= h.unlockCost) {
-          gameState.reputation -= h.unlockCost;
-          gameState.unlockedHeroes.add(h.id);
-          triggerSave();
-          renderEncyclopedia();
-          updateHUD();
-        }
-      };
+      sound.playGong();
     }
-    grid.appendChild(card);
-  });
-
-  document.getElementById("enc-unlocked-count").innerText = `${gameState.unlockedHeroes.size}/120`;
-  document.getElementById("enc-bonus-val").innerText = `+${(gameState.unlockedHeroes.size * 1.5).toFixed(1)}% ATK`;
+  } else {
+    // 위치 스왑
+    src.mesh.position.copy(gridTiles3D[toIdx].position);
+    dst.mesh.position.copy(gridTiles3D[fromIdx].position);
+    gameState.grid[toIdx] = src;
+    gameState.grid[fromIdx] = dst;
+    updateSynergyAndHUD();
+    saveGameSafe();
+  }
 }
 
-function renderTaixue() {
-  const container = document.getElementById("taixue-items");
-  container.innerHTML = "";
+function dismissHero(idx) {
+  const h = gameState.grid[idx];
+  if (!h) return;
+  const refund = Math.floor(gameState.recruitCost * h.data.tier * 0.5);
+  gameState.gold += refund;
+  addFloatingText(`+${refund}🌾 환급`, h.mesh.position, '#34d399');
+  scene.remove(h.mesh);
+  gameState.grid[idx] = null;
+  sound.playWarDrum();
+  updateSynergyAndHUD();
+  saveGameSafe();
+}
 
-  const items = [
-    { key: "goldBonus", name: "군량 비축술", desc: "시작 군량미 +25🌾", cost: (gameState.taixue.goldBonus + 1) * 30 },
-    { key: "recruitBonus", name: "초고속 천거술", desc: "고티어 등용 확률 +3%", cost: (gameState.taixue.recruitBonus + 1) * 40 },
-    { key: "gateBonus", name: "호로관 축성술", desc: "성문 HP +25 및 자동 수리 +5", cost: (gameState.taixue.gateBonus + 1) * 35 },
-    { key: "atkBonus", name: "병법 연마", desc: "전체 아군 공격력 +10%", cost: (gameState.taixue.atkBonus + 1) * 50 }
-  ];
+// 적군 스폰
+function spawnEnemy(isBoss = false) {
+  const hpBase = (45 + Math.pow(gameState.wave, 1.55) * 35) * (isBoss ? 6.5 : 1);
+  const group = new THREE.Group();
+  const color = isBoss ? 0xdc2626 : 0xa855f7;
+  const scale = isBoss ? 1.7 : 1.0;
 
-  items.forEach(item => {
-    const lvl = gameState.taixue[item.key];
-    const div = document.createElement("div");
-    div.className = "taixue-item";
-    div.innerHTML = `
-      <div class="taixue-info">
-        <h4>${item.name} <small>Lv.${lvl}</small></h4>
-        <p>${item.desc}</p>
-      </div>
-      <button class="taixue-buy-btn">🎖️ ${item.cost} 연구</button>
-    `;
-    div.querySelector(".taixue-buy-btn").onclick = () => {
-      if (gameState.reputation >= item.cost) {
-        gameState.reputation -= item.cost;
-        gameState.taixue[item.key]++;
-        triggerSave();
-        renderTaixue();
-        updateHUD();
-      }
-    };
-    container.appendChild(div);
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.42 * scale, 0.5 * scale, 1.1 * scale, 8),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
+  );
+  body.position.y = 0.6 * scale;
+  group.add(body);
+
+  group.position.copy(ENEMY_PATH[0]);
+  scene.add(group);
+
+  gameState.enemies.push({
+    mesh: group,
+    hp: hpBase,
+    maxHp: hpBase,
+    speed: isBoss ? 2.1 : 3.2 + Math.min(2.0, gameState.wave * 0.08),
+    wpIndex: 1,
+    isBoss,
+    burnTimer: 0,
+    burnDps: 0
+  });
+
+  if (isBoss) {
+    triggerHanjaStamp('敵將來襲', `제${gameState.wave}장 거대 보스 출현!`);
+  }
+}
+
+// 황금 목우유마 보급 수레 스폰
+function spawnSupplyCart() {
+  if (gameState.supplyCart) scene.remove(gameState.supplyCart.mesh);
+  const g = new THREE.Group();
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.9, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.15 })
+  );
+  box.position.y = 0.6;
+  g.add(box);
+  g.position.set(-9.5, 0, -0.2);
+  scene.add(g);
+  gameState.supplyCart = { mesh: g, hp: 1 };
+  addFloatingText('🐂 황금 목우유마 출현! (터치 시 군량미 획득)', new THREE.Vector3(0, 2.5, -1), '#fbbf24');
+}
+
+function addFloatingText(text, worldPos, color = '#ffffff') {
+  gameState.floatingTexts.push({
+    text,
+    pos: worldPos.clone(),
+    color,
+    life: 1.0
   });
 }
 
-/* 15. Controls & Camera Toggle Binding */
-document.querySelectorAll(".faction-tabs .tab-btn").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".faction-tabs .tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    gameState.activeFilterFaction = btn.dataset.faction;
-    renderEncyclopedia();
+// 세력 시너지 및 HUD 계산
+function getActiveSynergies() {
+  const counts = { shu: 0, wei: 0, wu: 0, qun: 0 };
+  gameState.grid.forEach(cell => {
+    if (cell) counts[cell.data.faction]++;
+  });
+  return {
+    counts,
+    shuMult: counts.shu >= 3 ? 1.3 : 1.0,
+    weiMult: counts.wei >= 3 ? 1.25 : 1.0,
+    wuBurn: counts.wu >= 3,
+    qunCrit: counts.qun >= 3 ? 0.22 : 0
   };
-});
-
-document.getElementById("cam-btn").onclick = () => {
-  currentCamIdx = (currentCamIdx + 1) % CAM_PRESETS.length;
-  camera.position.copy(CAM_PRESETS[currentCamIdx].pos);
-  camera.lookAt(CAM_PRESETS[currentCamIdx].look);
-  document.getElementById("cam-btn").textContent = CAM_PRESETS[currentCamIdx].name;
-};
-
-document.getElementById("encyclopedia-btn").onclick = () => {
-  renderEncyclopedia();
-  document.getElementById("encyclopedia-modal").classList.remove("hidden");
-};
-
-document.getElementById("taixue-btn").onclick = () => {
-  renderTaixue();
-  document.getElementById("taixue-modal").classList.remove("hidden");
-};
-
-document.getElementById("recruit-btn").onclick = recruitHero;
-document.getElementById("upgrade-btn").onclick = () => {
-  if (gameState.gold >= gameState.upgradeCost) {
-    gameState.gold -= gameState.upgradeCost;
-    gameState.upgradeLevel++;
-    gameState.upgradeCost = Math.round(gameState.upgradeCost * 1.35);
-  }
-};
-document.getElementById("skill-btn").onclick = () => {
-  if (gameState.skillCooldown <= 0) {
-    gameState.skillCooldown = 20.0;
-    audioEngine.playSound("lubu");
-    gameState.enemies.forEach(e => e.hp -= 300 * gameState.wave);
-  }
-};
-
-function updateHUD() {
-  document.getElementById("gold-val").innerText = gameState.gold;
-  document.getElementById("rep-val").innerText = gameState.reputation;
-  document.getElementById("hp-val").innerText = `${gameState.gateHp}/${gameState.maxGateHp}`;
-  document.getElementById("gate-hp-bar").style.width = `${(gameState.gateHp / gameState.maxGateHp) * 100}%`;
-  document.getElementById("recruit-cost").innerText = gameState.recruitCost;
-  document.getElementById("upgrade-lvl").innerText = gameState.upgradeLevel;
-  document.getElementById("upgrade-cost").innerText = gameState.upgradeCost;
 }
 
-/* 16. Main Game Loop */
-let lastTime = performance.now();
-function animateLoop(now) {
-  requestAnimationFrame(animateLoop);
-  const dt = Math.min((now - lastTime) / 1000, 0.1);
-  lastTime = now;
+function updateSynergyAndHUD() {
+  const syn = getActiveSynergies();
+  const codexBonus = gameState.unlockedIds.length * 2;
 
-  if (!gameState.paused && !gameState.gameOver) {
-    if (gameState.skillCooldown > 0) gameState.skillCooldown -= dt;
+  document.getElementById('gold-val').textContent = Math.floor(gameState.gold);
+  document.getElementById('hp-val').textContent = `${Math.max(0, Math.floor(gameState.hp))}/${gameState.maxHp}`;
+  document.getElementById('kill-val').textContent = gameState.kills;
+  document.getElementById('bonus-val').textContent = `+${codexBonus}%`;
+  document.getElementById('wave-title').textContent = `제${gameState.wave}장 호로관 방어전`;
+  document.getElementById('recruit-cost').textContent = gameState.recruitCost;
+  document.getElementById('upgrade-lvl').textContent = gameState.upgradeLvl;
+  document.getElementById('upgrade-cost').textContent = gameState.upgradeCost;
+  document.getElementById('gate-hp-bar').style.width = `${Math.max(0, (gameState.hp / gameState.maxHp) * 100)}%`;
 
-    // Enemy Spawner
-    const maxEnemies = 10 + gameState.wave * 2;
-    if (gameState.waveInProgress && gameState.enemiesSpawnedInWave < maxEnemies) {
-      gameState.spawnTimer += dt;
-      if (gameState.spawnTimer > 1.8 && gameState.enemies.length < 12) {
-        gameState.spawnTimer = 0;
-        gameState.enemiesSpawnedInWave++;
-        const enemy = new Enemy(gameState.wave);
-        gameState.enemies.push(enemy);
-        if (enemy.isBoss) gameState.bossEntity = enemy;
-      }
+  const setBadge = (id, label, cnt) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = `${label} ${cnt}/3`;
+    el.classList.toggle('active', cnt >= 3);
+  };
+  setBadge('syn-shu', '🟢 촉(공속)', syn.counts.shu);
+  setBadge('syn-wei', '🔵 위(화력)', syn.counts.wei);
+  setBadge('syn-wu',  '🔴 오(화염)', syn.counts.wu);
+  setBadge('syn-qun', '🟣 군웅(치명)', syn.counts.qun);
+
+  document.getElementById('siege-l-lv').textContent = gameState.siegeLeftLv > 0 ? `Lv.${gameState.siegeLeftLv} (${80 + gameState.siegeLeftLv * 60}🌾)` : '건설(80🌾)';
+  document.getElementById('siege-r-lv').textContent = gameState.siegeRightLv > 0 ? `Lv.${gameState.siegeRightLv} (${100 + gameState.siegeRightLv * 75}🌾)` : '건설(100🌾)';
+}
+
+// ============================================================================
+// 6. 실시간 전투 루프 및 2D HUD 오버레이 렌더링
+// ============================================================================
+function updateGame(dt) {
+  if (gameState.isGameOver) return;
+  const effDt = dt * gameState.gameSpeed;
+  sound.updateBgm(effDt);
+
+  if (gameState.skillCd > 0) {
+    gameState.skillCd = Math.max(0, gameState.skillCd - effDt);
+    const btn = document.getElementById('skill-btn');
+    const cdEl = document.getElementById('skill-cd');
+    btn.disabled = gameState.skillCd > 0;
+    cdEl.textContent = gameState.skillCd > 0 ? `${gameState.skillCd.toFixed(1)}s` : '즉시 발동';
+  }
+
+  // 카메라 시점 보간 & 화면 흔들림
+  const targetCam = CAM_PRESETS[gameState.camMode];
+  camera.position.lerp(targetCam.pos, 0.08);
+  if (gameState.screenShake > 0) {
+    gameState.screenShake = Math.max(0, gameState.screenShake - dt * 1.8);
+    camera.position.x += (Math.random() - 0.5) * gameState.screenShake * 1.4;
+  }
+  camera.lookAt(targetCam.look);
+
+  // 목우유마 이동
+  gameState.supplyCartTimer += effDt;
+  if (gameState.supplyCartTimer >= 25) {
+    gameState.supplyCartTimer = 0;
+    spawnSupplyCart();
+  }
+  if (gameState.supplyCart) {
+    gameState.supplyCart.mesh.position.x += effDt * 3.2;
+    if (gameState.supplyCart.mesh.position.x > 9.5) {
+      scene.remove(gameState.supplyCart.mesh);
+      gameState.supplyCart = null;
     }
+  }
 
-    // Update Enemies
-    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
-      const e = gameState.enemies[i];
-      if (!e.update(dt)) {
-        gameState.enemies.splice(i, 1);
-        continue;
-      }
-      checkDuelTrigger(e);
-      if (e.hp <= 0) {
-        const goldYield = Math.round(15 * gameState.buffs.goldMult);
-        gameState.gold += goldYield;
-        gameState.reputation += e.isBoss ? 30 : 1;
-        gameState.kills++;
-        e.destroy();
-        gameState.enemies.splice(i, 1);
-      }
+  // 적군 스폰
+  if (gameState.waveRemaining > 0) {
+    gameState.spawnTimer -= effDt;
+    if (gameState.spawnTimer <= 0) {
+      gameState.spawnTimer = 1.15;
+      const isBoss = (gameState.waveRemaining === 1 && gameState.wave % 5 === 0);
+      spawnEnemy(isBoss);
+      gameState.waveRemaining--;
     }
+  } else if (gameState.enemies.length === 0) {
+    // 웨이브 클리어
+    gameState.wave++;
+    gameState.waveRemaining = 8 + gameState.wave * 3;
+    gameState.gold += 35 + gameState.wave * 8;
+    updateSynergyAndHUD();
+    saveGameSafe();
+    if (gameState.wave % 2 === 0) openStrategyModal();
+  }
 
-    // Update Projectiles
-    for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
-      const p = gameState.projectiles[i];
-      if (!p.update(dt)) {
-        gameState.projectiles.splice(i, 1);
-      }
-    }
+  const syn = getActiveSynergies();
+  const codexMult = 1 + gameState.unlockedIds.length * 0.02;
+  const upgradeMult = 1 + (gameState.upgradeLvl - 1) * 0.18;
 
-    // Update Combat
-    let dps = 0;
-    gameState.grid.forEach(h => {
-      if (h) {
-        h.update(dt);
-        dps += Math.round(h.getAtk() * h.getAttackSpeed());
-        h.attackCooldown -= dt;
-        if (h.attackCooldown <= 0 && gameState.enemies.length > 0) {
-          h.attackCooldown = 1.0 / h.getAttackSpeed();
-          const target = gameState.enemies[0];
-          audioEngine.playSound("bow");
-          gameState.projectiles.push(new Projectile(
-            h.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)),
-            target,
-            h.heroData.hex,
-            h.getAtk(),
-            h
-          ));
+  // 그리드 장수 공격
+  gameState.grid.forEach((cell, idx) => {
+    if (!cell) return;
+    if (cell.mesh.userData.auraRing) cell.mesh.userData.auraRing.rotation.z += effDt * 1.8;
+    if (cell.mesh.userData.halo) cell.mesh.userData.halo.rotation.z -= effDt * 2.2;
+
+    if (idx === gameState.draggedIndex) return;
+
+    cell.cooldown -= effDt * cell.data.spd * gameState.buffSpd * syn.shuMult;
+    if (cell.cooldown <= 0 && gameState.enemies.length > 0) {
+      const range = (cell.data.range + gameState.buffRange) * syn.weiMult;
+      let target = null;
+      let minDist = Infinity;
+      for (const en of gameState.enemies) {
+        const d = cell.mesh.position.distanceTo(en.mesh.position);
+        if (d <= range && d < minDist) {
+          minDist = d;
+          target = en;
         }
+      }
+      if (target) {
+        cell.cooldown = 1.0;
+        if (cell.mesh.userData.armPivot) {
+          cell.mesh.userData.armPivot.rotation.x = -1.2;
+          setTimeout(() => { if (cell.mesh && cell.mesh.userData.armPivot) cell.mesh.userData.armPivot.rotation.x = 0; }, 140);
+        }
+        sound.playBladeSlash();
+
+        const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit);
+        const dmg = cell.data.atk * gameState.buffAtk * syn.weiMult * codexMult * upgradeMult * (isCrit ? 2.2 : 1.0);
+        spawnProjectile(cell.mesh.position, target, dmg, FACTION_META[cell.data.faction].hex, isCrit, syn.wuBurn);
+      }
+    }
+  });
+
+  // 성루 공성 병기 자동 사격
+  if (gameState.siegeLeftLv > 0 && gameState.enemies.length > 0) {
+    gameState.siegeLeftTimer += effDt;
+    if (gameState.siegeLeftTimer >= 1.5) {
+      gameState.siegeLeftTimer = 0;
+      const targets = gameState.enemies.slice(0, 3);
+      targets.forEach(t => {
+        spawnProjectile(siegeLeftMesh.position, t, 85 * gameState.siegeLeftLv * upgradeMult, 0x38bdf8, false, false);
+      });
+    }
+  }
+  if (gameState.siegeRightLv > 0 && gameState.enemies.length > 0) {
+    gameState.siegeRightTimer += effDt;
+    if (gameState.siegeRightTimer >= 3.8) {
+      gameState.siegeRightTimer = 0;
+      const target = gameState.enemies[0];
+      sound.playWarDrum();
+      spawnProjectile(siegeRightMesh.position, target, 240 * gameState.siegeRightLv * upgradeMult, 0xf97316, true, true);
+    }
+  }
+
+  // 발사체 이동
+  for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
+    const p = gameState.projectiles[i];
+    if (!gameState.enemies.includes(p.target)) {
+      scene.remove(p.mesh);
+      gameState.projectiles.splice(i, 1);
+      continue;
+    }
+    const dir = new THREE.Vector3().subVectors(p.target.mesh.position, p.mesh.position);
+    const dist = dir.length();
+    if (dist < 0.6) {
+      p.target.hp -= p.dmg;
+      if (p.burn) {
+        p.target.burnTimer = 3.0;
+        p.target.burnDps = p.dmg * 0.25;
+      }
+      addFloatingText(
+        `${p.isCrit ? '💥' : ''}-${Math.floor(p.dmg)}`,
+        p.target.mesh.position,
+        p.isCrit ? '#fde047' : '#f8fafc'
+      );
+      scene.remove(p.mesh);
+      gameState.projectiles.splice(i, 1);
+    } else {
+      dir.normalize();
+      p.mesh.position.addScaledVector(dir, effDt * 24);
+    }
+  }
+
+  // 적군 이동 및 처치 판정
+  for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+    const en = gameState.enemies[i];
+    if (en.burnTimer > 0) {
+      en.burnTimer -= effDt;
+      en.hp -= en.burnDps * effDt;
+    }
+    if (en.hp <= 0) {
+      scene.remove(en.mesh);
+      gameState.enemies.splice(i, 1);
+      gameState.kills++;
+      gameState.gold += en.isBoss ? 80 : 8 + Math.floor(gameState.wave * 1.5);
+      updateSynergyAndHUD();
+      continue;
+    }
+
+    const wp = ENEMY_PATH[en.wpIndex];
+    const dir = new THREE.Vector3().subVectors(wp, en.mesh.position);
+    const dist = dir.length();
+    if (dist < 0.35) {
+      en.wpIndex++;
+      if (en.wpIndex >= ENEMY_PATH.length) {
+        gameState.hp -= en.isBoss ? 30 : 10;
+        scene.remove(en.mesh);
+        gameState.enemies.splice(i, 1);
+        sound.playWarDrum();
+        updateSynergyAndHUD();
+        if (gameState.hp <= 0) {
+          gameState.isGameOver = true;
+          document.getElementById('final-wave').textContent = `제${gameState.wave}장`;
+          document.getElementById('final-kills').textContent = gameState.kills;
+          document.getElementById('gameover-modal').classList.remove('hidden');
+        }
+      }
+    } else {
+      dir.normalize();
+      en.mesh.position.addScaledVector(dir, effDt * en.speed);
+    }
+  }
+
+  // 플로팅 텍스트 갱신
+  for (let i = gameState.floatingTexts.length - 1; i >= 0; i--) {
+    gameState.floatingTexts[i].life -= dt * 1.1;
+    gameState.floatingTexts[i].pos.y += dt * 1.8;
+    if (gameState.floatingTexts[i].life <= 0) gameState.floatingTexts.splice(i, 1);
+  }
+}
+
+function spawnProjectile(fromPos, target, dmg, colorHex, isCrit, burn) {
+  const m = new THREE.Mesh(
+    new THREE.SphereGeometry(isCrit ? 0.28 : 0.18, 8, 8),
+    new THREE.MeshBasicMaterial({ color: colorHex })
+  );
+  m.position.copy(fromPos);
+  m.position.y += 1.0;
+  scene.add(m);
+  gameState.projectiles.push({ mesh: m, target, dmg, isCrit, burn });
+}
+
+function render2DOverlay() {
+  const canvas = document.getElementById('hudCanvas');
+  const ctx = canvas.getContext('2d');
+  if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 드래그 중일 때 하단 해산(환급) 드롭존 표시
+  if (gameState.draggedIndex !== -1) {
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.78)';
+    ctx.fillRect(20, canvas.height - 54, canvas.width - 40, 44);
+    ctx.strokeStyle = '#fca5a5';
+    ctx.strokeRect(20, canvas.height - 54, canvas.width - 40, 44);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🌾 이곳에 드롭하여 장수 해산 (+군량미 50% 환급)', canvas.width / 2, canvas.height - 27);
+  }
+
+  // 적 체력바 렌더링
+  gameState.enemies.forEach(en => {
+    const p = en.mesh.position.clone();
+    p.y += en.isBoss ? 2.4 : 1.5;
+    p.project(camera);
+    const x = (p.x * 0.5 + 0.5) * canvas.width;
+    const y = (-p.y * 0.5 + 0.5) * canvas.height;
+    const w = en.isBoss ? 56 : 34;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(x - w / 2, y, w, 5);
+    ctx.fillStyle = en.isBoss ? '#f59e0b' : '#ef4444';
+    ctx.fillRect(x - w / 2, y, w * Math.max(0, en.hp / en.maxHp), 5);
+  });
+
+  // 플로팅 텍스트 렌더링
+  gameState.floatingTexts.forEach(ft => {
+    const p = ft.pos.clone().project(camera);
+    const x = (p.x * 0.5 + 0.5) * canvas.width;
+    const y = (-p.y * 0.5 + 0.5) * canvas.height;
+    ctx.globalAlpha = Math.max(0, ft.life);
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = ft.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(ft.text, x, y);
+    ctx.globalAlpha = 1.0;
+  });
+}
+
+// ============================================================================
+// 7. 터치/마우스 Raycaster 조작 & 모달 이벤트
+// ============================================================================
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.2);
+
+function getTileIndexFromEvent(e) {
+  const canvas = document.getElementById('hudCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+  const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+
+  // 목우유마 터치 체크
+  if (gameState.supplyCart) {
+    const cartHits = raycaster.intersectObjects(gameState.supplyCart.mesh.children, true);
+    if (cartHits.length > 0) {
+      const bonus = 60 + gameState.wave * 15;
+      gameState.gold += bonus;
+      triggerHanjaStamp('木牛流馬', `보급 수레 확보! +${bonus}🌾`);
+      scene.remove(gameState.supplyCart.mesh);
+      gameState.supplyCart = null;
+      updateSynergyAndHUD();
+      return -2;
+    }
+  }
+
+  const hits = raycaster.intersectObjects(gridTiles3D);
+  if (hits.length > 0) return hits[0].object.userData.gridIndex;
+  return -1;
+}
+
+function bindEvents() {
+  const canvas = document.getElementById('hudCanvas');
+
+  const onDown = (e) => {
+    sound.init();
+    const idx = getTileIndexFromEvent(e);
+    if (idx >= 0 && gameState.grid[idx]) {
+      gameState.draggedIndex = idx;
+      gameState.selectedIndex = idx;
+      const d = gameState.grid[idx].data;
+      document.getElementById('unit-inspector').classList.remove('hidden');
+      document.getElementById('insp-name').textContent = `${d.name} [Tier ${d.tier}]`;
+      document.getElementById('insp-desc').textContent = `${FACTION_META[d.faction].name}(${FACTION_META[d.faction].hanja}) · ${d.desc}`;
+      document.getElementById('insp-atk').textContent = Math.floor(d.atk * gameState.buffAtk);
+      document.getElementById('insp-spd').textContent = `${(d.spd * gameState.buffSpd).toFixed(2)}/s`;
+      document.getElementById('insp-rng').textContent = `${d.range}m`;
+    } else {
+      document.getElementById('unit-inspector').classList.add('hidden');
+    }
+  };
+
+  const onMove = (e) => {
+    if (gameState.draggedIndex === -1) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    if (raycaster.ray.intersectPlane(dragPlane, gameState.dragWorldPos)) {
+      const cell = gameState.grid[gameState.draggedIndex];
+      if (cell) cell.mesh.position.copy(gameState.dragWorldPos);
+    }
+  };
+
+  const onUp = (e) => {
+    if (gameState.draggedIndex === -1) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    const fromIdx = gameState.draggedIndex;
+    gameState.draggedIndex = -1;
+
+    if (clientY - rect.top > rect.height - 58) {
+      dismissHero(fromIdx);
+      return;
+    }
+
+    const toIdx = getTileIndexFromEvent(e);
+    if (toIdx >= 0 && toIdx !== fromIdx) {
+      tryMergeOrMove(fromIdx, toIdx);
+    } else if (gameState.grid[fromIdx]) {
+      gameState.grid[fromIdx].mesh.position.copy(gridTiles3D[fromIdx].position);
+    }
+  };
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+
+  document.getElementById('recruit-btn').addEventListener('click', recruitHero);
+
+  document.getElementById('upgrade-btn').addEventListener('click', () => {
+    if (gameState.gold < gameState.upgradeCost) return;
+    gameState.gold -= gameState.upgradeCost;
+    gameState.upgradeLvl++;
+    gameState.upgradeCost = Math.floor(gameState.upgradeCost * 1.35);
+    sound.playGong();
+    updateSynergyAndHUD();
+    saveGameSafe();
+  });
+
+  document.getElementById('skill-btn').addEventListener('click', () => {
+    if (gameState.skillCd > 0) return;
+    gameState.skillCd = 18;
+    sound.playCatapultBoom();
+    triggerHanjaStamp('赤壁業火', '적벽의 화공이 적진을 불태웁니다!');
+    const skillDmg = 140 * gameState.wave;
+    gameState.enemies.forEach(en => {
+      en.hp -= skillDmg;
+      en.burnTimer = 4.0;
+      en.burnDps = skillDmg * 0.2;
+      addFloatingText(`🔥-${skillDmg}`, en.mesh.position, '#f97316');
+    });
+  });
+
+  document.getElementById('siege-left-btn').addEventListener('click', () => {
+    const cost = 80 + gameState.siegeLeftLv * 60;
+    if (gameState.gold < cost) return;
+    gameState.gold -= cost;
+    gameState.siegeLeftLv++;
+    siegeLeftMesh.visible = true;
+    triggerHanjaStamp('諸葛連弩', `좌성루 제갈연노 Lv.${gameState.siegeLeftLv} 가동!`);
+    updateSynergyAndHUD();
+    saveGameSafe();
+  });
+
+  document.getElementById('siege-right-btn').addEventListener('click', () => {
+    const cost = 100 + gameState.siegeRightLv * 75;
+    if (gameState.gold < cost) return;
+    gameState.gold -= cost;
+    gameState.siegeRightLv++;
+    siegeRightMesh.visible = true;
+    triggerHanjaStamp('霹靂投石', `우성루 벽력거 Lv.${gameState.siegeRightLv} 가동!`);
+    updateSynergyAndHUD();
+    saveGameSafe();
+  });
+
+  document.getElementById('speed-btn').addEventListener('click', (e) => {
+    gameState.gameSpeed = gameState.gameSpeed === 1 ? 2 : 1;
+    e.currentTarget.textContent = `⏩ ${gameState.gameSpeed}x`;
+  });
+
+  document.getElementById('cam-btn').addEventListener('click', () => {
+    gameState.camMode = (gameState.camMode + 1) % CAM_PRESETS.length;
+  });
+
+  document.getElementById('sound-btn').addEventListener('click', (e) => {
+    sound.enabled = !sound.enabled;
+    e.currentTarget.textContent = sound.enabled ? '🔊' : '🔇';
+  });
+
+  document.getElementById('codex-btn').addEventListener('click', openCodexModal);
+  document.getElementById('close-codex-btn').addEventListener('click', () => {
+    document.getElementById('codex-modal').classList.add('hidden');
+  });
+
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+  });
+
+  window.addEventListener('resize', () => {
+    const container = document.getElementById('webgl-container');
+    if (!container || !renderer) return;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+}
+
+function openStrategyModal() {
+  const modal = document.getElementById('strategy-modal');
+  const box = document.getElementById('strategy-cards');
+  box.innerHTML = '';
+  const picks = [...STRATEGY_CARDS].sort(() => Math.random() - 0.5).slice(0, 3);
+  picks.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'strategy-card';
+    div.innerHTML = `<h3>${c.title}</h3><p>${c.desc}</p>`;
+    div.onclick = () => {
+      c.apply(gameState);
+      sound.playGong();
+      modal.classList.add('hidden');
+      updateSynergyAndHUD();
+    };
+    box.appendChild(div);
+  });
+  modal.classList.remove('hidden');
+}
+
+function openCodexModal() {
+  const grid = document.getElementById('codex-grid');
+  grid.innerHTML = '';
+  HERO_DB.forEach(h => {
+    const unlocked = gameState.unlockedIds.includes(h.id);
+    const d = document.createElement('div');
+    d.className = `codex-item ${unlocked ? 'unlocked' : ''}`;
+    d.innerHTML = `<div style="font-size:16px;font-weight:900;color:${FACTION_META[h.faction].color}">${h.hanja}</div>
+                   <div>T${h.tier} ${h.name}</div>
+                   <div style="font-size:9px;color:#94a3b8">${unlocked ? '✅ 해금' : '🔒 미해금'}</div>`;
+    grid.appendChild(d);
+  });
+  document.getElementById('codex-modal').classList.remove('hidden');
+}
+
+// ============================================================================
+// 8. 메인 부트스트랩
+// ============================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  initThreeScene();
+  bindEvents();
+
+  const savedGridIds = loadGameSafe();
+  if (Array.isArray(savedGridIds)) {
+    savedGridIds.forEach((id, idx) => {
+      if (id) {
+        const h = HERO_DB.find(item => item.id === id);
+        if (h) spawnHeroAtGrid(idx, h);
       }
     });
-    document.getElementById("dps-val").innerText = dps;
-
-    checkWaveProgression();
-    checkGameOver();
+  } else {
+    spawnHeroAtGrid(7, HERO_DB[0]);
+    spawnHeroAtGrid(12, HERO_DB[1]);
   }
+  updateSynergyAndHUD();
 
-  updateHUD();
-  if (composer) composer.render();
-  else renderer.render(scene, camera);
-}
-
-window.addEventListener("load", () => {
-  loadSave();
-  initTacticalTerrainGrid();
-  buildBattlefield3D();
-  setupInteraction();
-  onResize();
-  recruitHero();
-  recruitHero();
-  animateLoop(performance.now());
+  let lastTime = performance.now();
+  function animate(now) {
+    requestAnimationFrame(animate);
+    const dt = Math.min(0.1, (now - lastTime) / 1000);
+    lastTime = now;
+    updateGame(dt);
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+    render2DOverlay();
+  }
+  requestAnimationFrame(animate);
 });

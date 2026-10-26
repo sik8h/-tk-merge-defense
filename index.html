@@ -1,167 +1,129 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>삼국지 3D 택티컬 머지 디펜스 - 120인 명장 & 팔진도 전술 디펜스</title>
-<link rel="stylesheet" href="style.css">
-<!-- Three.js & PostProcessing CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>삼국지 3D 택티컬 머지 디펜스 - Argon Zero-Asset</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 </head>
 <body>
-<div id="app-container">
-<!-- Tactical Telemetry HUD -->
-<header id="hud">
-<div class="hud-top">
-<div class="telemetry-tag">SYS.3K // 120HEROES</div>
-<div id="wave-title" class="hud-box">제1장 황건적의 난</div>
-<div class="hud-controls">
-<button id="cam-btn" class="hud-btn" title="카메라 시점 전환">🎥 쿼터뷰</button>
-<button id="encyclopedia-btn" class="hud-btn highlight">📖 도감</button>
-<button id="taixue-btn" class="hud-btn highlight-gold">🏛️ 태학</button>
-<a href="wiki.html#/tree" target="_blank" id="wiki-link-btn" class="hud-btn" title="공식 전술 위키 & DB">📚 위키</a>
-<button id="sound-btn" class="hud-btn">🔊</button>
-</div>
-</div>
-<div class="hud-stats">
-<div class="stat-item"><span class="label">군량미</span><span class="val">🌾 <b id="gold-val">100</b></span></div>
-<div class="stat-item"><span class="label">명성</span><span class="val">🎖️ <b id="rep-val">0</b></span></div>
-<div class="stat-item"><span class="label">호로관 HP</span><span class="val">🏯 <b id="hp-val">100/100</b></span></div>
-<div class="stat-item"><span class="label">화력(DPS)</span><span class="val">⚡ <b id="dps-val">0</b></span></div>
-</div>
-<div id="synergy-bar">
-<span id="syn-shu" class="syn-badge">촉(공속+25%) 0/3</span>
-<span id="syn-wei" class="syn-badge">위(화력+15%) 0/2</span>
-<span id="syn-qun" class="syn-badge">군웅(치명+25%) 0/3</span>
-</div>
-<div id="relic-inventory-bar">
-<span class="relic-label">보물:</span>
-<div id="relic-icons" class="relic-list"></div>
-</div>
-<div id="gate-hp-bar-container">
-<div id="gate-hp-bar"></div>
-</div>
-</header>
+  <div id="app-container">
+    <header id="hud">
+      <div class="hud-top">
+        <div class="telemetry-tag">ARGON.3K // ZERO-VOICE</div>
+        <div id="wave-title" class="hud-box">제1장 황건적의 난</div>
+        <div class="hud-controls">
+          <button id="speed-btn" class="hud-btn" title="배속 전환">⏩ 1x</button>
+          <button id="cam-btn" class="hud-btn" title="카메라 시점">🎥 시점</button>
+          <button id="sound-btn" class="hud-btn" title="사운드 토글">🔊</button>
+          <button id="codex-btn" class="hud-btn" title="28인 명장 도감">📖 도감</button>
+          <a href="wiki.html#/tree" class="hud-btn" title="공식 전술 위키">📚 위키</a>
+        </div>
+      </div>
+      <div class="hud-stats">
+        <div class="stat-item"><span class="label">군량미</span><span class="val">🌾 <b id="gold-val">120</b></span></div>
+        <div class="stat-item"><span class="label">호로관 내구도</span><span class="val">🏯 <b id="hp-val">100/100</b></span></div>
+        <div class="stat-item"><span class="label">격파</span><span class="val">⚔️ <b id="kill-val">0</b></span></div>
+        <div class="stat-item"><span class="label">도감 보너스</span><span class="val">🔥 <b id="bonus-val">+0%</b></span></div>
+      </div>
+      <div id="synergy-bar">
+        <span id="syn-shu" class="syn-badge">🟢 촉(공속) 0/3</span>
+        <span id="syn-wei" class="syn-badge">🔵 위(화력) 0/3</span>
+        <span id="syn-wu" class="syn-badge">🔴 오(화염) 0/3</span>
+        <span id="syn-qun" class="syn-badge">🟣 군웅(치명) 0/3</span>
+      </div>
+      <div id="gate-hp-bar-container">
+        <div id="gate-hp-bar"></div>
+      </div>
+    </header>
 
-<!-- 3D WebGL Viewport + 2D HUD Overlay Canvas -->
-<main id="game-view">
-<div id="webgl-container"></div>
-<canvas id="hudCanvas"></canvas>
+    <main id="game-view">
+      <div id="webgl-container"></div>
+      <canvas id="hudCanvas"></canvas>
 
-<!-- 1:1 Duel Event Banner -->
-<div id="duel-banner" class="hidden">
-<div class="duel-title">⚔️ 보스 일기토 신청! ⚔️</div>
-<button id="start-duel-btn" class="duel-action-btn">⚔️ 일기토 돌입! (연타 대결)</button>
-<div id="duel-gauge-box" class="hidden">
-<div class="duel-fighters"><span id="my-fighter">아군 장수</span> vs <span id="boss-fighter">적 보스</span></div>
-<div class="gauge-bar-bg"><div id="duel-gauge-fill" style="width: 50%;"></div></div>
-<button id="tap-duel-btn" class="tap-btn">🔥 미친듯이 연타하라!! 🔥</button>
-<div id="duel-timer">남은 시간: 5.0초</div>
-</div>
-</div>
+      <!-- 무쌍 한자 사자성어 낙관(Stamp) 연출 오버레이 -->
+      <div id="hanja-stamp-overlay" class="stamp-hidden">
+        <div class="stamp-box">
+          <div class="stamp-hanja" id="stamp-hanja">義薄雲天</div>
+          <div class="stamp-sub" id="stamp-sub">무성 관우 강림</div>
+        </div>
+      </div>
 
-<!-- Achievement Banner Toast -->
-<div id="achievement-toast" class="toast hidden">
-<div id="toast-title">🌟 역사적 업적 달성!</div>
-<div id="toast-msg">[무성 관우] 해금 완료!</div>
-</div>
+      <!-- 성루 3D 공성 병기 컨트롤 바 -->
+      <div id="siege-bar">
+        <button id="siege-left-btn" class="siege-btn">🏹 좌성루 제갈연노 <span id="siege-l-lv">건설(80🌾)</span></button>
+        <button id="siege-right-btn" class="siege-btn">☄️ 우성루 벽력거 <span id="siege-r-lv">건설(100🌾)</span></button>
+      </div>
 
-<!-- Unit Inspector Telemetry Panel -->
-<div id="unit-inspector" class="hidden">
-<div class="insp-left">
-<div class="insp-title" id="insp-name">관우 [Tier 5]</div>
-<div class="insp-sub" id="insp-desc">청룡언월도 검기 파동</div>
-</div>
-<div class="insp-metrics">
-<span>공격: <b id="insp-atk">450</b></span>
-<span>공속: <b id="insp-spd">0.95/s</b></span>
-<span>베테랑: <b id="insp-rank">★1</b></span>
-</div>
-</div>
-</main>
+      <div id="unit-inspector" class="hidden">
+        <div class="insp-title" id="insp-name">관우 [Tier 6]</div>
+        <div class="insp-sub" id="insp-desc">촉(蜀) · 청룡언월도 검기</div>
+        <div class="insp-metrics">
+          <span>공격력: <b id="insp-atk">420</b></span>
+          <span>공속: <b id="insp-spd">1.2/s</b></span>
+          <span>사거리: <b id="insp-rng">11m</b></span>
+        </div>
+      </div>
+    </main>
 
-<!-- Tactical Command Bar -->
-<footer id="command-bar">
-<button id="recruit-btn" class="cmd-btn recruit">
-<span class="btn-title">장수 모집</span>
-<span class="btn-sub"><span id="recruit-cost">20</span> 🌾 (선봉우대)</span>
-</button>
-<button id="upgrade-btn" class="cmd-btn upgrade">
-<span class="btn-title">무력 강화 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
-<span class="btn-sub"><span id="upgrade-cost">30</span> 🌾 (+15%)</span>
-</button>
-<button id="skill-btn" class="cmd-btn skill">
-<span class="btn-title">🔥 적벽 화공</span>
-<span class="btn-sub" id="skill-cd">즉시 발동</span>
-</button>
-</footer>
+    <footer id="command-bar">
+      <button id="recruit-btn" class="cmd-btn recruit">
+        <span class="btn-title">장수 모집</span>
+        <span class="btn-sub"><span id="recruit-cost">20</span> 🌾 (4세력 균등)</span>
+      </button>
+      <button id="upgrade-btn" class="cmd-btn upgrade">
+        <span class="btn-title">태학 무력연구 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
+        <span class="btn-sub"><span id="upgrade-cost">35</span> 🌾 (+18% 화력)</span>
+      </button>
+      <button id="skill-btn" class="cmd-btn skill">
+        <span class="btn-title">🔥 적벽 화공</span>
+        <span class="btn-sub" id="skill-cd">즉시 발동</span>
+      </button>
+    </footer>
 
-<!-- 120-Hero Encyclopedia & Three Visits Recruitment Modal -->
-<div id="encyclopedia-modal" class="modal hidden">
-<div class="modal-content encyclopedia-content">
-<div class="modal-header">
-<h2>📖 120인 명장 도감 & 삼고초려 등용소 📖</h2>
-<p>명성(🎖️)을 소모하여 삼고초려로 영입하거나 주력 선봉(⭐)을 지정하십시오.</p>
-<div class="enc-stats">
-<span>해금 상태: <b id="enc-unlocked-count">48/120</b></span>
-<span>도감 보너스: <b id="enc-bonus-val">+0% ATK</b></span>
-</div>
-</div>
-<div class="faction-tabs">
-<button class="tab-btn active" data-faction="all">전체</button>
-<button class="tab-btn" data-faction="촉">촉나라</button>
-<button class="tab-btn" data-faction="위">위나라</button>
-<button class="tab-btn" data-faction="오">오나라</button>
-<button class="tab-btn" data-faction="군웅">군웅</button>
-</div>
-<div id="hero-grid" class="hero-card-grid"></div>
-<button class="modal-close-btn" onclick="document.getElementById('encyclopedia-modal').classList.add('hidden')">닫기</button>
-</div>
-</div>
+    <!-- 제갈량의 금낭묘계 모달 -->
+    <div id="strategy-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>🪶 제갈량의 금낭묘계 🪶</h2>
+          <p>웨이브 돌파! 전군에 적용할 전술을 선택하십시오.</p>
+        </div>
+        <div id="strategy-cards" class="card-container"></div>
+      </div>
+    </div>
 
-<!-- Taixue Permanent Tech Lab Modal -->
-<div id="taixue-modal" class="modal hidden">
-<div class="modal-content">
-<div class="modal-header">
-<h2>🏛️ 태학(太學) 영구 기술 연구소 🏛️</h2>
-<p>명성(🎖️)을 투자하여 영구 계정 연구 스탯을 강화하십시오.</p>
-</div>
-<div id="taixue-items" class="taixue-list"></div>
-<button class="modal-close-btn" onclick="document.getElementById('taixue-modal').classList.add('hidden')">닫기</button>
-</div>
-</div>
+    <!-- 28인 명장 도감 모달 -->
+    <div id="codex-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>📖 삼국지 28인 명장 도감</h2>
+          <p>최초 해금 시 영구 공격력 +2% (같은 세력 합성 시 100% 계승)</p>
+        </div>
+        <div id="codex-grid" class="codex-grid"></div>
+        <button id="close-codex-btn" class="modal-action-btn">닫기</button>
+      </div>
+    </div>
 
-<!-- Roguelike Strategy Modal -->
-<div id="strategy-modal" class="modal hidden">
-<div class="modal-content">
-<div class="modal-header">
-<h2>🪶 제갈량의 금낭묘계 🪶</h2>
-<p>전술 코어를 업그레이드할 책략을 선택하십시오.</p>
-</div>
-<div id="strategy-cards" class="card-container"></div>
-</div>
-</div>
-
-<!-- Game Over Modal -->
-<div id="gameover-modal" class="modal hidden">
-<div class="modal-content text-center">
-<h1 id="gameover-title" style="color:#ef4444; margin-bottom:6px;">호로관 함락!</h1>
-<p id="gameover-subtitle" style="color:#94a3b8; font-size:13px;">방어선이 돌파당했습니다.</p>
-<div class="final-stats">
-<p>최종 도달: <strong id="final-wave" style="color:#fde047;">제1장</strong></p>
-<p>획득 명성: <strong id="final-rep" style="color:#38bdf8;">0</strong>🎖️</p>
-<p>적 처치 수: <strong id="final-kills" style="color:#38bdf8;">0</strong>명</p>
-</div>
-<button id="restart-btn" class="modal-action-btn">전장 재가동</button>
-</div>
-</div>
-</div>
-<script src="game.js"></script>
+    <!-- 게임 오버 모달 -->
+    <div id="gameover-modal" class="modal hidden">
+      <div class="modal-content text-center">
+        <h1 id="gameover-title">호로관 함락!</h1>
+        <p id="gameover-subtitle">적군에게 방어선이 돌파당했습니다.</p>
+        <div class="final-stats">
+          <p>최종 도달: <strong id="final-wave">제1장</strong></p>
+          <p>적 처치 수: <strong id="final-kills">0</strong>명</p>
+        </div>
+        <button id="restart-btn" class="modal-action-btn">전장 재가동</button>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
 </body>
 </html>
