@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>삼국지 3D 머지 디펜스 - 공식 전술 위키 & ARGON 3D DB</title>
+<link rel="stylesheet" href="wiki.css">
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="wiki-app">
+  <!-- Top Navigation Header -->
+  <header id="wiki-header">
+    <div class="header-left">
+      <canvas id="wiki-logo" width="40" height="40"></canvas>
+      <a href="#/tree" class="brand">
+        <strong>삼국지 3D 머지 디펜스</strong>
+        <small>PUBLIC WIKI & ARGON 3D DB</small>
+      </a>
+      <button id="mobile-toggle" class="mobile-toggle-btn" aria-label="메뉴 열기">☰</button>
+    </div>
+    <div class="header-center">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="search" id="wiki-search" placeholder="장수명, 한자, 세력, 시너지, 보물 검색... ( / 키)">
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="sync-badge" class="sync-badge">📖 도감 동기화: 0%</span>
+      <a href="index.html" class="play-btn">🎮 전장 복귀</a>
+    </div>
+  </header>
+
+  <!-- Sidebar Navigation Drawer -->
+  <aside id="wiki-sidebar" aria-label="위키와 데이터베이스 탐색">
+    <nav class="mode-tabs">
+      <a href="#/tree" id="tab-tree" class="mode-tab active">📖 전술 위키</a>
+      <a href="#/db/heroes" id="tab-db" class="mode-tab">🗂️ 리소스·DB</a>
+    </nav>
+    <nav id="sidebar-nav" aria-label="문서 목록">
+      <!-- Dynamic Tree Navigation rendered via JS -->
+    </nav>
+    <footer class="sidebar-footer">SYS.3K // 100% ARGON PROCEDURAL ENGINE</footer>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main id="main">
+    <!-- Document or DB Explorer rendered via JS -->
+  </main>
+
+  <!-- Detail Modal Dialog -->
+  <dialog id="hero-dialog">
+    <div class="dialog-wrapper">
+      <button id="dialog-close-btn" class="dialog-close">&times;</button>
+      <div class="dialog-body">
+        <div id="dialog-3d-view" class="viewer-3d">
+          <canvas id="viewer-canvas"></canvas>
+          <div class="viewer-hint">🖱️ 360도 회전 / 드래그 돌려보기</div>
+        </div>
+        <div id="dialog-infobox" class="infobox-container">
+          <!-- Infobox Stats rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<script src="wiki.js"></script>
+</body>
+</html>
