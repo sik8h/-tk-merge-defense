@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>삼국지 3D 택티컬 머지 디펜스 - Argon Zero-Asset</title>
+  <title>삼국지 3D 택티컬 머지 디펜스 - Argon Zero-Voice</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
@@ -17,28 +17,30 @@
   <div id="app-container">
     <header id="hud">
       <div class="hud-top">
-        <div class="telemetry-tag">ARGON.3K // ZERO-VOICE</div>
-        <div id="wave-title" class="hud-box">제1장 황건적의 난</div>
+        <div id="weather-badge" class="telemetry-tag">☀️ 천시: 쾌청</div>
+        <div id="wave-title" class="hud-box">제1장 호로관 전투</div>
         <div class="hud-controls">
+          <button id="automerge-btn" class="hud-btn" title="자동 합성">📐 합체</button>
           <button id="speed-btn" class="hud-btn" title="배속 전환">⏩ 1x</button>
-          <button id="cam-btn" class="hud-btn" title="카메라 시점">🎥 시점</button>
-          <button id="sound-btn" class="hud-btn" title="사운드 토글">🔊</button>
-          <button id="codex-btn" class="hud-btn" title="28인 명장 도감">📖 도감</button>
-          <a href="wiki.html#/tree" class="hud-btn" title="공식 전술 위키">📚 위키</a>
+          <button id="cam-btn" class="hud-btn" title="시점 전환">🎥</button>
+          <button id="sound-btn" class="hud-btn" title="사운드">🔊</button>
+          <button id="codex-btn" class="hud-btn" title="도감">📖</button>
+          <a href="wiki.html#/tree/overview" class="hud-btn" title="공식 위키">📚 위키</a>
         </div>
       </div>
       <div class="hud-stats">
         <div class="stat-item"><span class="label">군량미</span><span class="val">🌾 <b id="gold-val">120</b></span></div>
         <div class="stat-item"><span class="label">호로관 내구도</span><span class="val">🏯 <b id="hp-val">100/100</b></span></div>
         <div class="stat-item"><span class="label">격파</span><span class="val">⚔️ <b id="kill-val">0</b></span></div>
-        <div class="stat-item"><span class="label">도감 보너스</span><span class="val">🔥 <b id="bonus-val">+0%</b></span></div>
+        <div class="stat-item"><span class="label">도감·인연 화력</span><span class="val">🔥 <b id="bonus-val">+0%</b></span></div>
       </div>
       <div id="synergy-bar">
-        <span id="syn-shu" class="syn-badge">🟢 촉(공속) 0/3</span>
-        <span id="syn-wei" class="syn-badge">🔵 위(화력) 0/3</span>
-        <span id="syn-wu" class="syn-badge">🔴 오(화염) 0/3</span>
-        <span id="syn-qun" class="syn-badge">🟣 군웅(치명) 0/3</span>
+        <span id="syn-shu" class="syn-badge">🟢 촉 0/3</span>
+        <span id="syn-wei" class="syn-badge">🔵 위 0/3</span>
+        <span id="syn-wu" class="syn-badge">🔴 오 0/3</span>
+        <span id="syn-qun" class="syn-badge">🟣 군웅 0/3</span>
       </div>
+      <div id="bond-bar"></div>
       <div id="gate-hp-bar-container">
         <div id="gate-hp-bar"></div>
       </div>
@@ -48,7 +50,7 @@
       <div id="webgl-container"></div>
       <canvas id="hudCanvas"></canvas>
 
-      <!-- 무쌍 한자 사자성어 낙관(Stamp) 연출 오버레이 -->
+      <!-- 무쌍 한자 사자성어 낙관(Stamp) 연출 -->
       <div id="hanja-stamp-overlay" class="stamp-hidden">
         <div class="stamp-box">
           <div class="stamp-hanja" id="stamp-hanja">義薄雲天</div>
@@ -62,9 +64,18 @@
         <button id="siege-right-btn" class="siege-btn">☄️ 우성루 벽력거 <span id="siege-r-lv">건설(100🌾)</span></button>
       </div>
 
+      <!-- 보스전 일기토(Duel) 연타 패널 -->
+      <div id="duel-overlay" class="hidden">
+        <div class="duel-box">
+          <div class="duel-title">⚔️ 보스 일기토(一騎討) 격돌! ⚔️</div>
+          <div class="duel-sub">남은 시간 <b id="duel-timer">5.0</b>초 동안 버튼을 연타해 적장을 베하십시오!</div>
+          <button id="duel-hit-btn" class="duel-btn">⚡ 일기토 무쌍 참격! (<span id="duel-hits">0</span>타)</button>
+        </div>
+      </div>
+
       <div id="unit-inspector" class="hidden">
-        <div class="insp-title" id="insp-name">관우 [Tier 6]</div>
-        <div class="insp-sub" id="insp-desc">촉(蜀) · 청룡언월도 검기</div>
+        <div class="insp-title" id="insp-name">관우 [Tier 6] ★★★</div>
+        <div class="insp-sub" id="insp-desc">촉(蜀) · 지형: 일반 타일</div>
         <div class="insp-metrics">
           <span>공격력: <b id="insp-atk">420</b></span>
           <span>공속: <b id="insp-spd">1.2/s</b></span>
