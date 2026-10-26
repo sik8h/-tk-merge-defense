@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>삼국지 머지 디펜스 - Three Kingdoms Merge Defense</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- HUD Layer -->
+        <header id="hud">
+            <div class="hud-top">
+                <div id="wave-title" class="hud-box">제1장 황건적의 난</div>
+                <button id="sound-btn" class="hud-btn" aria-label="사운드 설정">🔊</button>
+            </div>
+            <div class="hud-stats">
+                <div class="stat-item"><span class="icon">🌾</span> <span id="gold-val">100</span></div>
+                <div class="stat-item"><span class="icon">🏯</span> <span id="hp-val">100/100</span></div>
+                <div class="stat-item"><span class="icon">⚔️</span> <span id="kill-val">0</span></div>
+            </div>
+            <div id="gate-hp-bar-container">
+                <div id="gate-hp-bar"></div>
+            </div>
+        </header>
+
+        <!-- Main Canvas Area -->
+        <main id="game-view">
+            <canvas id="gameCanvas"></canvas>
+        </main>
+
+        <!-- Command Bar -->
+        <footer id="command-bar">
+            <button id="recruit-btn" class="cmd-btn recruit">
+                <span class="btn-title">장수 모집</span>
+                <span class="btn-sub"><span id="recruit-cost">20</span> 🌾</span>
+            </button>
+            <button id="upgrade-btn" class="cmd-btn upgrade">
+                <span class="btn-title">전체 무력 강화 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
+                <span class="btn-sub"><span id="upgrade-cost">30</span> 🌾 (+10%)</span>
+            </button>
+        </footer>
+
+        <!-- Roguelike Strategy Modal (제갈량의 금낭묘계) -->
+        <div id="strategy-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🪶 제갈량의 금낭묘계 🪶</h2>
+                    <p>웨이브를 승리로 이끌 책략을 선택하십시오.</p>
+                </div>
+                <div id="strategy-cards" class="card-container">
+                    <!-- Cards injected via JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over / Victory Overlay -->
+        <div id="gameover-modal" class="modal hidden">
+            <div class="modal-content text-center">
+                <h1 id="gameover-title">관문 함락!</h1>
+                <p id="gameover-subtitle">적의 공세를 막아내지 못했습니다.</p>
+                <div class="final-stats">
+                    <p>최종 도달: <strong id="final-wave">제1장</strong></p>
+                    <p>적 처치 수: <strong id="final-kills">0</strong>명</p>
+                </div>
+                <button id="restart-btn" class="modal-action-btn">재도전 하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

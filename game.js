@@ -1,0 +1,1261 @@
+/**
+ * Three Kingdoms Merge Defense (삼국지 머지 & 관문 로그라이크 디펜스)
+ * game.js
+ */
+
+/* ==========================================================================
+   1. HERO_CONFIG & SOUND_CONFIG (PC Asset Replacement Ready)
+   ========================================================================== */
+
+const HERO_CONFIG = {
+    1: {
+        tier: 1,
+        name: "의용병",
+        faction: "군웅",
+        atk: 15,
+        attackSpeed: 1.1,
+        range: 220,
+        attackType: "single",
+        color: "#4AE3B5",
+        shape: "triangle",
+        spritePath: null,
+        soundPath: null,
+        desc: "기본 단발 사격을 수행하는 의용병"
+    },
+    2: {
+        tier: 2,
+        name: "정예 창병",
+        faction: "위",
+        atk: 32,
+        attackSpeed: 1.6,
+        range: 250,
+        attackType: "rapid",
+        color: "#3B82F6",
+        shape: "square",
+        spritePath: null,
+        soundPath: null,
+        desc: "빠른 2연타 공격을 퍼붓는 창병"
+    },
+    3: {
+        tier: 3,
+        name: "황충",
+        faction: "촉",
+        atk: 75,
+        attackSpeed: 1.0,
+        range: 350,
+        attackType: "pierce",
+        color: "#F59E0B",
+        shape: "pentagon",
+        spritePath: null,
+        soundPath: null,
+        desc: "긴 사거리로 관통하는 신궁 화살"
+    },
+    4: {
+        tier: 4,
+        name: "조운",
+        faction: "촉",
+        atk: 160,
+        attackSpeed: 2.6,
+        range: 280,
+        attackType: "rapid_spear",
+        color: "#06B6D4",
+        shape: "hexagon",
+        spritePath: null,
+        soundPath: null,
+        desc: "질풍노도와 같은 초고속 창격 연타"
+    },
+    5: {
+        tier: 5,
+        name: "관우",
+        faction: "촉",
+        atk: 380,
+        attackSpeed: 0.9,
+        range: 320,
+        attackType: "aoe",
+        color: "#10B981",
+        shape: "crescent",
+        spritePath: null,
+        soundPath: null,
+        desc: "청룡언월도의 초록색 거대한 검기 광역 타격"
+    },
+    6: {
+        tier: 6,
+        name: "제갈량",
+        faction: "촉",
+        atk: 850,
+        attackSpeed: 0.8,
+        range: 380,
+        attackType: "slow_aoe",
+        color: "#8B5CF6",
+        shape: "star",
+        spritePath: null,
+        soundPath: null,
+        desc: "적을 둔화시키고 적벽의 화공과 낙뢰를 쏟아붓는 명재상"
+    },
+    7: {
+        tier: 7,
+        name: "무신 여포",
+        faction: "군웅",
+        atk: 2200,
+        attackSpeed: 1.2,
+        range: 999, // Full screen range
+        attackType: "musou",
+        color: "#EF4444",
+        shape: "musou_star",
+        spritePath: null,
+        soundPath: null,
+        desc: "천하무쌍! 전 화면 사거리와 진홍색 방천화극 광역 폭발"
+    }
+};
+
+const SOUND_CONFIG = {
+    enabled: true,
+    paths: {
+        bow: null,
+        spear: null,
+        merge: null,
+        lubu: null,
+        boss: null,
+        hit: null
+    }
+};
+
+/* ==========================================================================
+   2. Web Audio API Synthesizer (Fallback Audio Engine)
+   ========================================================================== */
+
+class SoundEngine {
+    constructor() {
+        this.ctx = null;
+        this.initialized = false;
+        this.audioCache = {};
+    }
+
+    init() {
+        if (this.initialized) return;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioCtx();
+            this.initialized = true;
+        } catch (e) {
+            console.warn("Web Audio API not supported", e);
+        }
+    }
+
+    playSound(type) {
+        if (!SOUND_CONFIG.enabled) return;
+        if (!this.initialized) this.init();
+        if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+
+        if (SOUND_CONFIG.paths[type]) {
+            this.playFileSound(SOUND_CONFIG.paths[type]);
+            return;
+        }
+
+        const t = this.ctx.currentTime;
+
+        if (type === 'bow') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, t);
+            osc.frequency.exponentialRampToValueAtTime(110, t + 0.12);
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.12);
+        } else if (type === 'spear') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(700, t);
+            osc.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+            gain.gain.setValueAtTime(0.25, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.08);
+        } else if (type === 'merge') {
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((f, index) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, t + index * 0.04);
+                gain.gain.setValueAtTime(0.2, t + index * 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + index * 0.04 + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(t + index * 0.04);
+                osc.stop(t + index * 0.04 + 0.2);
+            });
+        } else if (type === 'lubu') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, t);
+            osc.frequency.exponentialRampToValueAtTime(35, t + 0.7);
+            gain.gain.setValueAtTime(0.4, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.7);
+        } else if (type === 'hit') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(120, t);
+            osc.frequency.exponentialRampToValueAtTime(40, t + 0.05);
+            gain.gain.setValueAtTime(0.1, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.05);
+        } else if (type === 'boss') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, t);
+            osc.frequency.linearRampToValueAtTime(330, t + 0.3);
+            gain.gain.setValueAtTime(0.35, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.5);
+        }
+    }
+
+    playFileSound(path) {
+        if (!this.audioCache[path]) {
+            this.audioCache[path] = new Audio(path);
+        }
+        const audio = this.audioCache[path].cloneNode();
+        audio.play().catch(e => console.warn("Audio play blocked", e));
+    }
+}
+
+const audioEngine = new SoundEngine();
+
+/* ==========================================================================
+   3. Sprite & Geometry Fallback Canvas Renderer
+   ========================================================================== */
+
+const imageCache = {};
+
+function drawHeroVisual(ctx, x, y, radius, tierConfig, auraTimer = 0) {
+    if (tierConfig.spritePath) {
+        if (!imageCache[tierConfig.spritePath]) {
+            const img = new Image();
+            img.src = tierConfig.spritePath;
+            imageCache[tierConfig.spritePath] = img;
+        }
+        const img = imageCache[tierConfig.spritePath];
+        if (img.complete && img.naturalWidth !== 0) {
+            ctx.drawImage(img, x - radius, y - radius, radius * 2, radius * 2);
+            return;
+        }
+    }
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    if (tierConfig.tier >= 5 || tierConfig.shape === 'musou_star') {
+        const glowRadius = radius + 8 + Math.sin(auraTimer * 6) * 4;
+        const grad = ctx.createRadialGradient(0, 0, radius * 0.4, 0, 0, glowRadius);
+        grad.addColorStop(0, tierConfig.color);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.shadowColor = tierConfig.color;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = tierConfig.color;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+
+    const shape = tierConfig.shape;
+    ctx.beginPath();
+
+    if (shape === "triangle") {
+        ctx.moveTo(0, -radius);
+        ctx.lineTo(radius * 0.866, radius * 0.5);
+        ctx.lineTo(-radius * 0.866, radius * 0.5);
+        ctx.closePath();
+    } else if (shape === "square") {
+        const side = radius * 1.4;
+        ctx.rect(-side / 2, -side / 2, side, side);
+    } else if (shape === "pentagon") {
+        drawPolygon(ctx, 0, 0, radius, 5);
+    } else if (shape === "hexagon") {
+        drawPolygon(ctx, 0, 0, radius, 6);
+    } else if (shape === "crescent") {
+        ctx.arc(0, 0, radius, 0.2 * Math.PI, 1.8 * Math.PI, false);
+        ctx.arc(radius * 0.4, 0, radius * 0.8, 1.6 * Math.PI, 0.4 * Math.PI, true);
+        ctx.closePath();
+    } else if (shape === "star" || shape === "musou_star") {
+        drawStar(ctx, 0, 0, shape === "musou_star" ? 8 : 5, radius, radius * 0.5);
+    } else {
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    }
+
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold " + Math.round(radius * 0.5) + "px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(tierConfig.name, 0, 1);
+
+    // Tier badge
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.arc(radius * 0.7, -radius * 0.7, radius * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = tierConfig.color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "bold " + Math.round(radius * 0.35) + "px sans-serif";
+    ctx.fillText("T" + tierConfig.tier, radius * 0.7, -radius * 0.7 + 1);
+
+    ctx.restore();
+}
+
+function drawPolygon(ctx, x, y, radius, sides) {
+    const angle = (Math.PI * 2) / sides;
+    ctx.moveTo(x + radius * Math.sin(0), y - radius * Math.cos(0));
+    for (let i = 1; i < sides; i++) {
+        ctx.lineTo(x + radius * Math.sin(i * angle), y - radius * Math.cos(i * angle));
+    }
+    ctx.closePath();
+}
+
+function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+}
+
+/* ==========================================================================
+   4. Game State & Logic Core
+   ========================================================================== */
+
+const COLS = 5;
+const ROWS = 4;
+
+const gameState = {
+    gold: 100,
+    gateHp: 100,
+    maxGateHp: 100,
+    kills: 0,
+    wave: 1,
+    recruitCost: 20,
+    upgradeLevel: 1,
+    upgradeCost: 30,
+    atkBonusPercent: 0,
+    goldMultiplier: 1.0,
+    aspdBonusPercent: 0,
+    paused: false,
+    gameOver: false,
+    grid: Array(ROWS * COLS).fill(null), // Array of Hero objects or null
+    enemies: [],
+    projectiles: [],
+    particles: [],
+    floatingTexts: [],
+    draggedItem: null, // { sourceIndex, x, y, hero }
+    waveInProgress: false,
+    enemiesToSpawn: 0,
+    spawnTimer: 0,
+    waveClearTimer: 0,
+    auraTimer: 0
+};
+
+// Enemy Chapter / Wave Definitions
+const CHAPTERS = [
+    { wave: 1, name: "제1장 황건적의 난", enemyName: "황건적", hp: 45, speed: 60, gold: 12, isBoss: false },
+    { wave: 2, name: "제2장 황건적 정예", enemyName: "황건적 장수", hp: 90, speed: 65, gold: 15, isBoss: false },
+    { wave: 3, name: "제3장 서량 기병대", enemyName: "서량 기병", hp: 180, speed: 75, gold: 20, isBoss: false },
+    { wave: 4, name: "제4장 동탁 선봉대", enemyName: "동탁 중장병", hp: 320, speed: 62, gold: 25, isBoss: false },
+    { wave: 5, name: "제5장 사곡의 결전 [보스: 화웅]", enemyName: "보스 화웅", hp: 1600, speed: 45, gold: 100, isBoss: true },
+    { wave: 6, name: "제6장 연합군 격돌", enemyName: "서량 정예기병", hp: 600, speed: 70, gold: 35, isBoss: false },
+    { wave: 7, name: "제7장 호뢰관 관문전", enemyName: "동탁 친위대", hp: 1000, speed: 65, gold: 45, isBoss: false },
+    { wave: 8, name: "제8장 하북의 강호", enemyName: "원소철기", hp: 1600, speed: 68, gold: 55, isBoss: false },
+    { wave: 9, name: "제9장 야망의 동탁군", enemyName: "동탁 근위대장", hp: 2500, speed: 60, gold: 70, isBoss: false },
+    { wave: 10, name: "제10장 호뢰관의 악몽 [보스: 무신 여포]", enemyName: "보스 무신 여포", hp: 10000, speed: 48, gold: 300, isBoss: true }
+];
+
+function getWaveConfig(waveNum) {
+    if (waveNum <= CHAPTERS.length) {
+        return CHAPTERS[waveNum - 1];
+    }
+    // Endless Scaling
+    const isBoss = waveNum % 5 === 0;
+    const baseHp = Math.round(1000 * Math.pow(1.4, waveNum - 5));
+    const bossName = isBoss ? `무신 여포 Lv.${waveNum / 5}` : `정예 대장 Lv.${waveNum}`;
+    return {
+        wave: waveNum,
+        name: `제${waveNum}장 ${isBoss ? '[보스전] ' + bossName : '천하패권전'}`,
+        enemyName: isBoss ? bossName : `패왕의 군사`,
+        hp: isBoss ? baseHp * 5 : baseHp,
+        speed: Math.min(100, 50 + waveNum * 1.2),
+        gold: Math.round(30 + waveNum * 8),
+        isBoss: isBoss
+    };
+}
+
+/* ==========================================================================
+   5. Class Definitions (Entities)
+   ========================================================================== */
+
+class Hero {
+    constructor(tier) {
+        this.tier = tier;
+        this.config = HERO_CONFIG[tier];
+        this.attackCooldown = 0;
+    }
+
+    getAtk() {
+        const base = this.config.atk;
+        return Math.round(base * (1 + gameState.atkBonusPercent / 100));
+    }
+
+    getAttackSpeed() {
+        return this.config.attackSpeed * (1 + gameState.aspdBonusPercent / 100);
+    }
+}
+
+class Enemy {
+    constructor(config) {
+        this.name = config.enemyName;
+        this.maxHp = config.hp;
+        this.hp = config.hp;
+        this.speed = config.speed;
+        this.goldReward = config.gold;
+        this.isBoss = config.isBoss;
+        this.pathProgress = 0; // 0 to 1 along S-curve
+        this.x = 0;
+        this.y = 0;
+        this.radius = config.isBoss ? 22 : 12;
+        this.slowTimer = 0;
+        this.slowFactor = 1.0;
+    }
+
+    update(dt, pathPoints) {
+        if (this.slowTimer > 0) {
+            this.slowTimer -= dt;
+            if (this.slowTimer <= 0) {
+                this.slowFactor = 1.0;
+            }
+        }
+
+        const effectiveSpeed = this.speed * this.slowFactor;
+        // Total distance along path
+        this.pathProgress += (effectiveSpeed * dt) / 260; // Normalized progress speed
+
+        if (this.pathProgress >= 1) {
+            this.pathProgress = 1;
+            return true; // Reached gate
+        }
+
+        // Interpolate along path points
+        const pos = getPointOnPath(pathPoints, this.pathProgress);
+        this.x = pos.x;
+        this.y = pos.y;
+        return false;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        // Glow for Boss
+        if (this.isBoss) {
+            ctx.shadowColor = "#FF2222";
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = "#B91C1C";
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius + 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Slow effect tint
+        ctx.fillStyle = this.slowTimer > 0 ? "#38BDF8" : (this.isBoss ? "#DC2626" : "#EAB308");
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.stroke();
+
+        // Enemy Text / Initial
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = `bold ${this.isBoss ? 13 : 10}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(this.name.substring(0, 2), 0, 0);
+
+        // HP Bar
+        const barW = this.radius * 2 + 4;
+        const barH = 4;
+        const hpPct = Math.max(0, this.hp / this.maxHp);
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(-barW / 2, -this.radius - 8, barW, barH);
+        ctx.fillStyle = hpPct > 0.5 ? "#22C55E" : (hpPct > 0.2 ? "#EAB308" : "#EF4444");
+        ctx.fillRect(-barW / 2, -this.radius - 8, barW * hpPct, barH);
+
+        ctx.restore();
+    }
+}
+
+class Projectile {
+    constructor(x, y, target, hero) {
+        this.x = x;
+        this.y = y;
+        this.target = target;
+        this.hero = hero;
+        this.type = hero.config.attackType;
+        this.damage = hero.getAtk();
+        this.speed = 500;
+        this.active = true;
+        this.color = hero.config.color;
+
+        if (this.type === 'pierce') {
+            const dx = target.x - x;
+            const dy = target.y - y;
+            const dist = Math.hypot(dx, dy) || 1;
+            this.vx = (dx / dist) * this.speed;
+            this.vy = (dy / dist) * this.speed;
+            this.hitEnemies = new Set();
+        }
+    }
+
+    update(dt, enemies) {
+        if (!this.active) return;
+
+        if (this.type === 'pierce') {
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+
+            enemies.forEach(e => {
+                if (!this.hitEnemies.has(e) && Math.hypot(e.x - this.x, e.y - this.y) < e.radius + 10) {
+                    this.hitEnemies.add(e);
+                    applyDamage(e, this.damage);
+                    createImpactParticles(e.x, e.y, this.color, 4);
+                }
+            });
+
+            if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                this.active = false;
+            }
+        } else {
+            if (!enemies.includes(this.target)) {
+                if (enemies.length > 0) {
+                    this.target = enemies[0];
+                } else {
+                    this.active = false;
+                    return;
+                }
+            }
+
+            const dx = this.target.x - this.x;
+            const dy = this.target.y - this.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < 14) {
+                this.active = false;
+                applyDamage(this.target, this.damage);
+                createImpactParticles(this.target.x, this.target.y, this.color, 6);
+            } else {
+                this.x += (dx / dist) * this.speed * dt;
+                this.y += (dy / dist) * this.speed * dt;
+            }
+        }
+    }
+
+    draw(ctx) {
+        if (!this.active) return;
+        ctx.save();
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 120 + 30;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 0.4 + Math.random() * 0.3;
+        this.maxLife = this.life;
+        this.radius = 2 + Math.random() * 3;
+    }
+
+    update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.life -= dt;
+    }
+
+    draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class FloatingText {
+    constructor(x, y, text, color = "#FFD700", fontSize = 16) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.fontSize = fontSize;
+        this.life = 0.8;
+        this.maxLife = 0.8;
+    }
+
+    update(dt) {
+        this.y -= 30 * dt;
+        this.life -= dt;
+    }
+
+    draw(ctx) {
+        if (this.life <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+        ctx.fillStyle = this.color;
+        ctx.font = `bold ${this.fontSize}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000000";
+        ctx.shadowBlur = 4;
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
+
+/* ==========================================================================
+   6. DOM Elements, Canvas Setup & Pathing
+   ========================================================================== */
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const waveTitleEl = document.getElementById("wave-title");
+const goldValEl = document.getElementById("gold-val");
+const hpValEl = document.getElementById("hp-val");
+const killValEl = document.getElementById("kill-val");
+const gateHpBarEl = document.getElementById("gate-hp-bar");
+const soundBtnEl = document.getElementById("sound-btn");
+
+const recruitBtn = document.getElementById("recruit-btn");
+const recruitCostEl = document.getElementById("recruit-cost");
+const upgradeBtn = document.getElementById("upgrade-btn");
+const upgradeLvlEl = document.getElementById("upgrade-lvl");
+const upgradeCostEl = document.getElementById("upgrade-cost");
+
+const strategyModal = document.getElementById("strategy-modal");
+const strategyCardsContainer = document.getElementById("strategy-cards");
+
+const gameoverModal = document.getElementById("gameover-modal");
+const gameoverTitleEl = document.getElementById("gameover-title");
+const gameoverSubtitleEl = document.getElementById("gameover-subtitle");
+const finalWaveEl = document.getElementById("final-wave");
+const finalKillsEl = document.getElementById("final-kills");
+const restartBtn = document.getElementById("restart-btn");
+
+let canvasWidth = 0;
+let canvasHeight = 0;
+let gridStartY = 0;
+let gridHeight = 0;
+let cellWidth = 0;
+let cellHeight = 0;
+let pathPoints = [];
+
+function resizeCanvas() {
+    const view = document.getElementById("game-view");
+    canvasWidth = view.clientWidth;
+    canvasHeight = view.clientHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    gridHeight = canvasHeight * 0.42;
+    gridStartY = canvasHeight - gridHeight - 10;
+    cellWidth = canvasWidth / COLS;
+    cellHeight = gridHeight / ROWS;
+
+    const topY = 15;
+    const gateY = gridStartY - 25;
+    const midY1 = topY + (gateY - topY) * 0.3;
+    const midY2 = topY + (gateY - topY) * 0.65;
+
+    pathPoints = [
+        { x: canvasWidth * 0.15, y: topY },
+        { x: canvasWidth * 0.85, y: midY1 },
+        { x: canvasWidth * 0.15, y: midY2 },
+        { x: canvasWidth * 0.50, y: gateY }
+    ];
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+function getPointOnPath(points, t) {
+    if (points.length < 4) return { x: 0, y: 0 };
+    const p0 = points[0];
+    const p1 = points[1];
+    const p2 = points[2];
+    const p3 = points[3];
+
+    const cx = 3 * (p1.x - p0.x);
+    const bx = 3 * (p2.x - p1.x) - cx;
+    const ax = p3.x - p0.x - cx - bx;
+
+    const cy = 3 * (p1.y - p0.y);
+    const by = 3 * (p2.y - p1.y) - cy;
+    const ay = p3.y - p0.y - cy - by;
+
+    const x = (ax * Math.pow(t, 3)) + (bx * Math.pow(t, 2)) + (cx * t) + p0.x;
+    const y = (ay * Math.pow(t, 3)) + (by * Math.pow(t, 2)) + (cy * t) + p0.y;
+
+    return { x, y };
+}
+
+/* ==========================================================================
+   7. Grid Touch & Drag-and-Drop System
+   ========================================================================== */
+
+function getCellCenter(index) {
+    const col = index % COLS;
+    const row = Math.floor(index / COLS);
+    return {
+        x: col * cellWidth + cellWidth / 2,
+        y: gridStartY + row * cellHeight + cellHeight / 2
+    };
+}
+
+function getIndexFromCoords(x, y) {
+    if (y < gridStartY || y > gridStartY + gridHeight) return -1;
+    const col = Math.floor(x / cellWidth);
+    const row = Math.floor((y - gridStartY) / cellHeight);
+    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return -1;
+    return row * COLS + col;
+}
+
+function handleDragStart(clientX, clientY) {
+    if (gameState.gameOver || gameState.paused) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const index = getIndexFromCoords(x, y);
+    if (index !== -1 && gameState.grid[index] !== null) {
+        gameState.draggedItem = {
+            sourceIndex: index,
+            hero: gameState.grid[index],
+            x: x,
+            y: y
+        };
+        audioEngine.playSound('spear');
+    }
+}
+
+function handleDragMove(clientX, clientY) {
+    if (!gameState.draggedItem) return;
+    const rect = canvas.getBoundingClientRect();
+    gameState.draggedItem.x = clientX - rect.left;
+    gameState.draggedItem.y = clientY - rect.top;
+}
+
+function handleDragEnd() {
+    if (!gameState.draggedItem) return;
+    const { sourceIndex, hero, x, y } = gameState.draggedItem;
+    const targetIndex = getIndexFromCoords(x, y);
+
+    if (targetIndex !== -1 && targetIndex !== sourceIndex) {
+        const targetHero = gameState.grid[targetIndex];
+
+        if (targetHero === null) {
+            gameState.grid[targetIndex] = hero;
+            gameState.grid[sourceIndex] = null;
+        } else if (targetHero.tier === hero.tier && hero.tier < 7) {
+            const nextTier = hero.tier + 1;
+            const newHero = new Hero(nextTier);
+            gameState.grid[targetIndex] = newHero;
+            gameState.grid[sourceIndex] = null;
+
+            const targetPos = getCellCenter(targetIndex);
+            createImpactParticles(targetPos.x, targetPos.y, newHero.config.color, 18);
+            gameState.floatingTexts.push(new FloatingText(targetPos.x, targetPos.y - 15, `${newHero.config.name} 승급!`, newHero.config.color, 18));
+
+            if (nextTier === 7) {
+                audioEngine.playSound('lubu');
+            } else {
+                audioEngine.playSound('merge');
+            }
+        } else {
+            gameState.grid[targetIndex] = hero;
+            gameState.grid[sourceIndex] = targetHero;
+        }
+    }
+
+    gameState.draggedItem = null;
+}
+
+// Touch & Mouse Event Listeners
+canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    audioEngine.init();
+    if (e.touches.length > 0) {
+        handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+    }
+}, { passive: false });
+
+canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+        handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+}, { passive: false });
+
+canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    handleDragEnd();
+}, { passive: false });
+
+canvas.addEventListener("mousedown", (e) => {
+    audioEngine.init();
+    handleDragStart(e.clientX, e.clientY);
+});
+
+canvas.addEventListener("mousemove", (e) => {
+    handleDragMove(e.clientX, e.clientY);
+});
+
+canvas.addEventListener("mouseup", () => {
+    handleDragEnd();
+});
+
+/* ==========================================================================
+   8. Combat Engine & Attack Logic
+   ========================================================================== */
+
+function applyDamage(enemy, amount) {
+    enemy.hp -= amount;
+    audioEngine.playSound('hit');
+    gameState.floatingTexts.push(new FloatingText(enemy.x + (Math.random() * 10 - 5), enemy.y - 10, `-${amount}`, "#FF5555", 13));
+
+    if (enemy.hp <= 0) {
+        const reward = Math.round(enemy.goldReward * gameState.goldMultiplier);
+        gameState.gold += reward;
+        gameState.kills += 1;
+        gameState.floatingTexts.push(new FloatingText(enemy.x, enemy.y - 20, `+${reward}🌾`, "#FFD700", 14));
+        createImpactParticles(enemy.x, enemy.y, "#FFD700", 10);
+    }
+}
+
+function createImpactParticles(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
+        gameState.particles.push(new Particle(x, y, color));
+    }
+}
+
+function updateCombat(dt) {
+    const aliveEnemies = gameState.enemies.filter(e => e.hp > 0);
+
+    for (let i = 0; i < gameState.grid.length; i++) {
+        const hero = gameState.grid[i];
+        if (!hero) continue;
+
+        const pos = getCellCenter(i);
+        hero.attackCooldown -= dt;
+
+        if (hero.attackCooldown <= 0 && aliveEnemies.length > 0) {
+            let target = null;
+            let maxProgress = -1;
+
+            aliveEnemies.forEach(e => {
+                const dist = Math.hypot(e.x - pos.x, e.y - pos.y);
+                if (dist <= hero.config.range) {
+                    if (e.pathProgress > maxProgress) {
+                        maxProgress = e.pathProgress;
+                        target = e;
+                    }
+                }
+            });
+
+            if (target) {
+                hero.attackCooldown = 1.0 / hero.getAttackSpeed();
+                const type = hero.config.attackType;
+
+                if (type === 'single' || type === 'rapid' || type === 'pierce') {
+                    audioEngine.playSound('bow');
+                    gameState.projectiles.push(new Projectile(pos.x, pos.y, target, hero));
+                } else if (type === 'rapid_spear') {
+                    audioEngine.playSound('spear');
+                    applyDamage(target, hero.getAtk());
+                    createImpactParticles(target.x, target.y, hero.config.color, 5);
+                } else if (type === 'aoe') {
+                    audioEngine.playSound('spear');
+                    aliveEnemies.forEach(e => {
+                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.config.range) {
+                            applyDamage(e, hero.getAtk());
+                            createImpactParticles(e.x, e.y, "#10B981", 6);
+                        }
+                    });
+                } else if (type === 'slow_aoe') {
+                    audioEngine.playSound('boss');
+                    aliveEnemies.forEach(e => {
+                        if (Math.hypot(e.x - pos.x, e.y - pos.y) <= hero.config.range) {
+                            applyDamage(e, hero.getAtk());
+                            e.slowTimer = 2.0;
+                            e.slowFactor = 0.5;
+                            createImpactParticles(e.x, e.y, "#8B5CF6", 8);
+                        }
+                    });
+                } else if (type === 'musou') {
+                    audioEngine.playSound('lubu');
+                    aliveEnemies.forEach(e => {
+                        applyDamage(e, hero.getAtk());
+                        createImpactParticles(e.x, e.y, "#EF4444", 10);
+                    });
+                    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.3, "천하무쌍 방천화극!!", "#EF4444", 22));
+                }
+            }
+        }
+    }
+}
+
+/* ==========================================================================
+   9. Spawning & Wave Engine
+   ========================================================================== */
+
+function startNextWave() {
+    gameState.waveInProgress = true;
+    const waveConfig = getWaveConfig(gameState.wave);
+    waveTitleEl.innerText = waveConfig.name;
+
+    if (waveConfig.isBoss) {
+        audioEngine.playSound('boss');
+        gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight * 0.25, "⚠️ 보스 출현 ⚠️", "#FF2222", 24));
+        gameState.enemiesToSpawn = 1;
+    } else {
+        gameState.enemiesToSpawn = 8 + Math.floor(gameState.wave * 1.5);
+    }
+    gameState.spawnTimer = 0;
+}
+
+function updateWave(dt) {
+    if (!gameState.waveInProgress) return;
+
+    const waveConfig = getWaveConfig(gameState.wave);
+
+    if (gameState.enemiesToSpawn > 0) {
+        gameState.spawnTimer -= dt;
+        if (gameState.spawnTimer <= 0) {
+            gameState.spawnTimer = waveConfig.isBoss ? 1.0 : 0.9;
+            gameState.enemies.push(new Enemy(waveConfig));
+            gameState.enemiesToSpawn -= 1;
+        }
+    }
+
+    gameState.enemies = gameState.enemies.filter(e => {
+        if (e.hp <= 0) return false;
+
+        const reachedGate = e.update(dt, pathPoints);
+        if (reachedGate) {
+            const dmg = e.isBoss ? 30 : 10;
+            gameState.gateHp = Math.max(0, gameState.gateHp - dmg);
+            createImpactParticles(e.x, e.y, "#FF0000", 12);
+            audioEngine.playSound('hit');
+
+            if (gameState.gateHp <= 0) {
+                triggerGameOver();
+            }
+            return false;
+        }
+        return true;
+    });
+
+    if (gameState.enemiesToSpawn <= 0 && gameState.enemies.length === 0) {
+        gameState.waveInProgress = false;
+        showStrategyModal();
+    }
+}
+
+/* ==========================================================================
+   10. Roguelike Strategy Cards ("제갈량의 금낭묘계")
+   ========================================================================== */
+
+const STRATEGY_POOL = [
+    { id: "atk_up", name: "도원결의", desc: "전체 장수 공격력 +25% 증가", icon: "🍶", apply: () => gameState.atkBonusPercent += 25 },
+    { id: "gold_up", name: "병량 확보", desc: "적 처치 시 군량미 획득량 +30%", icon: "🌾", apply: () => gameState.goldMultiplier += 0.3 },
+    { id: "aspd_up", name: "연노 개량", desc: "전체 장수 공격속도 +20% 증가", icon: "🏹", apply: () => gameState.aspdBonusPercent += 20 },
+    { id: "gate_repair", name: "성벽 보수", desc: "관문 내구도 40 회복", icon: "🏯", apply: () => gameState.gateHp = Math.min(gameState.maxGateHp, gameState.gateHp + 40) },
+    { id: "free_gold", name: "군자금 조달", desc: "즉시 군량미 150🌾 획득", icon: "💰", apply: () => gameState.gold += 150 }
+];
+
+function showStrategyModal() {
+    gameState.paused = true;
+    strategyCardsContainer.innerHTML = "";
+
+    const shuffled = [...STRATEGY_POOL].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 3);
+
+    selected.forEach(card => {
+        const cardEl = document.createElement("div");
+        cardEl.className = "strategy-card";
+        cardEl.innerHTML = `
+            <div class="card-icon">${card.icon}</div>
+            <div class="card-info">
+                <div class="card-name">${card.name}</div>
+                <div class="card-desc">${card.desc}</div>
+            </div>
+        `;
+        cardEl.onclick = () => {
+            card.apply();
+            audioEngine.playSound('merge');
+            strategyModal.classList.add("hidden");
+            gameState.paused = false;
+            gameState.wave += 1;
+            startNextWave();
+        };
+        strategyCardsContainer.appendChild(cardEl);
+    });
+
+    strategyModal.classList.remove("hidden");
+}
+
+/* ==========================================================================
+   11. Recruitment, Upgrades & Actions
+   ========================================================================== */
+
+function recruitHero() {
+    if (gameState.gold < gameState.recruitCost) return;
+
+    const emptyIndices = [];
+    for (let i = 0; i < gameState.grid.length; i++) {
+        if (gameState.grid[i] === null) emptyIndices.push(i);
+    }
+
+    if (emptyIndices.length === 0) {
+        gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, gridStartY - 20, "진영에 빈 자리가 없습니다!", "#FF4444", 16));
+        return;
+    }
+
+    gameState.gold -= gameState.recruitCost;
+    gameState.recruitCost = Math.round(gameState.recruitCost * 1.15);
+
+    const targetSlot = emptyIndices[0];
+    const newHero = new Hero(1);
+    gameState.grid[targetSlot] = newHero;
+
+    const pos = getCellCenter(targetSlot);
+    createImpactParticles(pos.x, pos.y, newHero.config.color, 12);
+    audioEngine.playSound('spear');
+}
+
+function upgradeForce() {
+    if (gameState.gold < gameState.upgradeCost) return;
+
+    gameState.gold -= gameState.upgradeCost;
+    gameState.upgradeLevel += 1;
+    gameState.atkBonusPercent += 10;
+    gameState.upgradeCost = Math.round(gameState.upgradeCost * 1.3);
+
+    audioEngine.playSound('merge');
+    gameState.floatingTexts.push(new FloatingText(canvasWidth / 2, canvasHeight / 2, `전체 무력 강화 Lv.${gameState.upgradeLevel}!`, "#FFD700", 20));
+}
+
+recruitBtn.addEventListener("click", recruitHero);
+upgradeBtn.addEventListener("click", upgradeForce);
+
+soundBtnEl.addEventListener("click", () => {
+    SOUND_CONFIG.enabled = !SOUND_CONFIG.enabled;
+    soundBtnEl.innerText = SOUND_CONFIG.enabled ? "🔊" : "🔇";
+});
+
+function triggerGameOver() {
+    gameState.gameOver = true;
+    gameState.paused = true;
+    finalWaveEl.innerText = getWaveConfig(gameState.wave).name;
+    finalKillsEl.innerText = gameState.kills;
+    gameoverModal.classList.remove("hidden");
+}
+
+restartBtn.addEventListener("click", () => {
+    location.reload();
+});
+
+/* ==========================================================================
+   12. Render Loop & UI Updates
+   ========================================================================== */
+
+function updateUI() {
+    goldValEl.innerText = gameState.gold;
+    hpValEl.innerText = `${gameState.gateHp}/${gameState.maxGateHp}`;
+    killValEl.innerText = gameState.kills;
+    gateHpBarEl.style.width = `${Math.max(0, (gameState.gateHp / gameState.maxGateHp) * 100)}%`;
+
+    recruitCostEl.innerText = gameState.recruitCost;
+    upgradeLvlEl.innerText = gameState.upgradeLevel;
+    upgradeCostEl.innerText = gameState.upgradeCost;
+
+    recruitBtn.classList.toggle("disabled", gameState.gold < gameState.recruitCost);
+    upgradeBtn.classList.toggle("disabled", gameState.gold < gameState.upgradeCost);
+}
+
+function drawGame() {
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // 1. Draw S-Curve Defense Path
+    ctx.save();
+    ctx.strokeStyle = "rgba(212, 175, 55, 0.25)";
+    ctx.lineWidth = 26;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    for (let t = 0; t <= 1; t += 0.02) {
+        const pt = getPointOnPath(pathPoints, t);
+        if (t === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Draw Gate / Castle Gate Line
+    const gateY = gridStartY - 15;
+    ctx.save();
+    ctx.fillStyle = "#3a2e1d";
+    ctx.fillRect(0, gateY, canvasWidth, 12);
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏯 성문 관문 방어선", canvasWidth / 2, gateY + 9);
+    ctx.restore();
+
+    // 3. Draw Enemies & Projectiles
+    gameState.enemies.forEach(e => e.draw(ctx));
+    gameState.projectiles.forEach(p => p.draw(ctx));
+
+    // 4. Draw 5x4 Grid Tiles
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+            const x = col * cellWidth;
+            const y = gridStartY + row * cellHeight;
+            const index = row * COLS + col;
+
+            ctx.save();
+            ctx.fillStyle = "rgba(30, 41, 59, 0.6)";
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.25)";
+            ctx.lineWidth = 1;
+            ctx.fillRect(x + 2, y + 2, cellWidth - 4, cellHeight - 4);
+            ctx.strokeRect(x + 2, y + 2, cellWidth - 4, cellHeight - 4);
+
+            const hero = gameState.grid[index];
+            if (hero && (!gameState.draggedItem || gameState.draggedItem.sourceIndex !== index)) {
+                const centerX = x + cellWidth / 2;
+                const centerY = y + cellHeight / 2;
+                const radius = Math.min(cellWidth, cellHeight) * 0.35;
+                drawHeroVisual(ctx, centerX, centerY, radius, hero.config, gameState.auraTimer);
+            }
+            ctx.restore();
+        }
+    }
+
+    // 5. Draw Dragged Hero Following Cursor/Touch
+    if (gameState.draggedItem) {
+        const { hero, x, y } = gameState.draggedItem;
+        const radius = Math.min(cellWidth, cellHeight) * 0.4;
+        drawHeroVisual(ctx, x, y, radius, hero.config, gameState.auraTimer);
+    }
+
+    // 6. Draw Particles & Floating Text
+    gameState.particles.forEach(p => p.draw(ctx));
+    gameState.floatingTexts.forEach(ft => ft.draw(ctx));
+}
+
+let lastTime = performance.now();
+function gameLoop(now) {
+    const dt = Math.min(0.1, (now - lastTime) / 1000);
+    lastTime = now;
+
+    if (!gameState.paused && !gameState.gameOver) {
+        gameState.auraTimer += dt;
+        updateWave(dt);
+        updateCombat(dt);
+
+        gameState.projectiles.forEach(p => p.update(dt, gameState.enemies));
+        gameState.projectiles = gameState.projectiles.filter(p => p.active);
+
+        gameState.particles.forEach(p => p.update(dt));
+        gameState.particles = gameState.particles.filter(p => p.life > 0);
+
+        gameState.floatingTexts.forEach(ft => ft.update(dt));
+        gameState.floatingTexts = gameState.floatingTexts.filter(ft => ft.life > 0);
+    }
+
+    updateUI();
+    drawGame();
+    requestAnimationFrame(gameLoop);
+}
+
+/* ==========================================================================
+   13. Initialization
+   ========================================================================= */
+
+function initGame() {
+    resizeCanvas();
+    gameState.grid[7] = new Hero(1);
+    gameState.grid[12] = new Hero(1);
+    startNextWave();
+    requestAnimationFrame(gameLoop);
+}
+
+window.onload = initGame;
