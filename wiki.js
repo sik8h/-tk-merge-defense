@@ -170,6 +170,24 @@ function drawHeroPortraitCanvas(hero) {
   const ctx = c.getContext('2d');
   const f = FACTION_META[hero.faction];
 
+  const saveInfo = getSaveData();
+  const upgrades = saveInfo.heroUpgrades[hero.id] || { rankLv: 0, weaponLv: 0 };
+  let borderColor = '#2e384b';
+  let borderW = 1;
+  if (upgrades.rankLv >= 4) {
+    borderColor = '#a855f7'; // Royal Purple-Gold
+    borderW = 3;
+  } else if (upgrades.rankLv >= 2) {
+    borderColor = '#fbbf24'; // Gold
+    borderW = 2;
+  } else if (upgrades.rankLv >= 1) {
+    borderColor = '#ef4444'; // Vermilion
+    borderW = 2;
+  }
+
+  c.style.borderColor = borderColor;
+  c.style.borderWidth = `${borderW}px`;
+
   // 1. 수묵 그라데이션 배경 & 후광
   const grad = ctx.createRadialGradient(70, 75, 10, 70, 80, 85);
   grad.addColorStop(0, f.color);
@@ -356,6 +374,9 @@ function buildDetailedHero3D(hero) {
   base.position.y = -1.25;
   root.add(base);
 
+  const saveInfo = getSaveData();
+  const upgrades = saveInfo.heroUpgrades[hero.id] || { rankLv: 0, weaponLv: 0 };
+
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.92, 1.04, 24),
     new THREE.MeshBasicMaterial({ color: f.hex, side: THREE.DoubleSide })
@@ -363,6 +384,14 @@ function buildDetailedHero3D(hero) {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = -1.11;
   root.add(ring);
+
+  if (upgrades.weaponLv >= 1) {
+    const weaponRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide });
+    const weaponRing = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.25, 24), weaponRingMat);
+    weaponRing.rotation.x = -Math.PI / 2;
+    weaponRing.position.y = -1.10;
+    root.add(weaponRing);
+  }
 
   let yOff = -1.12;
 
@@ -575,12 +604,19 @@ function buildDetailedHero3D(hero) {
   const shaftMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.5 });
 
   // 왼손 보조 파츠
+  const weaponAuraMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.4 });
+
   const leftHand = new THREE.Group();
   leftHand.position.set(-0.52, yOff + 0.95, 0.18);
   if (hero.weapon === 'dual') {
     const bladeL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.05, 0.16), steelMat);
     bladeL.position.y = 0.45;
     leftHand.add(bladeL);
+    if (upgrades.weaponLv >= 1) {
+      const auraL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 0.22), weaponAuraMat);
+      auraL.position.y = 0.45;
+      leftHand.add(auraL);
+    }
   } else if (hero.weapon === 'fan') {
     const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.18, 0), goldMat);
     orb.position.y = 0.15;
@@ -606,6 +642,11 @@ function buildDetailedHero3D(hero) {
     const tip = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.35, 4), steelMat);
     tip.position.set(0, 2.12, 0.04);
     rightHand.add(pole, guard, blade, tip);
+    if (upgrades.weaponLv >= 1) {
+      const auraB = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.82, 0.38), weaponAuraMat);
+      auraB.position.set(0, 1.68, 0.08);
+      rightHand.add(auraB);
+    }
   } else if (hero.weapon === 'halberd') {
     // 방천화극: 긴 자루 + 중앙 창날 + 양옆 초승달 날
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 2.0, 8), shaftMat);
@@ -619,6 +660,11 @@ function buildDetailedHero3D(hero) {
     crescentR.rotation.z = -Math.PI / 2;
     crescentR.position.x = 0.08;
     rightHand.add(pole, tip, crescentL, crescentR);
+    if (upgrades.weaponLv >= 1) {
+      const auraT = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 4), weaponAuraMat);
+      auraT.position.y = 1.65;
+      rightHand.add(auraT);
+    }
   } else if (hero.weapon === 'snake') {
     // 장팔사모: 구불구불한 뱀 모양 창날
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.8, 8), shaftMat);
@@ -638,6 +684,12 @@ function buildDetailedHero3D(hero) {
     const str = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 1.15, 4), steelMat);
     str.position.y = 0.35;
     rightHand.add(bowArc, str);
+    if (upgrades.weaponLv >= 1) {
+      const auraBow = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.08, 8, 18, Math.PI), weaponAuraMat);
+      auraBow.rotation.z = -Math.PI / 2;
+      auraBow.position.y = 0.35;
+      rightHand.add(auraBow);
+    }
   } else if (hero.weapon === 'fan') {
     // 백우선: 7갈래로 펼쳐진 입체 부채
     const featherMat = new THREE.MeshStandardMaterial({ color: hero.faction === 'wei' ? 0x334155 : 0xf8fafc });
@@ -655,6 +707,12 @@ function buildDetailedHero3D(hero) {
     axeHead.rotation.z = Math.PI / 2;
     axeHead.position.set(0.15, 1.15, 0);
     rightHand.add(pole, axeHead);
+    if (upgrades.weaponLv >= 1) {
+      const auraAxe = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.16, 12), weaponAuraMat);
+      auraAxe.rotation.z = Math.PI / 2;
+      auraAxe.position.set(0.15, 1.15, 0);
+      rightHand.add(auraAxe);
+    }
   } else if (hero.weapon === 'mace') {
     // 철추
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.5, 8), shaftMat);
@@ -669,6 +727,11 @@ function buildDetailedHero3D(hero) {
     const blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.15, 0.16), steelMat);
     blade.position.y = 0.75;
     rightHand.add(guard, blade);
+    if (upgrades.weaponLv >= 1) {
+      const auraS = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.25, 0.22), weaponAuraMat);
+      auraS.position.y = 0.75;
+      rightHand.add(auraS);
+    }
   } else {
     // 용담은창 / 장창
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 1.95, 8), shaftMat);
@@ -678,6 +741,11 @@ function buildDetailedHero3D(hero) {
     const spearTip = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.52, 4), steelMat);
     spearTip.position.y = 1.68;
     rightHand.add(pole, tassel, spearTip);
+    if (upgrades.weaponLv >= 1) {
+      const auraSp = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.62, 4), weaponAuraMat);
+      auraSp.position.y = 1.68;
+      rightHand.add(auraSp);
+    }
   }
   root.add(rightHand);
 
@@ -723,16 +791,18 @@ function getSaveData() {
   const defaultIds = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1 };
+    if (!raw) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
     const data = JSON.parse(raw);
     const merged = new Set([...defaultIds, ...(Array.isArray(data.unlockedIds) ? data.unlockedIds : [])]);
     return {
       unlockedSet: merged,
       fame: Number(data.fame) || 30,
-      bestWave: Number(data.bestWave || data.wave) || 1
+      bestWave: Number(data.bestWave || data.wave) || 1,
+      heroUpgrades: data.heroUpgrades || {},
+      factionTech: data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 }
     };
   } catch (e) {
-    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1 };
+    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
   }
 }
 
@@ -958,6 +1028,16 @@ function renderDbView(subRoute, saveInfo) {
   filtered.forEach(hero => {
     const isUnlocked = unlockedSet.has(hero.id);
     const card = document.createElement('div');
+  const upgrades = saveInfo.heroUpgrades[hero.id] || { rankLv: 0, weaponLv: 0 };
+  let stampBg = '#4a1c1c', stampBorder = '#8c3b3b', stampColor = '#f3e5ab';
+  if (upgrades.rankLv >= 4) {
+    stampBg = '#2e1065'; stampBorder = '#7e22ce'; stampColor = '#e9d5ff';
+  } else if (upgrades.rankLv >= 2) {
+    stampBg = '#713f12'; stampBorder = '#ca8a04'; stampColor = '#fef08a';
+  } else if (upgrades.rankLv >= 1) {
+    stampBg = '#7f1d1d'; stampBorder = '#dc2626'; stampColor = '#fecaca';
+  }
+
     card.className = `db-card ${isUnlocked ? 'unlocked' : ''}`;
     card.innerHTML = `
       <span class="unlock-tag ${isUnlocked ? 'yes' : 'no'}">${isUnlocked ? '✅ 해방됨' : `🔒 제${hero.unlockWave}장`}</span>
@@ -971,7 +1051,7 @@ function renderDbView(subRoute, saveInfo) {
         <span>탈것: <b>${hero.mount === 'red' ? '적토마' : hero.mount === 'white' ? '백마' : hero.mount === 'black' ? '흑마' : hero.mount === 'elephant' ? '코끼리' : '보병'}</b></span>
       </div>
       <div class="card-lib-info">${hero.unlockWave === 1 ? '기본 참전 무장' : `제${hero.unlockWave}장 해방 / 삼고초려 ${hero.fameCost}🎖️`}</div>
-      <div class="card-stamp">${hero.stamp}</div>`;
+    <div class="card-stamp" style="background:${stampBg}; border-color:${stampBorder}; color:${stampColor}">${hero.stamp}</div>`;
     card.querySelector('.portrait-slot').appendChild(drawHeroPortraitCanvas(hero));
     card.addEventListener('click', () => openHero3DDialog(hero, isUnlocked));
     gridEl.appendChild(card);
@@ -995,6 +1075,9 @@ function openHero3DDialog(hero, isUnlocked) {
   const infoBox = document.getElementById('dialog-info-box');
   const f = FACTION_META[hero.faction];
 
+  const saveInfo = getSaveData();
+  const upgrades = saveInfo.heroUpgrades[hero.id] || { rankLv: 0, weaponLv: 0 };
+
   infoBox.innerHTML = `
     <div>
       <div style="font-size:12px;color:${f.color};font-weight:800;">${f.name} · Tier ${hero.tier}</div>
@@ -1007,6 +1090,7 @@ function openHero3DDialog(hero, isUnlocked) {
       <table class="wiki-table" style="margin-bottom:10px;">
         <tr><th>전용 무기</th><td>${hero.wName}</td><th>해방 상태</th><td>${isUnlocked ? '✅ 해방 완료' : '🔒 미해방'}</td></tr>
         <tr><th>1성 / 3성 공격력</th><td>${hero.atk} / <b>${Math.floor(hero.atk * 1.56)}</b></td><th>공격 속도</th><td>${hero.spd}/s</td></tr>
+        <tr><th>관직 성급</th><td><b style="color:#fbbf24">${upgrades.rankLv}/5</b> (+${upgrades.rankLv * 15}% 공)</td><th>신병 단조</th><td><b style="color:#38bdf8">${upgrades.weaponLv}/5</b> (+${upgrades.weaponLv * 6}% 공속)</td></tr>
         <tr><th>사거리</th><td>${hero.range}m</td><th>소속 인연</th><td>${hero.bonds.length ? hero.bonds.join(', ') : '세력 기본 시너지'}</td></tr>
       </table>
       <button class="demo-btn" onclick="demoStamp('${hero.stamp}', '${hero.name} [Tier ${hero.tier}] 출진!')">🥁 '${hero.stamp}' 낙관 & 대북 시연</button>

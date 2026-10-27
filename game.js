@@ -261,7 +261,9 @@ const gameState = {
   selectedIndex: -1,
   spawnTimer: 0,
   waveRemaining: 10,
-  isGameOver: false
+  isGameOver: false,
+  heroUpgrades: {},
+  factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }
 };
 
 function saveGameSafe() {
@@ -279,7 +281,9 @@ function saveGameSafe() {
       siegeLeftLv: gameState.siegeLeftLv,
       siegeRightLv: gameState.siegeRightLv,
       unlockedIds: gameState.unlockedIds,
-      gridIds: gameState.grid.map(h => h ? h.data.id : null)
+      gridIds: gameState.grid.map(h => h ? h.data.id : null),
+      heroUpgrades: gameState.heroUpgrades,
+      factionTech: gameState.factionTech
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
   } catch (e) {}
@@ -305,6 +309,8 @@ function loadGameSafe() {
     const mergedUnlock = new Set([...INITIAL_UNLOCKED, ...data.unlockedIds]);
     gameState.unlockedIds = Array.from(mergedUnlock);
     gameState.waveRemaining = 8 + gameState.wave * 3;
+    gameState.heroUpgrades = data.heroUpgrades || {};
+    gameState.factionTech = data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 };
     return data.gridIds || null;
   } catch (e) {
     return null;
@@ -362,6 +368,204 @@ const CAM_PRESETS = [
   { pos: new THREE.Vector3(0, 8, 16), look: new THREE.Vector3(0, 1, -10) }
 ];
 
+let campPreviewRenderer = null;
+let campPreviewScene = null;
+let campPreviewCamera = null;
+let campPreviewHeroMesh = null;
+let campPreviewAnimId = null;
+let selectedCampHero = null;
+
+function renderCampPreview() {
+  if (!campPreviewHeroMesh) return;
+  campPreviewAnimId = requestAnimationFrame(renderCampPreview);
+  campPreviewHeroMesh.rotation.y += 0.01;
+  campPreviewRenderer.render(campPreviewScene, campPreviewCamera);
+}
+
+function initCampPreview(heroId) {
+  const container = document.getElementById('camp-3d-preview');
+  const w = container.clientWidth || 150;
+  const h = container.clientHeight || 160;
+
+  if (!campPreviewRenderer) {
+    campPreviewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    campPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(campPreviewRenderer.domElement);
+
+    campPreviewScene = new THREE.Scene();
+    campPreviewCamera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
+    campPreviewCamera.position.set(0, 1.2, 4.5);
+    campPreviewCamera.lookAt(0, 0.5, 0);
+
+    campPreviewScene.add(new THREE.HemisphereLight(0xfff5e4, 0x1e2636, 0.95));
+    const dl = new THREE.DirectionalLight(0xfffaed, 1.1);
+    dl.position.set(4, 7, 6);
+    campPreviewScene.add(dl);
+  }
+
+  campPreviewRenderer.setSize(w, h);
+  campPreviewCamera.aspect = w / h;
+  campPreviewCamera.updateProjectionMatrix();
+
+  if (campPreviewHeroMesh) campPreviewScene.remove(campPreviewHeroMesh);
+
+  const heroData = HERO_DB.find(h => h.id === heroId);
+  if (!heroData) return;
+
+  campPreviewHeroMesh = buildHeroCharacter3D(heroData);
+  campPreviewScene.add(campPreviewHeroMesh);
+
+  if (campPreviewAnimId) cancelAnimationFrame(campPreviewAnimId);
+  renderCampPreview();
+}
+
+function updateCampHeroDetail() {
+  if (!selectedCampHero) {
+    document.getElementById('camp-hero-empty').classList.remove('hidden');
+    document.getElementById('camp-hero-content').classList.add('hidden');
+    return;
+  }
+
+  document.getElementById('camp-hero-empty').classList.add('hidden');
+  document.getElementById('camp-hero-content').classList.remove('hidden');
+
+  const heroData = HERO_DB.find(h => h.id === selectedCampHero);
+  const upgrades = gameState.heroUpgrades[heroData.id] || { rankLv: 0, weaponLv: 0 };
+
+  const rankCost = 10 * (upgrades.rankLv + 1);
+  const weaponCost = 15 * (upgrades.weaponLv + 1);
+
+  document.getElementById('camp-hero-name').textContent = `T${heroData.tier} ${heroData.name}`;
+  document.getElementById('camp-hero-stats').innerHTML = `
+    <div>관직 성급: <b style="color:#fbbf24">${upgrades.rankLv}/5</b> (+${upgrades.rankLv * 15}% 공격력)</div>
+    <div>신병 단조: <b style="color:#38bdf8">${upgrades.weaponLv}/5</b> (+${upgrades.weaponLv * 6}% 공속, +${upgrades.weaponLv * 4}% 치명)</div>
+    <div style="margin-top:4px;color:#94a3b8">현재 화력: ${Math.floor(heroData.atk * (1 + 0.15 * upgrades.rankLv))}</div>
+    <div style="color:#94a3b8">현재 공속: ${(heroData.spd * (1 + 0.06 * upgrades.weaponLv)).toFixed(2)}/s</div>
+  `;
+
+  const btnRank = document.getElementById('btn-upgrade-rank');
+  const btnWeapon = document.getElementById('btn-upgrade-weapon');
+
+  if (upgrades.rankLv >= 5) {
+    btnRank.innerHTML = `<span>최대 성급</span><span style="font-size:10px;color:#fff;">완료</span>`;
+    btnRank.disabled = true;
+  } else {
+    btnRank.innerHTML = `<span>관직 승진</span><span style="font-size:10px;color:#fff;">${rankCost} 🎖️</span>`;
+    btnRank.disabled = gameState.fame < rankCost;
+  }
+
+  if (upgrades.weaponLv >= 5) {
+    btnWeapon.innerHTML = `<span>최대 단조</span><span style="font-size:10px;color:#fff;">완료</span>`;
+    btnWeapon.disabled = true;
+  } else {
+    btnWeapon.innerHTML = `<span>신병 단조</span><span style="font-size:10px;color:#fff;">${weaponCost} 🎖️</span>`;
+    btnWeapon.disabled = gameState.fame < weaponCost;
+  }
+
+  btnRank.onclick = () => {
+    if (gameState.fame >= rankCost && upgrades.rankLv < 5) {
+      gameState.fame -= rankCost;
+      if (!gameState.heroUpgrades[heroData.id]) gameState.heroUpgrades[heroData.id] = { rankLv: 0, weaponLv: 0 };
+      gameState.heroUpgrades[heroData.id].rankLv++;
+      sound.playGong();
+      updateCampUI();
+      saveGameSafe();
+    }
+  };
+
+  btnWeapon.onclick = () => {
+    if (gameState.fame >= weaponCost && upgrades.weaponLv < 5) {
+      gameState.fame -= weaponCost;
+      if (!gameState.heroUpgrades[heroData.id]) gameState.heroUpgrades[heroData.id] = { rankLv: 0, weaponLv: 0 };
+      gameState.heroUpgrades[heroData.id].weaponLv++;
+      sound.playBladeSlash();
+      updateCampUI();
+      saveGameSafe();
+    }
+  };
+
+  initCampPreview(selectedCampHero);
+}
+
+function updateCampUI() {
+  document.getElementById('camp-fame-val').textContent = gameState.fame;
+
+  // Faction Tech
+  const techContainer = document.getElementById('faction-tech-container');
+  techContainer.innerHTML = '';
+  ['shu', 'wei', 'wu', 'qun'].forEach(f => {
+    const level = gameState.factionTech[f] || 0;
+    const cost = 20 * (level + 1);
+    const meta = FACTION_META[f];
+    const maxed = level >= 10;
+
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.justifyContent = 'space-between';
+    div.style.alignItems = 'center';
+    div.style.background = '#0f172a';
+    div.style.padding = '6px 10px';
+    div.style.borderRadius = '4px';
+    div.innerHTML = `
+      <div style="font-size:12px;color:${meta.color}"><b>${meta.name} 태학 Lv.${level}</b></div>
+      <button class="upgrade-tech-btn" style="background:#334155;border:none;color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;" ${maxed || gameState.fame < cost ? 'disabled' : ''}>
+        ${maxed ? '연구 완료' : `${cost} 🎖️ 연구`}
+      </button>
+    `;
+    const btn = div.querySelector('.upgrade-tech-btn');
+    if (!maxed) {
+      btn.onclick = () => {
+        if (gameState.fame >= cost) {
+          gameState.fame -= cost;
+          gameState.factionTech[f] = level + 1;
+          sound.playGong();
+          updateCampUI();
+          saveGameSafe();
+        }
+      };
+    }
+    techContainer.appendChild(div);
+  });
+
+  // Hero Grid
+  const grid = document.getElementById('camp-hero-grid');
+  grid.innerHTML = '';
+  gameState.unlockedIds.forEach(id => {
+    const h = HERO_DB.find(x => x.id === id);
+    if (!h) return;
+    const upg = gameState.heroUpgrades[id] || { rankLv: 0, weaponLv: 0 };
+
+    let borderCol = '#334155';
+    if (upg.rankLv >= 4) borderCol = '#a855f7';
+    else if (upg.rankLv >= 2) borderCol = '#fbbf24';
+    else if (upg.rankLv >= 1) borderCol = '#ef4444';
+
+    const item = document.createElement('div');
+    item.style.border = `2px solid ${id === selectedCampHero ? '#fff' : borderCol}`;
+    item.style.borderRadius = '4px';
+    item.style.padding = '4px';
+    item.style.background = FACTION_META[h.faction].color + '40';
+    item.style.cursor = 'pointer';
+    item.style.textAlign = 'center';
+    item.innerHTML = `
+      <div style="font-size:16px;font-weight:bold;color:${FACTION_META[h.faction].color}">${h.hanja}</div>
+      <div style="font-size:9px;color:#cbd5e1;margin-top:2px;">Lv.${upg.rankLv} / W.${upg.weaponLv}</div>
+    `;
+    item.onclick = () => {
+      selectedCampHero = id;
+      updateCampUI();
+    };
+    grid.appendChild(item);
+  });
+
+  updateCampHeroDetail();
+}
+
+function openUpgradeCampModal() {
+  document.getElementById('upgrade-camp-modal').classList.remove('hidden');
+  updateCampUI();
+}
+
 function getHeroBannerTexture(heroData) {
   if (bannerTextureCache[heroData.id]) return bannerTextureCache[heroData.id];
   const c = document.createElement('canvas');
@@ -398,12 +602,23 @@ function buildHeroCharacter3D(heroData) {
   base.position.y = 0.15;
   root.add(base);
 
+  const upgrades = gameState.heroUpgrades[heroData.id] || { rankLv: 0, weaponLv: 0 };
+
   const ringMat = new THREE.MeshBasicMaterial({ color: fMeta.hex, side: THREE.DoubleSide });
   const auraRing = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.05, 16), ringMat);
   auraRing.rotation.x = -Math.PI / 2;
   auraRing.position.y = 0.32;
   root.add(auraRing);
   root.userData.auraRing = auraRing;
+
+  if (upgrades.weaponLv >= 1) {
+    const weaponRingMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide });
+    const weaponRing = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.25, 24), weaponRingMat);
+    weaponRing.rotation.x = -Math.PI / 2;
+    weaponRing.position.y = 0.33;
+    root.add(weaponRing);
+    root.userData.weaponRing = weaponRing;
+  }
 
   let yOffset = 0.3;
   if (heroData.mount) {
@@ -459,6 +674,13 @@ function buildHeroCharacter3D(heroData) {
   armPivot.add(blade);
   root.add(armPivot);
   root.userData.armPivot = armPivot;
+
+  if (upgrades.weaponLv >= 1) {
+    const auraMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.5 });
+    const auraBlade = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 4), auraMat);
+    auraBlade.position.y = 1.35;
+    armPivot.add(auraBlade);
+  }
 
   const flagPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.3, 6), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
   flagPole.position.set(-0.35, yOffset + 1.1, -0.35);
@@ -667,8 +889,19 @@ function tryMergeOrMove(fromIdx, toIdx) {
   }
 
   if (src.data.tier === dst.data.tier && src.data.tier < 7) {
-    const nextTier = src.data.tier + 1;
+    let nextTier = src.data.tier + 1;
     let nextFaction = src.data.faction;
+
+    // Critical Leap: Faction Tech grants 1% chance per level for a +2 Tier jump
+    let isCritLeap = false;
+    if (src.data.faction === dst.data.faction && src.data.tier < 6) {
+      const techLevel = gameState.factionTech[src.data.faction] || 0;
+      if (Math.random() < techLevel * 0.01) {
+        nextTier = src.data.tier + 2;
+        isCritLeap = true;
+      }
+    }
+
     if (src.data.faction !== dst.data.faction) {
       nextFaction = Math.random() < 0.5 ? src.data.faction : dst.data.faction;
     }
@@ -679,11 +912,18 @@ function tryMergeOrMove(fromIdx, toIdx) {
     gameState.grid[fromIdx] = null;
     spawnHeroAtGrid(toIdx, nextHero);
 
-    addFloatingText(`✨ ${nextHero.name} [T${nextTier}] 승급!`, gridTiles3D[toIdx].position, '#fde047');
-    if (nextTier >= 4) {
-      triggerHanjaStamp(nextHero.stamp, `${nextHero.name} [Tier ${nextTier}] 출진!`);
+    gameState.fame += 2; // +2 fame reward on merge
+
+    if (isCritLeap) {
+      addFloatingText(`🌟 크리티컬 도약! ${nextHero.name} [T${nextTier}]`, gridTiles3D[toIdx].position, '#fde047');
+      triggerHanjaStamp('兵法跳躍', `태학 병법: ${nextHero.name} [Tier ${nextTier}] 2단계 승급!`);
     } else {
-      sound.playGong();
+      addFloatingText(`✨ ${nextHero.name} [T${nextTier}] 승급!`, gridTiles3D[toIdx].position, '#fde047');
+      if (nextTier >= 4) {
+        triggerHanjaStamp(nextHero.stamp, `${nextHero.name} [Tier ${nextTier}] 출진!`);
+      } else {
+        sound.playGong();
+      }
     }
   } else {
     src.mesh.position.copy(gridTiles3D[toIdx].position);
@@ -864,6 +1104,7 @@ function updateGame(dt) {
   if (gameState.inLobby || gameState.isGameOver) {
     gameState.grid.forEach(cell => {
       if (cell && cell.mesh.userData.auraRing) cell.mesh.userData.auraRing.rotation.z += dt * 1.5;
+      if (cell && cell.mesh.userData.weaponRing) cell.mesh.userData.weaponRing.rotation.z -= dt * 1.0;
     });
     return;
   }
@@ -952,11 +1193,22 @@ function updateGame(dt) {
   const codexMult = 1 + gameState.unlockedIds.length * 0.02 + syn.bondAtkBonus;
   const upgradeMult = 1 + (gameState.upgradeLvl - 1) * 0.18;
 
+  // Calculate total rank level for Global Roster Bonus
+  let totalRankLv = 0;
+  for (const id in gameState.heroUpgrades) {
+    totalRankLv += gameState.heroUpgrades[id].rankLv || 0;
+  }
+  const globalRankBonus = totalRankLv * 0.01;
+
   gameState.grid.forEach((cell, idx) => {
     if (!cell) return;
     if (cell.mesh.userData.auraRing) cell.mesh.userData.auraRing.rotation.z += effDt * 1.8;
+    if (cell.mesh.userData.weaponRing) cell.mesh.userData.weaponRing.rotation.z -= effDt * 1.2;
     if (cell.mesh.userData.halo) cell.mesh.userData.halo.rotation.z -= effDt * 2.2;
     if (idx === gameState.draggedIndex) return;
+
+    const upgrades = gameState.heroUpgrades[cell.data.id] || { rankLv: 0, weaponLv: 0 };
+    const factionTech = gameState.factionTech[cell.data.faction] || 0;
 
     const tInfo = TERRAIN_MAP[idx];
     const terrainSpd = (tInfo && tInfo.type === 'wind') ? 1.35 : 1.0;
@@ -964,7 +1216,8 @@ function updateGame(dt) {
     const terrainAtk = (tInfo && tInfo.type === 'high') ? 1.2 : 1.0;
     const terrainCrit = (tInfo && tInfo.type === 'taichi') ? 0.3 : 0;
 
-    cell.cooldown -= effDt * cell.data.spd * gameState.buffSpd * syn.shuMult * terrainSpd;
+    const weaponSpdBonus = 1 + (0.06 * upgrades.weaponLv);
+    cell.cooldown -= effDt * cell.data.spd * gameState.buffSpd * syn.shuMult * terrainSpd * weaponSpdBonus;
     if (cell.cooldown <= 0 && gameState.enemies.length > 0) {
       const range = (cell.data.range + gameState.buffRange + terrainRange + (weather.rangeMod || 0)) * syn.weiMult;
       let target = null;
@@ -991,10 +1244,14 @@ function updateGame(dt) {
           addFloatingText(`★${cell.stars} 무쌍 각성!`, cell.mesh.position, '#fde047');
         }
         const starMult = 1 + (cell.stars - 1) * 0.28;
+        const rankAtkBonus = 1 + (0.15 * upgrades.rankLv);
+        const factionTechBonus = 1 + (0.05 * factionTech);
+        const weaponCritBonus = 0.04 * upgrades.weaponLv;
 
-        const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0));
+        const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0) + weaponCritBonus);
         const wuMod = cell.data.faction === 'wu' ? weather.fireMod : 1.0;
-        const dmg = cell.data.atk * starMult * terrainAtk * wuMod * gameState.buffAtk * syn.weiMult * codexMult * upgradeMult * (isCrit ? 2.2 : 1.0);
+        const totalCodexMult = codexMult + globalRankBonus;
+        const dmg = cell.data.atk * rankAtkBonus * starMult * terrainAtk * wuMod * gameState.buffAtk * syn.weiMult * totalCodexMult * upgradeMult * factionTechBonus * (isCrit ? 2.2 : 1.0);
         const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire');
         spawnProjectile(cell.mesh.position, target, dmg, FACTION_META[cell.data.faction].hex, isCrit, applyBurn);
       }
@@ -1420,6 +1677,13 @@ function bindEvents() {
   document.getElementById('codex-btn').addEventListener('click', openCodexModal);
   document.getElementById('close-codex-btn').addEventListener('click', () => {
     document.getElementById('codex-modal').classList.add('hidden');
+  });
+
+  document.getElementById('upgrade-camp-btn').addEventListener('click', openUpgradeCampModal);
+  document.getElementById('close-upgrade-camp-btn').addEventListener('click', () => {
+    document.getElementById('upgrade-camp-modal').classList.add('hidden');
+    if (campPreviewAnimId) cancelAnimationFrame(campPreviewAnimId);
+    campPreviewAnimId = null;
   });
 
   document.getElementById('restart-btn').addEventListener('click', () => {
