@@ -348,6 +348,7 @@ const gameState = {
   buffRange: 0,
   buffCrit: 0.12,
   highRecruitBonus: 0,
+  stratCd: { fire: 0, rock: 0, flood: 0, buff: 0 },
   skillCd: 0,
   gameSpeed: 1,
   camMode: 0,
