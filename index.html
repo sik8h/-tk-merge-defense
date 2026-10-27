@@ -147,6 +147,27 @@
       </div>
     </main>
 
+
+    <!-- 주군 계책판 (Stratagem Bar) -->
+    <div id="stratagem-bar">
+      <button class="strat-btn" id="strat-fire" title="화계·적벽화공 (화염 AoE)">
+        <span class="strat-icon">🔥</span>
+        <div class="strat-cd-overlay" id="strat-fire-cd"></div>
+      </button>
+      <button class="strat-btn" id="strat-rock" title="낙석·기산매복 (단일 기절)">
+        <span class="strat-icon">🪨</span>
+        <div class="strat-cd-overlay" id="strat-rock-cd"></div>
+      </button>
+      <button class="strat-btn" id="strat-flood" title="수계·번성수공 (밀치기/감속)">
+        <span class="strat-icon">🌊</span>
+        <div class="strat-cd-overlay" id="strat-flood-cd"></div>
+      </button>
+      <button class="strat-btn" id="strat-buff" title="신산·팔문금쇄 (아군 공속/치명타 버프)">
+        <span class="strat-icon">⚡</span>
+        <div class="strat-cd-overlay" id="strat-buff-cd"></div>
+      </button>
+    </div>
+
     <footer id="command-bar">
       <button id="recruit-btn" class="cmd-btn recruit">
         <span class="btn-title">장수 모집</span>
@@ -156,10 +177,7 @@
         <span class="btn-title">태학 무력연구 <small>Lv.<span id="upgrade-lvl">1</span></small></span>
         <span class="btn-sub"><span id="upgrade-cost">35</span> 🌾 (+18% 화력)</span>
       </button>
-      <button id="skill-btn" class="cmd-btn skill">
-        <span class="btn-title">🔥 적벽 화공</span>
-        <span class="btn-sub" id="skill-cd">즉시 발동</span>
-      </button>
+
     </footer>
 
     <!-- 제갈량의 금낭묘계 모달 -->
@@ -192,7 +210,14 @@
           <h2>⚔️ 군영 육성소 (3-Pillar Progression)</h2>
           <p>무공 명성(🎖️ <b id="camp-fame-val">0</b>)을 소모하여 장수의 관직, 신병·명마, 태학 병법을 강화합니다.</p>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+
+        <div class="camp-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+          <button id="tab-btn-camp" class="camp-tab-btn active" style="flex:1;padding:8px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">⚔️ 육성·태학</button>
+          <button id="tab-btn-treasure" class="camp-tab-btn" style="flex:1;padding:8px;background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:4px;cursor:pointer;font-weight:bold;">🏺 보물·계책 (전설 보물고)</button>
+        </div>
+
+        <div id="tab-content-camp" style="display:flex;gap:16px;flex-wrap:wrap;">
+
 
           <div style="flex:1;min-width:300px;background:#1e293b;padding:12px;border-radius:8px;border:1px solid #334155;">
             <h3 style="color:#fbbf24;font-size:14px;margin-bottom:8px;border-bottom:1px solid #334155;padding-bottom:4px;">🏛️ 4대 세력 태학 병법 연구 (명성 소모)</h3>
@@ -230,6 +255,24 @@
           </div>
 
         </div>
+
+        </div>
+
+        <div id="tab-content-treasure" class="hidden" style="display:flex;flex-direction:column;gap:16px;">
+          <div style="background:#1e293b;padding:12px;border-radius:8px;border:1px solid #334155;">
+            <h3 style="color:#fbbf24;font-size:14px;margin-bottom:8px;border-bottom:1px solid #334155;padding-bottom:4px;">📜 주군 4대 계책 강화</h3>
+            <div id="stratagem-upgrade-container" style="display:flex;gap:12px;flex-wrap:wrap;"></div>
+          </div>
+
+          <div style="background:#1e293b;padding:12px;border-radius:8px;border:1px solid #334155;display:flex;flex-direction:column;flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:8px;">
+               <h3 style="color:#fbbf24;font-size:14px;margin:0;">🏺 24대 전설 보물고</h3>
+               <button id="btn-pull-treasure" style="padding:6px 12px;background:#f59e0b;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">보물 감정 (15 🎖️)</button>
+            </div>
+            <div id="treasure-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;max-height:300px;overflow-y:auto;align-content:start;"></div>
+          </div>
+        </div>
+
         <button id="close-upgrade-camp-btn" class="modal-action-btn" style="margin-top:16px;">닫기</button>
       </div>
     </div>
