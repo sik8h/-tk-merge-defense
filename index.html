@@ -80,6 +80,7 @@
           <button id="speed-btn" class="hud-btn" title="배속">⏩ 1x</button>
           <button id="cam-btn" class="hud-btn" title="시점">🎥</button>
           <button id="sound-btn" class="hud-btn" title="사운드">🔊</button>
+          <button id="deck-btn" class="hud-btn" style="color:#fde047;border-color:#fbbf24;" title="편성">⛺ 편성</button>
           <button id="codex-btn" class="hud-btn" title="명장 해방">📜 해방</button>
         </div>
       </div>
@@ -181,6 +182,47 @@
         </div>
         <div id="codex-grid" class="codex-grid"></div>
         <button id="close-codex-btn" class="modal-action-btn">전장으로 돌아가기</button>
+      </div>
+    </div>
+
+
+    <!-- 출진 편성소 & 태학 모달 -->
+    <div id="deck-modal" class="modal hidden">
+      <div class="modal-content" style="max-width: 800px; padding: 15px;">
+        <div class="modal-header" style="margin-bottom:10px;">
+          <h2>⛺ 출진 편성소 & 태수 파견소</h2>
+          <div class="mode-switch" style="margin-top:10px; display:flex; gap:10px; justify-content:center;">
+            <button id="tab-deck-btn" class="filter-btn active">⛺ 28인 출진 편성</button>
+            <button id="tab-gov-btn" class="filter-btn">🗺️ 태수 파견소</button>
+          </div>
+        </div>
+
+        <div id="deck-tab">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:12px; color:#cbd5e1;">현재 전장에 출진할 28인의 대표 명장을 편성합니다.</p>
+            <div style="display:flex; gap:5px;">
+              <button class="preset-btn" onclick="applyDeckPreset('shu_five')">[오호대장군 중심]</button>
+              <button class="preset-btn" onclick="applyDeckPreset('wei_five')">[오자양장 중심]</button>
+              <button class="preset-btn" onclick="applyDeckPreset('wu_fire')">[강동화공 중심]</button>
+              <button class="preset-btn" onclick="applyDeckPreset('qun_boss')">[무쌍군웅 중심]</button>
+            </div>
+          </div>
+          <div id="deck-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; max-height:400px; overflow-y:auto; padding:10px; background:#12161f; border-radius:8px; border:1px solid #2e384b;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div id="gov-tab" class="hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p style="font-size:12px; color:#cbd5e1;">출진하지 않은 잉여 명장들을 파견하여 군량과 명성을 획득하십시오.</p>
+            <button class="preset-btn" style="color:#fbbf24; border-color:#fbbf24;" onclick="autoAssignGovernors()">⚡ 최적 태수 자동 임명</button>
+          </div>
+          <div id="gov-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; max-height:400px; overflow-y:auto;">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <button id="close-deck-btn" class="modal-action-btn" style="margin-top:15px;">저장 및 전장 귀환</button>
       </div>
     </div>
 

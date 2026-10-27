@@ -7,7 +7,7 @@ const FACTION_META = {
 
 // 28인 명장 + 스테이지 등반 해방 스토리(unlockWave, fameCost, story) 탑재
 const HERO_DB = [
-  // Tier 1~3: 초기 해방 (unlockWave: 1)
+
   { id: 'shu_1', tier: 1, faction: 'shu', name: '백이병', hanja: '白', weapon: 'spear', atk: 24, spd: 1.0, range: 8.5, stamp: '百毦精兵', unlockWave: 1, fameCost: 0, story: '유비의 곁을 지키는 기본 정예병' },
   { id: 'wei_1', tier: 1, faction: 'wei', name: '청주병', hanja: '青', weapon: 'spear', atk: 26, spd: 0.95, range: 8.5, stamp: '青州強兵', unlockWave: 1, fameCost: 0, story: '조조가 거느린 청주 정예병' },
   { id: 'wu_1',  tier: 1, faction: 'wu',  name: '강동수군', hanja: '水', weapon: 'bow',   atk: 22, spd: 1.1, range: 9.5, stamp: '江東水軍', unlockWave: 1, fameCost: 0, story: '장강을 수호하는 수군 사수' },
@@ -20,30 +20,123 @@ const HERO_DB = [
   { id: 'wei_3', tier: 3, faction: 'wei', name: '서황', hanja: '徐', weapon: 'axe',    atk: 135, spd: 1.0, range: 9.5, stamp: '周亞夫風', unlockWave: 1, fameCost: 0, story: '대부를 휘두르는 위나라 오자양장' },
   { id: 'wu_3',  tier: 3, faction: 'wu',  name: '감녕', hanja: '甘', weapon: 'mace',   atk: 125, spd: 1.25, range: 9.5, stamp: '錦帆遊俠', unlockWave: 1, fameCost: 0, story: '방울 소리와 함께 적진을 기습하는 금범적' },
   { id: 'qun_3', tier: 3, faction: 'qun', name: '초선', hanja: '貂', weapon: 'fan',    atk: 115, spd: 1.35, range: 10.5, stamp: '閉月連環', unlockWave: 1, fameCost: 0, story: '달을 가리는 미모로 난세를 흔든 무희', female: true },
-
-  // Tier 4: 제2장~제3장 등반 해방 (또는 명성 30 영입)
   { id: 'wu_4',  tier: 4, faction: 'wu',  name: '손상향', hanja: '香', weapon: 'bow',   atk: 250, spd: 1.4, range: 11.5, stamp: '弓腰姬君', unlockWave: 2, fameCost: 30, story: '[제2장 강동 결집] 무장을 거느린 궁요희 손상향이 전장에 합류했습니다!', female: true },
   { id: 'qun_4', tier: 4, faction: 'qun', name: '맹획', hanja: '孟', weapon: 'mace',   atk: 310, spd: 1.0, range: 9.5, stamp: '南蠻獸王', unlockWave: 2, fameCost: 30, story: '[제2장 남만 귀순] 칠종칠금 끝에 남만왕 맹획이 코끼리 군단을 이끌고 합류했습니다!', mount: 'elephant' },
   { id: 'shu_4', tier: 4, faction: 'shu', name: '조운', hanja: '趙', weapon: 'spear',  atk: 260, spd: 1.35, range: 10.5, stamp: '一身是膽', unlockWave: 3, fameCost: 40, story: '[제3장 장판파 단기필마] 상산 조자룡이 백마를 타고 적진을 뚫어 아군에 합류했습니다!', mount: 'white' },
   { id: 'wei_4', tier: 4, faction: 'wei', name: '하후돈', hanja: '夏', weapon: 'sword', atk: 285, spd: 1.15, range: 10.0, stamp: '拔矢啖睛', unlockWave: 3, fameCost: 40, story: '[제3장 서주 출격] 화살 박힌 눈을 삼킨 맹장 하후돈이 봉인에서 깨어났습니다!' },
-
-  // Tier 5: 제5장~제7장 등반 해방 (또는 명성 70 영입)
   { id: 'shu_5', tier: 5, faction: 'shu', name: '장비', hanja: '張', weapon: 'snake',  atk: 560, spd: 1.3, range: 10.5, stamp: '萬夫不當', unlockWave: 5, fameCost: 70, story: '[제5장 장판교의 포효] 장팔사모를 쥔 익덕 장비의 우레 같은 고함이 적군을 물리칩니다!' },
   { id: 'wei_5', tier: 5, faction: 'wei', name: '장료', hanja: '遼', weapon: 'glaive', atk: 590, spd: 1.25, range: 11.0, stamp: '威震逍遙', unlockWave: 5, fameCost: 70, story: '[제5장 합비 소요진] 800기로 대군을 격파한 오자양장 필두 장료가 해방되었습니다!' },
   { id: 'wu_5',  tier: 5, faction: 'wu',  name: '육손', hanja: '陸', weapon: 'dual',   atk: 540, spd: 1.45, range: 11.0, stamp: '火燒連營', unlockWave: 7, fameCost: 80, story: '[제7장 이릉 화계] 칠백 리 진영을 불태운 대도독 육손이 전군 지휘에 합류합니다!' },
   { id: 'qun_5', tier: 5, faction: 'qun', name: '장각', hanja: '角', weapon: 'staff',  atk: 620, spd: 1.15, range: 12.0, stamp: '黃天當立', unlockWave: 7, fameCost: 80, story: '[제7장 태평요술] 천공장군 장각의 황천 벼락이 아군의 편에서 작렬합니다!' },
-
-  // Tier 6: 제10장~제12장 등반 해방 (또는 명성 130 영입)
   { id: 'shu_6', tier: 6, faction: 'shu', name: '관우', hanja: '關', weapon: 'glaive', atk: 1250, spd: 1.35, range: 11.5, stamp: '義薄雲天', unlockWave: 10, fameCost: 130, story: '[제10장 오관육참 돌파] 다섯 관문을 뚫고 적토마에 오른 무성 관우가 주군 곁으로 귀환했습니다!', redFace: true, beard: 'long', mount: 'red' },
   { id: 'wei_6', tier: 6, faction: 'wei', name: '사마의', hanja: '司', weapon: 'fan',  atk: 1320, spd: 1.3, range: 12.5, stamp: '塚虎奇謀', unlockWave: 10, fameCost: 130, story: '[제10장 총호의 출사] 깊은 침묵을 깨고 중달 사마의가 암흑 귀모를 펼칩니다!' },
   { id: 'wu_6',  tier: 6, faction: 'wu',  name: '주유', hanja: '周', weapon: 'fan',    atk: 1200, spd: 1.5, range: 12.0, stamp: '赤壁業火', unlockWave: 12, fameCost: 150, story: '[제12장 적벽대전] 동남풍과 함께 미주랑 주유의 적벽 업화가 강산을 불태웁니다!' },
   { id: 'qun_6', tier: 6, faction: 'qun', name: '동탁', hanja: '董', weapon: 'mace',   atk: 1400, spd: 1.15, range: 10.5, stamp: '暴虐魔王', unlockWave: 12, fameCost: 150, story: '[제12장 낙양 제압] 서량의 패도 폭군 동탁이 압도적 무력으로 전장에 복종합니다!', mount: 'black' },
-
-  // Tier 7: 제15장~제20장 등반 해방 (또는 명성 220 영입)
   { id: 'shu_7', tier: 7, faction: 'shu', name: '제갈량', hanja: '諸', weapon: 'fan',  atk: 2900, spd: 1.6, range: 13.5, stamp: '臥龍出世', unlockWave: 15, fameCost: 220, story: '[제15장 삼고초려 완성] 융중의 초당에서 잠자던 와룡 제갈량이 마침내 천하를 위해 출사했습니다!', halo: true },
   { id: 'wei_7', tier: 7, faction: 'wei', name: '무제 조조', hanja: '曹', weapon: 'sword', atk: 3100, spd: 1.5, range: 13.0, stamp: '唯才是擧', unlockWave: 16, fameCost: 220, story: '[제16장 패왕 등극] 천하의 인재를 모두 거느린 난세의 간웅 무제 조조가 강림합니다!', mount: 'black', halo: true },
   { id: 'wu_7',  tier: 7, faction: 'wu',  name: '대제 손권', hanja: '孫', weapon: 'sword', atk: 2850, spd: 1.7, range: 13.0, stamp: '江東猛虎', unlockWave: 18, fameCost: 220, story: '[제18장 강동 제왕] 벽안자염의 대제 손권이 오나라 황룡의 기운을 해방합니다!', halo: true },
   { id: 'qun_7', tier: 7, faction: 'qun', name: '무신 여포', hanja: '呂', weapon: 'halberd', atk: 3600, spd: 1.65, range: 13.0, stamp: '天下無雙', unlockWave: 20, fameCost: 260, story: '[제20장 인중여포 마중적토] 호로관의 전설, 천하무쌍 무신 여포가 아군 최강의 신화로 해방되었습니다!', mount: 'red', plumes: true, halo: true }
+,
+  { id: 'shu_new_1', tier: 1, faction: 'shu', name: '간옹', hanja: '간', weapon: 'halberd', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 간옹이(가) 합류했습니다.' },
+  { id: 'shu_new_2', tier: 1, faction: 'shu', name: '손건', hanja: '손', weapon: 'mace', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 손건이(가) 합류했습니다.' },
+  { id: 'shu_new_3', tier: 1, faction: 'shu', name: '미축', hanja: '미', weapon: 'spear', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 미축이(가) 합류했습니다.', beard: 'long' },
+  { id: 'shu_new_4', tier: 1, faction: 'shu', name: '미방', hanja: '미', weapon: 'fan', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 미방이(가) 합류했습니다.', beard: 'long' },
+  { id: 'shu_new_5', tier: 1, faction: 'shu', name: '번궁', hanja: '번', weapon: 'fan', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 번궁이(가) 합류했습니다.' },
+  { id: 'shu_new_6', tier: 2, faction: 'shu', name: '주창', hanja: '주', weapon: 'snake', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 주창이(가) 합류했습니다.' },
+  { id: 'shu_new_7', tier: 2, faction: 'shu', name: '요화', hanja: '요', weapon: 'fan', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 요화이(가) 합류했습니다.' },
+  { id: 'shu_new_8', tier: 2, faction: 'shu', name: '마량', hanja: '마', weapon: 'sword', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 마량이(가) 합류했습니다.' },
+  { id: 'shu_new_9', tier: 2, faction: 'shu', name: '이적', hanja: '이', weapon: 'fan', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이적이(가) 합류했습니다.' },
+  { id: 'shu_new_10', tier: 3, faction: 'shu', name: '마속', hanja: '마', weapon: 'axe', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 마속이(가) 합류했습니다.' },
+  { id: 'shu_new_11', tier: 3, faction: 'shu', name: '왕평', hanja: '왕', weapon: 'snake', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 왕평이(가) 합류했습니다.' },
+  { id: 'shu_new_12', tier: 3, faction: 'shu', name: '장익', hanja: '장', weapon: 'glaive', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장익이(가) 합류했습니다.' },
+  { id: 'shu_new_13', tier: 3, faction: 'shu', name: '장억', hanja: '장', weapon: 'dual', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장억이(가) 합류했습니다.', beard: 'long' },
+  { id: 'shu_new_14', tier: 3, faction: 'shu', name: '오의', hanja: '오', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 오의이(가) 합류했습니다.' },
+  { id: 'shu_new_15', tier: 4, faction: 'shu', name: '황권', hanja: '황', weapon: 'bow', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 황권이(가) 합류했습니다.' },
+  { id: 'shu_new_16', tier: 4, faction: 'shu', name: '법정', hanja: '법', weapon: 'fan', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 법정이(가) 합류했습니다.' },
+  { id: 'shu_new_17', tier: 4, faction: 'shu', name: '유봉', hanja: '유', weapon: 'staff', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 유봉이(가) 합류했습니다.' },
+  { id: 'shu_new_18', tier: 4, faction: 'shu', name: '맹달', hanja: '맹', weapon: 'glaive', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 맹달이(가) 합류했습니다.' },
+  { id: 'shu_new_19', tier: 4, faction: 'shu', name: '관흥', hanja: '관', weapon: 'axe', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 관흥이(가) 합류했습니다.' },
+  { id: 'shu_new_20', tier: 5, faction: 'shu', name: '위연', hanja: '위', weapon: 'fan', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 위연이(가) 합류했습니다.', mount: 'white', beard: 'long' },
+  { id: 'shu_new_21', tier: 5, faction: 'shu', name: '엄안', hanja: '엄', weapon: 'mace', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 엄안이(가) 합류했습니다.' },
+  { id: 'shu_new_22', tier: 5, faction: 'shu', name: '장포', hanja: '장', weapon: 'dual', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 장포이(가) 합류했습니다.', mount: 'black' },
+  { id: 'shu_new_23', tier: 5, faction: 'shu', name: '마대', hanja: '마', weapon: 'staff', atk: 571, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 마대이(가) 합류했습니다.' },
+  { id: 'shu_new_24', tier: 6, faction: 'shu', name: '방통', hanja: '방', weapon: 'sword', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 방통이(가) 합류했습니다.', beard: 'long' },
+  { id: 'shu_new_25', tier: 6, faction: 'shu', name: '강유', hanja: '강', weapon: 'halberd', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 강유이(가) 합류했습니다.', beard: 'long' },
+  { id: 'shu_new_26', tier: 6, faction: 'shu', name: '마초', hanja: '마', weapon: 'snake', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 마초이(가) 합류했습니다.' },
+  { id: 'shu_new_27', tier: 7, faction: 'shu', name: '유비', hanja: '유', weapon: 'snake', atk: 3000, spd: 1.5, range: 10.9, stamp: '名將出擊', unlockWave: 15, fameCost: 220, story: '도감에 등록된 명장 유비이(가) 합류했습니다.' },
+  { id: 'wei_new_1', tier: 1, faction: 'wei', name: '조홍', hanja: '조', weapon: 'bow', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조홍이(가) 합류했습니다.' },
+  { id: 'wei_new_2', tier: 1, faction: 'wei', name: '조순', hanja: '조', weapon: 'mace', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조순이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wei_new_3', tier: 1, faction: 'wei', name: '이전', hanja: '이', weapon: 'snake', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이전이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wei_new_4', tier: 1, faction: 'wei', name: '만총', hanja: '만', weapon: 'fan', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 만총이(가) 합류했습니다.' },
+  { id: 'wei_new_5', tier: 2, faction: 'wei', name: '우금', hanja: '우', weapon: 'axe', atk: 57, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 우금이(가) 합류했습니다.' },
+  { id: 'wei_new_6', tier: 2, faction: 'wei', name: '조진', hanja: '조', weapon: 'halberd', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조진이(가) 합류했습니다.' },
+  { id: 'wei_new_7', tier: 2, faction: 'wei', name: '조휴', hanja: '조', weapon: 'mace', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조휴이(가) 합류했습니다.' },
+  { id: 'wei_new_8', tier: 2, faction: 'wei', name: '유엽', hanja: '유', weapon: 'spear', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 유엽이(가) 합류했습니다.' },
+  { id: 'wei_new_9', tier: 3, faction: 'wei', name: '장합', hanja: '장', weapon: 'bow', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장합이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wei_new_10', tier: 3, faction: 'wei', name: '하후상', hanja: '하', weapon: 'glaive', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 하후상이(가) 합류했습니다.' },
+  { id: 'wei_new_11', tier: 3, faction: 'wei', name: '문빙', hanja: '문', weapon: 'mace', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 문빙이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wei_new_12', tier: 3, faction: 'wei', name: '방덕', hanja: '방', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 방덕이(가) 합류했습니다.' },
+  { id: 'wei_new_13', tier: 3, faction: 'wei', name: '정욱', hanja: '정', weapon: 'snake', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정욱이(가) 합류했습니다.' },
+  { id: 'wei_new_14', tier: 4, faction: 'wei', name: '순유', hanja: '순', weapon: 'sword', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 순유이(가) 합류했습니다.' },
+  { id: 'wei_new_15', tier: 4, faction: 'wei', name: '가후', hanja: '가', weapon: 'glaive', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 가후이(가) 합류했습니다.' },
+  { id: 'wei_new_16', tier: 4, faction: 'wei', name: '하후연', hanja: '하', weapon: 'bow', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 하후연이(가) 합류했습니다.' },
+  { id: 'wei_new_17', tier: 4, faction: 'wei', name: '조비', hanja: '조', weapon: 'spear', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 조비이(가) 합류했습니다.' },
+  { id: 'wei_new_18', tier: 4, faction: 'wei', name: '사마사', hanja: '사', weapon: 'sword', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 사마사이(가) 합류했습니다.' },
+  { id: 'wei_new_19', tier: 5, faction: 'wei', name: '허저', hanja: '허', weapon: 'mace', atk: 573, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 허저이(가) 합류했습니다.', mount: 'white' },
+  { id: 'wei_new_20', tier: 5, faction: 'wei', name: '전위', hanja: '전', weapon: 'sword', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 전위이(가) 합류했습니다.' },
+  { id: 'wei_new_21', tier: 5, faction: 'wei', name: '사마소', hanja: '사', weapon: 'glaive', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 사마소이(가) 합류했습니다.' },
+  { id: 'wei_new_22', tier: 6, faction: 'wei', name: '순욱', hanja: '순', weapon: 'spear', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 순욱이(가) 합류했습니다.', mount: 'elephant' },
+  { id: 'wei_new_23', tier: 6, faction: 'wei', name: '곽가', hanja: '곽', weapon: 'axe', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 곽가이(가) 합류했습니다.', mount: 'elephant' },
+  { id: 'wei_new_24', tier: 6, faction: 'wei', name: '하후패', hanja: '하', weapon: 'sword', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 하후패이(가) 합류했습니다.' },
+  { id: 'wu_new_1', tier: 1, faction: 'wu', name: '우번', hanja: '우', weapon: 'dual', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 우번이(가) 합류했습니다.' },
+  { id: 'wu_new_2', tier: 1, faction: 'wu', name: '장소', hanja: '장', weapon: 'dual', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장소이(가) 합류했습니다.' },
+  { id: 'wu_new_3', tier: 1, faction: 'wu', name: '고옹', hanja: '고', weapon: 'halberd', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 고옹이(가) 합류했습니다.' },
+  { id: 'wu_new_4', tier: 1, faction: 'wu', name: '보즐', hanja: '보', weapon: 'glaive', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 보즐이(가) 합류했습니다.' },
+  { id: 'wu_new_5', tier: 1, faction: 'wu', name: '여범', hanja: '여', weapon: 'sword', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 여범이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wu_new_6', tier: 2, faction: 'wu', name: '한당', hanja: '한', weapon: 'snake', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 한당이(가) 합류했습니다.' },
+  { id: 'wu_new_7', tier: 2, faction: 'wu', name: '정보', hanja: '정', weapon: 'spear', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정보이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wu_new_8', tier: 2, faction: 'wu', name: '황개', hanja: '황', weapon: 'halberd', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 황개이(가) 합류했습니다.' },
+  { id: 'wu_new_9', tier: 2, faction: 'wu', name: '조무', hanja: '조', weapon: 'fan', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조무이(가) 합류했습니다.' },
+  { id: 'wu_new_10', tier: 2, faction: 'wu', name: '진무', hanja: '진', weapon: 'halberd', atk: 55, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 진무이(가) 합류했습니다.' },
+  { id: 'wu_new_11', tier: 3, faction: 'wu', name: '주환', hanja: '주', weapon: 'spear', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 주환이(가) 합류했습니다.' },
+  { id: 'wu_new_12', tier: 3, faction: 'wu', name: '반장', hanja: '반', weapon: 'sword', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 반장이(가) 합류했습니다.' },
+  { id: 'wu_new_13', tier: 3, faction: 'wu', name: '서성', hanja: '서', weapon: 'halberd', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 서성이(가) 합류했습니다.' },
+  { id: 'wu_new_14', tier: 3, faction: 'wu', name: '정봉', hanja: '정', weapon: 'spear', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정봉이(가) 합류했습니다.' },
+  { id: 'wu_new_15', tier: 3, faction: 'wu', name: '능통', hanja: '능', weapon: 'mace', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 능통이(가) 합류했습니다.' },
+  { id: 'wu_new_16', tier: 4, faction: 'wu', name: '장흠', hanja: '장', weapon: 'sword', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 장흠이(가) 합류했습니다.' },
+  { id: 'wu_new_17', tier: 4, faction: 'wu', name: '대교', hanja: '대', weapon: 'fan', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 대교이(가) 합류했습니다.', female: true },
+  { id: 'wu_new_18', tier: 4, faction: 'wu', name: '소교', hanja: '소', weapon: 'bow', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 소교이(가) 합류했습니다.', female: true },
+  { id: 'wu_new_19', tier: 4, faction: 'wu', name: '노숙', hanja: '노', weapon: 'dual', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 노숙이(가) 합류했습니다.', beard: 'long' },
+  { id: 'wu_new_20', tier: 5, faction: 'wu', name: '태사자', hanja: '태', weapon: 'halberd', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 태사자이(가) 합류했습니다.', mount: 'white', beard: 'long' },
+  { id: 'wu_new_21', tier: 5, faction: 'wu', name: '육항', hanja: '육', weapon: 'dual', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 육항이(가) 합류했습니다.' },
+  { id: 'wu_new_22', tier: 5, faction: 'wu', name: '제갈각', hanja: '제', weapon: 'bow', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 제갈각이(가) 합류했습니다.' },
+  { id: 'wu_new_23', tier: 6, faction: 'wu', name: '손견', hanja: '손', weapon: 'snake', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 손견이(가) 합류했습니다.', mount: 'black' },
+  { id: 'wu_new_24', tier: 6, faction: 'wu', name: '손책', hanja: '손', weapon: 'bow', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 손책이(가) 합류했습니다.' },
+  { id: 'wu_new_25', tier: 6, faction: 'wu', name: '여몽', hanja: '여', weapon: 'fan', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 여몽이(가) 합류했습니다.' },
+  { id: 'qun_new_1', tier: 1, faction: 'qun', name: '송헌', hanja: '송', weapon: 'sword', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 송헌이(가) 합류했습니다.' },
+  { id: 'qun_new_2', tier: 1, faction: 'qun', name: '후성', hanja: '후', weapon: 'axe', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 후성이(가) 합류했습니다.' },
+  { id: 'qun_new_3', tier: 1, faction: 'qun', name: '위속', hanja: '위', weapon: 'bow', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 위속이(가) 합류했습니다.' },
+  { id: 'qun_new_4', tier: 1, faction: 'qun', name: '장만성', hanja: '장', weapon: 'glaive', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장만성이(가) 합류했습니다.' },
+  { id: 'qun_new_5', tier: 1, faction: 'qun', name: '파재', hanja: '파', weapon: 'fan', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 파재이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_6', tier: 2, faction: 'qun', name: '장보', hanja: '장', weapon: 'staff', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장보이(가) 합류했습니다.' },
+  { id: 'qun_new_7', tier: 2, faction: 'qun', name: '장량', hanja: '장', weapon: 'fan', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장량이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_8', tier: 2, faction: 'qun', name: '고순', hanja: '고', weapon: 'staff', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 고순이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_9', tier: 2, faction: 'qun', name: '장임', hanja: '장', weapon: 'dual', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장임이(가) 합류했습니다.' },
+  { id: 'qun_new_10', tier: 2, faction: 'qun', name: '엄백호', hanja: '엄', weapon: 'staff', atk: 55, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 엄백호이(가) 합류했습니다.' },
+  { id: 'qun_new_11', tier: 3, faction: 'qun', name: '번조', hanja: '번', weapon: 'fan', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 번조이(가) 합류했습니다.' },
+  { id: 'qun_new_12', tier: 3, faction: 'qun', name: '이각', hanja: '이', weapon: 'spear', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이각이(가) 합류했습니다.' },
+  { id: 'qun_new_13', tier: 3, faction: 'qun', name: '곽사', hanja: '곽', weapon: 'bow', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 곽사이(가) 합류했습니다.' },
+  { id: 'qun_new_14', tier: 3, faction: 'qun', name: '공손찬', hanja: '공', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 공손찬이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_15', tier: 4, faction: 'qun', name: '안량', hanja: '안', weapon: 'snake', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 안량이(가) 합류했습니다.' },
+  { id: 'qun_new_16', tier: 4, faction: 'qun', name: '문추', hanja: '문', weapon: 'snake', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 문추이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_17', tier: 4, faction: 'qun', name: '장로', hanja: '장', weapon: 'bow', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 장로이(가) 합류했습니다.' },
+  { id: 'qun_new_18', tier: 4, faction: 'qun', name: '마등', hanja: '마', weapon: 'sword', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 마등이(가) 합류했습니다.', beard: 'long' },
+  { id: 'qun_new_19', tier: 4, faction: 'qun', name: '원술', hanja: '원', weapon: 'spear', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 원술이(가) 합류했습니다.' },
+  { id: 'qun_new_20', tier: 5, faction: 'qun', name: '원소', hanja: '원', weapon: 'dual', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 원소이(가) 합류했습니다.', mount: 'white' },
+  { id: 'qun_new_21', tier: 5, faction: 'qun', name: '진궁', hanja: '진', weapon: 'sword', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 진궁이(가) 합류했습니다.' },
+  { id: 'qun_new_22', tier: 5, faction: 'qun', name: '축융', hanja: '축', weapon: 'sword', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 축융이(가) 합류했습니다.', female: true },
+  { id: 'qun_new_23', tier: 6, faction: 'qun', name: '좌자', hanja: '좌', weapon: 'bow', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 좌자이(가) 합류했습니다.' },
+  { id: 'qun_new_24', tier: 6, faction: 'qun', name: '우길', hanja: '우', weapon: 'spear', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 우길이(가) 합류했습니다.', beard: 'long' },
 ];
 
 const CHAPTER_TITLES = {
@@ -70,11 +163,26 @@ const TERRAIN_MAP = {
 };
 
 const BOND_LIST = [
-  { id: 'oath', name: '🍑 도원결의 (+25% 화력)', ids: ['shu_5', 'shu_6', 'shu_7'], min: 2, atkBonus: 0.25 },
-  { id: 'five', name: '🐯 오호대장군 (+25% 화력)', ids: ['shu_3', 'shu_4', 'shu_5', 'shu_6'], min: 2, atkBonus: 0.25 },
-  { id: 'wei5', name: '🦅 오자양장 (+25% 화력)', ids: ['wei_2', 'wei_3', 'wei_5'], min: 2, atkBonus: 0.25 },
-  { id: 'burn', name: '🔥 적벽화신 (+30% 화력)', ids: ['wu_5', 'wu_6', 'shu_7'], min: 2, atkBonus: 0.30 },
-  { id: 'moon', name: '🌙 연환계 (+35% 화력)', ids: ['qun_3', 'qun_7'], min: 2, atkBonus: 0.35 }
+  { id: 'shu_bond_1', name: '도원결의 (+25% 화력)', ids: ['shu_new_27', 'shu_6', 'shu_5'], min: 3, atkBonus: 0.25 },
+  { id: 'shu_bond_2', name: '오호대장군 (+25% 화력)', ids: ['shu_6', 'shu_5', 'shu_4', 'shu_new_26', 'shu_3'], min: 5, atkBonus: 0.25 },
+  { id: 'shu_bond_3', name: '와룡봉추 (+25% 화력)', ids: ['shu_7', 'shu_new_24'], min: 2, atkBonus: 0.25 },
+  { id: 'shu_bond_4', name: '북벌의별 (+25% 화력)', ids: ['shu_7', 'shu_new_25', 'shu_new_23', 'shu_new_11'], min: 4, atkBonus: 0.25 },
+  { id: 'shu_bond_5', name: '노익장 (+25% 화력)', ids: ['shu_3', 'shu_new_21'], min: 2, atkBonus: 0.25 },
+  { id: 'shu_bond_6', name: '촉한의방패 (+25% 화력)', ids: ['shu_new_20', 'shu_new_7', 'shu_new_12'], min: 3, atkBonus: 0.25 },
+  { id: 'wei_bond_1', name: '오자양장 (+25% 화력)', ids: ['wei_5', 'wei_2', 'wei_new_5', 'wei_new_9', 'wei_3'], min: 5, atkBonus: 0.25 },
+  { id: 'wei_bond_2', name: '호위쌍벽 (+25% 화력)', ids: ['wei_new_20', 'wei_new_19'], min: 2, atkBonus: 0.25 },
+  { id: 'wei_bond_3', name: '왕좌의지략 (+25% 화력)', ids: ['wei_new_22', 'wei_new_14', 'wei_new_23', 'wei_new_13', 'wei_new_15'], min: 5, atkBonus: 0.25 },
+  { id: 'wei_bond_4', name: '하후일족 (+25% 화력)', ids: ['wei_4', 'wei_new_16', 'wei_new_24'], min: 3, atkBonus: 0.25 },
+  { id: 'wei_bond_5', name: '사마씨의야망 (+25% 화력)', ids: ['wei_6', 'wei_new_18', 'wei_new_21'], min: 3, atkBonus: 0.25 },
+  { id: 'wu_bond_1', name: '강동삼대 (+25% 화력)', ids: ['wu_new_23', 'wu_new_24', 'wu_7'], min: 3, atkBonus: 0.25 },
+  { id: 'wu_bond_2', name: '적벽화공 (+25% 화력)', ids: ['wu_6', 'wu_new_8', 'wu_5', 'wu_new_25'], min: 4, atkBonus: 0.25 },
+  { id: 'wu_bond_3', name: '강동호신 (+25% 화력)', ids: ['wu_new_20', 'wu_3', 'wu_2', 'wu_new_15'], min: 4, atkBonus: 0.25 },
+  { id: 'wu_bond_4', name: '강동이교 (+25% 화력)', ids: ['wu_new_17', 'wu_new_18'], min: 2, atkBonus: 0.25 },
+  { id: 'wu_bond_5', name: '오의기둥 (+25% 화력)', ids: ['wu_new_19', 'wu_new_2', 'wu_new_21'], min: 3, atkBonus: 0.25 },
+  { id: 'qun_bond_1', name: '경국지색 (+25% 화력)', ids: ['qun_7', 'qun_3'], min: 2, atkBonus: 0.25 },
+  { id: 'qun_bond_2', name: '하북쌍벽 (+25% 화력)', ids: ['qun_new_15', 'qun_new_16'], min: 2, atkBonus: 0.25 },
+  { id: 'qun_bond_3', name: '태평황건 (+25% 화력)', ids: ['qun_5', 'qun_new_6', 'qun_new_7'], min: 3, atkBonus: 0.25 },
+  { id: 'qun_bond_4', name: '남만부부 (+25% 화력)', ids: ['qun_4', 'qun_new_22'], min: 2, atkBonus: 0.25 },
 ];
 
 const WEATHER_LIST = [
@@ -218,6 +326,10 @@ function showStoryToast(chapterTxt, titleTxt, descTxt) {
 const SAVE_KEY = 'TK_ARGON_SAVE_V4';
 const INITIAL_UNLOCKED = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
 
+const INITIAL_DECK = [];
+const DEFAULT_ORIGINAL_28 = ['shu_1', 'wei_1', 'wu_1', 'qun_1', 'shu_2', 'wei_2', 'wu_2', 'qun_2', 'shu_3', 'wei_3', 'wu_3', 'qun_3', 'shu_4', 'wei_4', 'wu_4', 'qun_4', 'shu_5', 'wei_5', 'wu_5', 'qun_5', 'shu_6', 'wei_6', 'wu_6', 'qun_6', 'shu_7', 'wei_7', 'wu_7', 'qun_7'];
+
+
 const gameState = {
   inLobby: true,
   selectedLord: 'shu',
@@ -261,11 +373,14 @@ const gameState = {
   selectedIndex: -1,
   spawnTimer: 0,
   waveRemaining: 10,
-  isGameOver: false
+  isGameOver: false,
+  activeDeck: [],
+  governors: { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] }
 };
 
 function saveGameSafe() {
   try {
+
     const payload = {
       selectedLord: gameState.selectedLord,
       gold: gameState.gold,
@@ -279,7 +394,9 @@ function saveGameSafe() {
       siegeLeftLv: gameState.siegeLeftLv,
       siegeRightLv: gameState.siegeRightLv,
       unlockedIds: gameState.unlockedIds,
-      gridIds: gameState.grid.map(h => h ? h.data.id : null)
+      gridIds: gameState.grid.map(h => h ? h.data.id : null),
+      activeDeck: gameState.activeDeck,
+      governors: gameState.governors
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
   } catch (e) {}
@@ -302,8 +419,11 @@ function loadGameSafe() {
     gameState.upgradeCost = Number(data.upgradeCost) || 35;
     gameState.siegeLeftLv = Number(data.siegeLeftLv) || 0;
     gameState.siegeRightLv = Number(data.siegeRightLv) || 0;
+
     const mergedUnlock = new Set([...INITIAL_UNLOCKED, ...data.unlockedIds]);
     gameState.unlockedIds = Array.from(mergedUnlock);
+    gameState.activeDeck = data.activeDeck || [...DEFAULT_ORIGINAL_28];
+    gameState.governors = data.governors || { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] };
     gameState.waveRemaining = 8 + gameState.wave * 3;
     return data.gridIds || null;
   } catch (e) {
@@ -602,15 +722,23 @@ function spawnHeroAtGrid(idx, heroData, stars = 1) {
 
 // 해방 여부 확인 후 장수 반환 (미해방 시 해방된 장수 또는 삼고초려 안내)
 function getUnlockedHeroOrFallback(faction, tier) {
+  const f_idx = ['shu', 'wei', 'wu', 'qun'].indexOf(faction);
+  const slot_idx = (tier - 1) * 4 + f_idx;
+  if (slot_idx >= 0 && slot_idx < 28) {
+    const deckHeroId = gameState.activeDeck[slot_idx];
+    const deckHero = HERO_DB.find(h => h.id === deckHeroId);
+    if (deckHero && gameState.unlockedIds.includes(deckHero.id)) {
+      return deckHero;
+    }
+  }
+
   const exact = HERO_DB.find(h => h.faction === faction && h.tier === tier);
   if (exact && gameState.unlockedIds.includes(exact.id)) return exact;
 
-  // 같은 티어의 해방된 다른 세력 장수 탐색
   const unlockedSameTier = HERO_DB.filter(h => h.tier === tier && gameState.unlockedIds.includes(h.id));
   if (unlockedSameTier.length > 0) {
     return unlockedSameTier[Math.floor(Math.random() * unlockedSameTier.length)];
   }
-  // 만약 해당 티어가 전원 미해방이면 즉시 첫 명장 드라마틱 해방!
   if (exact) {
     gameState.unlockedIds.push(exact.id);
     triggerHanjaStamp(exact.stamp, `전장 각성: ${exact.name} 해방!`);
@@ -799,6 +927,15 @@ function getActiveSynergies() {
   });
 
   let bondAtkBonus = 0;
+  // Collection Bonus (+3% per completed bond in unlockedIds)
+  let completedBondsCount = 0;
+  BOND_LIST.forEach(b => {
+    let unlockedMatch = 0;
+    b.ids.forEach(id => { if (gameState.unlockedIds.includes(id)) unlockedMatch++; });
+    if (unlockedMatch >= b.min) completedBondsCount++;
+  });
+  bondAtkBonus += completedBondsCount * 0.03;
+
   const activeBonds = [];
   BOND_LIST.forEach(b => {
     let match = 0;
@@ -940,8 +1077,37 @@ function updateGame(dt) {
     gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
     gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
     gameState.waveRemaining = 8 + gameState.wave * 3;
-    gameState.gold += 35 + gameState.wave * 8;
-    gameState.fame += 10;
+
+    // Calculate Dispatch Power Rewards
+    let totalDispatchPower = 0;
+    try {
+      const rawSave = localStorage.getItem(SAVE_KEY);
+      const data = rawSave ? JSON.parse(rawSave) : {};
+      const heroUpgrades = data.heroUpgrades || {};
+      for(const region in gameState.governors) {
+        gameState.governors[region].forEach(id => {
+          const h = HERO_DB.find(x => x.id === id);
+          if(h) {
+            const rank = heroUpgrades[id] ? (heroUpgrades[id].rank || 0) : 0;
+            totalDispatchPower += h.tier + rank;
+          }
+        });
+      }
+    } catch(e) {}
+
+    const dispatchGold = Math.floor(totalDispatchPower * 1.5);
+    gameState.gold += 35 + gameState.wave * 8 + dispatchGold;
+
+    let fameGained = 10;
+    if (gameState.wave % 5 === 0) {
+        fameGained += Math.floor(totalDispatchPower * 0.5);
+    }
+    gameState.fame += fameGained;
+
+    if(totalDispatchPower > 0) {
+      addFloatingText(`🗺️ 태수 징수 +(${dispatchGold}🌾)`, new THREE.Vector3(0, 3, 0), '#fbbf24');
+    }
+
     checkStageLiberation(gameState.wave);
     updateSynergyAndHUD();
     saveGameSafe();
@@ -1248,7 +1414,156 @@ function startNewCampaign() {
   saveGameSafe();
 }
 
+
+// ==================== DECK & DISPATCH UI LOGIC ====================
+function openDeckModal() {
+  renderDeckGrid();
+  renderGovGrid();
+  document.getElementById('deck-modal').classList.remove('hidden');
+}
+
+function closeDeckModal() {
+  document.getElementById('deck-modal').classList.add('hidden');
+  saveGameSafe();
+}
+
+function renderDeckGrid() {
+  const grid = document.getElementById('deck-grid');
+  grid.innerHTML = '';
+  const f = ['shu', 'wei', 'wu', 'qun'];
+
+  for(let t=1; t<=7; t++) {
+    for(let i=0; i<4; i++) {
+      const idx = (t-1)*4 + i;
+      const heroId = gameState.activeDeck[idx];
+      const hero = HERO_DB.find(h => h.id === heroId);
+
+      const div = document.createElement('div');
+      div.className = 'deck-slot';
+      if(hero) {
+        div.innerHTML = `<div class="tier">T${t}</div><div class="name" style="color:${FACTION_META[hero.faction].color}">${hero.name}</div>`;
+      } else {
+        div.innerHTML = `<div class="tier">T${t}</div><div class="name" style="color:#94a3b8">미지정</div>`;
+      }
+      div.onclick = () => showHeroSelectorForDeck(idx, f[i], t);
+      grid.appendChild(div);
+    }
+  }
+}
+
+function showHeroSelectorForDeck(slotIdx, faction, tier) {
+  const available = HERO_DB.filter(h => h.faction === faction && h.tier === tier && gameState.unlockedIds.includes(h.id));
+  if(available.length <= 1) {
+    addFloatingText('교체할 해방 명장이 없습니다.', new THREE.Vector3(0,3,0), '#f87171');
+    return;
+  }
+
+  let currentIdx = available.findIndex(h => h.id === gameState.activeDeck[slotIdx]);
+  currentIdx = (currentIdx + 1) % available.length;
+  const newHero = available[currentIdx];
+
+  // Remove from governors if they are there
+  for(let r in gameState.governors) {
+    const gIdx = gameState.governors[r].indexOf(newHero.id);
+    if(gIdx > -1) gameState.governors[r][gIdx] = null;
+  }
+
+  gameState.activeDeck[slotIdx] = newHero.id;
+  renderDeckGrid();
+  renderGovGrid();
+}
+
+const REGION_NAMES = { luoyang: '낙양', chengdu: '성도', ye: '업성', jianye: '건업', xiangyang: '양양', changan: '장안' };
+
+function renderGovGrid() {
+  const grid = document.getElementById('gov-grid');
+  grid.innerHTML = '';
+
+  for(const region in gameState.governors) {
+    const slots = gameState.governors[region];
+    // ensure 3 slots
+    while(slots.length < 3) slots.push(null);
+
+    let html = `<div class="gov-region"><h3>${REGION_NAMES[region]}</h3><div class="gov-slots">`;
+    for(let i=0; i<3; i++) {
+      const hId = slots[i];
+      if(hId) {
+        const hero = HERO_DB.find(h => h.id === hId);
+        html += `<div class="gov-slot filled" onclick="removeGovernor('${region}', ${i})">${hero.name}<br>T${hero.tier}</div>`;
+      } else {
+        html += `<div class="gov-slot" onclick="assignGovernor('${region}', ${i})">빈 자리</div>`;
+      }
+    }
+    html += `</div></div>`;
+    grid.innerHTML += html;
+  }
+}
+
+window.removeGovernor = function(region, idx) {
+  gameState.governors[region][idx] = null;
+  renderGovGrid();
+}
+
+window.assignGovernor = function(region, idx) {
+  const activeSet = new Set(gameState.activeDeck);
+  const govSet = new Set();
+  for(let r in gameState.governors) gameState.governors[r].forEach(id => { if(id) govSet.add(id); });
+
+  const available = HERO_DB.filter(h => gameState.unlockedIds.includes(h.id) && !activeSet.has(h.id) && !govSet.has(h.id));
+  available.sort((a,b) => b.tier - a.tier);
+
+  if(available.length > 0) {
+    gameState.governors[region][idx] = available[0].id;
+    renderGovGrid();
+  } else {
+    alert('파견할 유휴 명장이 없습니다!');
+  }
+}
+
+window.autoAssignGovernors = function() {
+  const activeSet = new Set(gameState.activeDeck);
+  let govSet = new Set(); // We will reassign all
+  for(let r in gameState.governors) gameState.governors[r] = [null, null, null];
+
+  const available = HERO_DB.filter(h => gameState.unlockedIds.includes(h.id) && !activeSet.has(h.id));
+  available.sort((a,b) => b.tier - a.tier);
+
+  let aIdx = 0;
+  for(let r in gameState.governors) {
+    for(let i=0; i<3; i++) {
+      if(aIdx < available.length) {
+        gameState.governors[r][i] = available[aIdx].id;
+        aIdx++;
+      }
+    }
+  }
+  renderGovGrid();
+}
+
+window.applyDeckPreset = function(type) {
+  let preferredNames = [];
+  if (type === 'shu_five') preferredNames = ['관우', '장비', '조운', '마초', '황충'];
+  else if (type === 'wei_five') preferredNames = ['장료', '악진', '우금', '장합', '서황'];
+  else if (type === 'wu_fire') preferredNames = ['주유', '육손', '황개', '여몽'];
+  else if (type === 'qun_boss') preferredNames = ['여포', '초선', '동탁', '장각'];
+
+  const prefHeroes = HERO_DB.filter(h => {
+    return preferredNames.includes(h.name.split(' ').pop()) && gameState.unlockedIds.includes(h.id);
+  });
+
+  prefHeroes.forEach(ph => {
+    const f_idx = ['shu', 'wei', 'wu', 'qun'].indexOf(ph.faction);
+    const slotIdx = (ph.tier - 1) * 4 + f_idx;
+    gameState.activeDeck[slotIdx] = ph.id;
+  });
+
+  renderDeckGrid();
+  alert('추천 인연 덱 프리셋이 적용되었습니다!');
+}
+// =================================================================
+
 function bindEvents() {
+
   const canvas = document.getElementById('hudCanvas');
 
   // 로비 이벤트
@@ -1417,6 +1732,28 @@ function bindEvents() {
     e.currentTarget.textContent = sound.enabled ? '🔊' : '🔇';
   });
 
+
+  document.getElementById('deck-btn').addEventListener('click', () => {
+    sound.init();
+    openDeckModal();
+  });
+
+  document.getElementById('close-deck-btn').addEventListener('click', closeDeckModal);
+
+  document.getElementById('tab-deck-btn').addEventListener('click', (e) => {
+    e.target.classList.add('active');
+    document.getElementById('tab-gov-btn').classList.remove('active');
+    document.getElementById('deck-tab').classList.remove('hidden');
+    document.getElementById('gov-tab').classList.add('hidden');
+  });
+
+  document.getElementById('tab-gov-btn').addEventListener('click', (e) => {
+    e.target.classList.add('active');
+    document.getElementById('tab-deck-btn').classList.remove('active');
+    document.getElementById('gov-tab').classList.remove('hidden');
+    document.getElementById('deck-tab').classList.add('hidden');
+  });
+
   document.getElementById('codex-btn').addEventListener('click', openCodexModal);
   document.getElementById('close-codex-btn').addEventListener('click', () => {
     document.getElementById('codex-modal').classList.add('hidden');
@@ -1496,6 +1833,18 @@ window.addEventListener('DOMContentLoaded', () => {
   bindEvents();
 
   const savedGridIds = loadGameSafe();
+  if (gameState.activeDeck.length < 28) {
+      const f = ['shu', 'wei', 'wu', 'qun'];
+      for(let t=1; t<=7; t++) {
+        for(let i=0; i<4; i++) {
+          const idx = (t-1)*4 + i;
+          if(!gameState.activeDeck[idx]) {
+            const h = HERO_DB.find(x => x.faction === f[i] && x.tier === t && gameState.unlockedIds.includes(x.id));
+            gameState.activeDeck[idx] = h ? h.id : DEFAULT_ORIGINAL_28[idx];
+          }
+        }
+      }
+  }
   if (Array.isArray(savedGridIds) && savedGridIds.some(x => x !== null)) {
     savedGridIds.forEach((id, idx) => {
       if (id) {

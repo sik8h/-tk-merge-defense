@@ -1,3 +1,25 @@
+const BOND_LIST = [
+  { id: 'shu_bond_1', name: '도원결의 (+25% 화력)', ids: ['shu_new_27', 'shu_6', 'shu_5'], min: 3, atkBonus: 0.25 },
+  { id: 'shu_bond_2', name: '오호대장군 (+25% 화력)', ids: ['shu_6', 'shu_5', 'shu_4', 'shu_new_26', 'shu_3'], min: 5, atkBonus: 0.25 },
+  { id: 'shu_bond_3', name: '와룡봉추 (+25% 화력)', ids: ['shu_7', 'shu_new_24'], min: 2, atkBonus: 0.25 },
+  { id: 'shu_bond_4', name: '북벌의별 (+25% 화력)', ids: ['shu_7', 'shu_new_25', 'shu_new_23', 'shu_new_11'], min: 4, atkBonus: 0.25 },
+  { id: 'shu_bond_5', name: '노익장 (+25% 화력)', ids: ['shu_3', 'shu_new_21'], min: 2, atkBonus: 0.25 },
+  { id: 'shu_bond_6', name: '촉한의방패 (+25% 화력)', ids: ['shu_new_20', 'shu_new_7', 'shu_new_12'], min: 3, atkBonus: 0.25 },
+  { id: 'wei_bond_1', name: '오자양장 (+25% 화력)', ids: ['wei_5', 'wei_2', 'wei_new_5', 'wei_new_9', 'wei_3'], min: 5, atkBonus: 0.25 },
+  { id: 'wei_bond_2', name: '호위쌍벽 (+25% 화력)', ids: ['wei_new_20', 'wei_new_19'], min: 2, atkBonus: 0.25 },
+  { id: 'wei_bond_3', name: '왕좌의지략 (+25% 화력)', ids: ['wei_new_22', 'wei_new_14', 'wei_new_23', 'wei_new_13', 'wei_new_15'], min: 5, atkBonus: 0.25 },
+  { id: 'wei_bond_4', name: '하후일족 (+25% 화력)', ids: ['wei_4', 'wei_new_16', 'wei_new_24'], min: 3, atkBonus: 0.25 },
+  { id: 'wei_bond_5', name: '사마씨의야망 (+25% 화력)', ids: ['wei_6', 'wei_new_18', 'wei_new_21'], min: 3, atkBonus: 0.25 },
+  { id: 'wu_bond_1', name: '강동삼대 (+25% 화력)', ids: ['wu_new_23', 'wu_new_24', 'wu_7'], min: 3, atkBonus: 0.25 },
+  { id: 'wu_bond_2', name: '적벽화공 (+25% 화력)', ids: ['wu_6', 'wu_new_8', 'wu_5', 'wu_new_25'], min: 4, atkBonus: 0.25 },
+  { id: 'wu_bond_3', name: '강동호신 (+25% 화력)', ids: ['wu_new_20', 'wu_3', 'wu_2', 'wu_new_15'], min: 4, atkBonus: 0.25 },
+  { id: 'wu_bond_4', name: '강동이교 (+25% 화력)', ids: ['wu_new_17', 'wu_new_18'], min: 2, atkBonus: 0.25 },
+  { id: 'wu_bond_5', name: '오의기둥 (+25% 화력)', ids: ['wu_new_19', 'wu_new_2', 'wu_new_21'], min: 3, atkBonus: 0.25 },
+  { id: 'qun_bond_1', name: '경국지색 (+25% 화력)', ids: ['qun_7', 'qun_3'], min: 2, atkBonus: 0.25 },
+  { id: 'qun_bond_2', name: '하북쌍벽 (+25% 화력)', ids: ['qun_new_15', 'qun_new_16'], min: 2, atkBonus: 0.25 },
+  { id: 'qun_bond_3', name: '태평황건 (+25% 화력)', ids: ['qun_5', 'qun_new_6', 'qun_new_7'], min: 3, atkBonus: 0.25 },
+  { id: 'qun_bond_4', name: '남만부부 (+25% 화력)', ids: ['qun_4', 'qun_new_22'], min: 2, atkBonus: 0.25 },
+];
 const SAVE_KEY = 'TK_ARGON_SAVE_V4';
 
 // 눈이 편안한 전통 수묵·칠기 컬러 팔레트
@@ -10,6 +32,7 @@ const FACTION_META = {
 
 // 28인 전 장수 상세 조형 파라미터 + 해방 스토리 완비
 const HERO_DB = [
+
   { id:'shu_1', tier:1, faction:'shu', name:'백이병', hanja:'白', weapon:'spear', wName:'백이장창', helm:'helm', beard:'none', atk:24, spd:1.0, range:8.5, stamp:'百毦精兵', unlockWave:1, fameCost:0, bonds:[], desc:'유비 직속 백이 정예 창병', story:'제1장부터 참전하는 촉한 기본 정예병' },
   { id:'wei_1', tier:1, faction:'wei', name:'청주병', hanja:'青', weapon:'spear', wName:'청주철창', helm:'helm', beard:'none', atk:26, spd:0.95, range:8.5, stamp:'青州強兵', unlockWave:1, fameCost:0, bonds:[], desc:'조조가 편성한 청주 정예병', story:'제1장부터 참전하는 조위 기본 정예병' },
   { id:'wu_1',  tier:1, faction:'wu',  name:'강동수군', hanja:'水', weapon:'bow',   wName:'수군단궁', helm:'turban', beard:'none', atk:22, spd:1.1, range:9.5, stamp:'江東水軍', unlockWave:1, fameCost:0, bonds:[], desc:'장강 물길을 지키는 궁병', story:'제1장부터 참전하는 손오 수군 사수' },
@@ -44,15 +67,126 @@ const HERO_DB = [
   { id:'wei_7', tier:7, faction:'wei', name:'무제 조조', hanja:'曹', weapon:'sword', wName:'의천검', helm:'crown', beard:'goatee', atk:3100, spd:1.5, range:13.0, stamp:'唯才是擧', unlockWave:16, fameCost:220, bonds:[], desc:'천하의 인재를 거느린 난세의 간웅이자 위무제', story:'[제16장 해방] 중원의 패왕 무제 조조 강림!', mount:'black', halo:true },
   { id:'wu_7',  tier:7, faction:'wu',  name:'대제 손권', hanja:'孫', weapon:'sword', wName:'백홍검', helm:'crown', beard:'goatee', atk:2850, spd:1.7, range:13.0, stamp:'江東猛虎', unlockWave:18, fameCost:220, bonds:[], desc:'강동 6군 81주를 수호한 벽안자염의 오나라 황제', story:'[제18장 해방] 강동맹호 대제 손권 각성!', halo:true },
   { id:'qun_7', tier:7, faction:'qun', name:'무신 여포', hanja:'呂', weapon:'halberd', wName:'방천화극', helm:'plumes', beard:'none', atk:3600, spd:1.65, range:13.0, stamp:'天下無雙', unlockWave:20, fameCost:260, bonds:['연환계'], desc:'적토마와 방천화극으로 천하를 압도한 무신', story:'[제20장 해방] 인중여포 마중적토, 무신 여포 해방!', mount:'red', halo:true }
+,
+  { id: 'shu_new_1', tier: 1, faction: 'shu', name: '간옹', hanja: '간', weapon: 'halberd', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 간옹이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 간옹입니다.' },
+  { id: 'shu_new_2', tier: 1, faction: 'shu', name: '손건', hanja: '손', weapon: 'mace', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 손건이(가) 합류했습니다.', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 손건입니다.' },
+  { id: 'shu_new_3', tier: 1, faction: 'shu', name: '미축', hanja: '미', weapon: 'spear', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 미축이(가) 합류했습니다.', beard: 'long', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 미축입니다.', helm: 'none' },
+  { id: 'shu_new_4', tier: 1, faction: 'shu', name: '미방', hanja: '미', weapon: 'fan', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 미방이(가) 합류했습니다.', beard: 'long', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 미방입니다.', helm: 'none' },
+  { id: 'shu_new_5', tier: 1, faction: 'shu', name: '번궁', hanja: '번', weapon: 'fan', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 번궁이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 번궁입니다.' },
+  { id: 'shu_new_6', tier: 2, faction: 'shu', name: '주창', hanja: '주', weapon: 'snake', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 주창이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 주창입니다.' },
+  { id: 'shu_new_7', tier: 2, faction: 'shu', name: '요화', hanja: '요', weapon: 'fan', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 요화이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 요화입니다.' },
+  { id: 'shu_new_8', tier: 2, faction: 'shu', name: '마량', hanja: '마', weapon: 'sword', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 마량이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 마량입니다.' },
+  { id: 'shu_new_9', tier: 2, faction: 'shu', name: '이적', hanja: '이', weapon: 'fan', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이적이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 이적입니다.' },
+  { id: 'shu_new_10', tier: 3, faction: 'shu', name: '마속', hanja: '마', weapon: 'axe', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 마속이(가) 합류했습니다.', wName: 'Axe Weapon', desc: '삼국지 역사에 기록된 명장 마속입니다.' },
+  { id: 'shu_new_11', tier: 3, faction: 'shu', name: '왕평', hanja: '왕', weapon: 'snake', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 왕평이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 왕평입니다.' },
+  { id: 'shu_new_12', tier: 3, faction: 'shu', name: '장익', hanja: '장', weapon: 'glaive', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장익이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 장익입니다.' },
+  { id: 'shu_new_13', tier: 3, faction: 'shu', name: '장억', hanja: '장', weapon: 'dual', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장억이(가) 합류했습니다.', beard: 'long', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 장억입니다.', helm: 'none' },
+  { id: 'shu_new_14', tier: 3, faction: 'shu', name: '오의', hanja: '오', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 오의이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 오의입니다.' },
+  { id: 'shu_new_15', tier: 4, faction: 'shu', name: '황권', hanja: '황', weapon: 'bow', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 황권이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 황권입니다.' },
+  { id: 'shu_new_16', tier: 4, faction: 'shu', name: '법정', hanja: '법', weapon: 'fan', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 법정이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 법정입니다.' },
+  { id: 'shu_new_17', tier: 4, faction: 'shu', name: '유봉', hanja: '유', weapon: 'staff', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 유봉이(가) 합류했습니다.', wName: 'Staff Weapon', desc: '삼국지 역사에 기록된 명장 유봉입니다.' },
+  { id: 'shu_new_18', tier: 4, faction: 'shu', name: '맹달', hanja: '맹', weapon: 'glaive', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 맹달이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 맹달입니다.' },
+  { id: 'shu_new_19', tier: 4, faction: 'shu', name: '관흥', hanja: '관', weapon: 'axe', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 관흥이(가) 합류했습니다.', wName: 'Axe Weapon', desc: '삼국지 역사에 기록된 명장 관흥입니다.' },
+  { id: 'shu_new_20', tier: 5, faction: 'shu', name: '위연', hanja: '위', weapon: 'fan', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 위연이(가) 합류했습니다.', mount: 'white', beard: 'long', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 위연입니다.', helm: 'none' },
+  { id: 'shu_new_21', tier: 5, faction: 'shu', name: '엄안', hanja: '엄', weapon: 'mace', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 엄안이(가) 합류했습니다.', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 엄안입니다.' },
+  { id: 'shu_new_22', tier: 5, faction: 'shu', name: '장포', hanja: '장', weapon: 'dual', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 장포이(가) 합류했습니다.', mount: 'black', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 장포입니다.' },
+  { id: 'shu_new_23', tier: 5, faction: 'shu', name: '마대', hanja: '마', weapon: 'staff', atk: 571, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 마대이(가) 합류했습니다.', wName: 'Staff Weapon', desc: '삼국지 역사에 기록된 명장 마대입니다.' },
+  { id: 'shu_new_24', tier: 6, faction: 'shu', name: '방통', hanja: '방', weapon: 'sword', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 방통이(가) 합류했습니다.', beard: 'long', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 방통입니다.', helm: 'none' },
+  { id: 'shu_new_25', tier: 6, faction: 'shu', name: '강유', hanja: '강', weapon: 'halberd', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 강유이(가) 합류했습니다.', beard: 'long', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 강유입니다.', helm: 'none' },
+  { id: 'shu_new_26', tier: 6, faction: 'shu', name: '마초', hanja: '마', weapon: 'snake', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 마초이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 마초입니다.' },
+  { id: 'shu_new_27', tier: 7, faction: 'shu', name: '유비', hanja: '유', weapon: 'snake', atk: 3000, spd: 1.5, range: 10.9, stamp: '名將出擊', unlockWave: 15, fameCost: 220, story: '도감에 등록된 명장 유비이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 유비입니다.' },
+  { id: 'wei_new_1', tier: 1, faction: 'wei', name: '조홍', hanja: '조', weapon: 'bow', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조홍이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 조홍입니다.' },
+  { id: 'wei_new_2', tier: 1, faction: 'wei', name: '조순', hanja: '조', weapon: 'mace', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조순이(가) 합류했습니다.', beard: 'long', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 조순입니다.', helm: 'none' },
+  { id: 'wei_new_3', tier: 1, faction: 'wei', name: '이전', hanja: '이', weapon: 'snake', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이전이(가) 합류했습니다.', beard: 'long', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 이전입니다.', helm: 'none' },
+  { id: 'wei_new_4', tier: 1, faction: 'wei', name: '만총', hanja: '만', weapon: 'fan', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 만총이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 만총입니다.' },
+  { id: 'wei_new_5', tier: 2, faction: 'wei', name: '우금', hanja: '우', weapon: 'axe', atk: 57, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 우금이(가) 합류했습니다.', wName: 'Axe Weapon', desc: '삼국지 역사에 기록된 명장 우금입니다.' },
+  { id: 'wei_new_6', tier: 2, faction: 'wei', name: '조진', hanja: '조', weapon: 'halberd', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조진이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 조진입니다.' },
+  { id: 'wei_new_7', tier: 2, faction: 'wei', name: '조휴', hanja: '조', weapon: 'mace', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조휴이(가) 합류했습니다.', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 조휴입니다.' },
+  { id: 'wei_new_8', tier: 2, faction: 'wei', name: '유엽', hanja: '유', weapon: 'spear', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 유엽이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 유엽입니다.' },
+  { id: 'wei_new_9', tier: 3, faction: 'wei', name: '장합', hanja: '장', weapon: 'bow', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장합이(가) 합류했습니다.', beard: 'long', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 장합입니다.', helm: 'none' },
+  { id: 'wei_new_10', tier: 3, faction: 'wei', name: '하후상', hanja: '하', weapon: 'glaive', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 하후상이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 하후상입니다.' },
+  { id: 'wei_new_11', tier: 3, faction: 'wei', name: '문빙', hanja: '문', weapon: 'mace', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 문빙이(가) 합류했습니다.', beard: 'long', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 문빙입니다.', helm: 'none' },
+  { id: 'wei_new_12', tier: 3, faction: 'wei', name: '방덕', hanja: '방', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 방덕이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 방덕입니다.' },
+  { id: 'wei_new_13', tier: 3, faction: 'wei', name: '정욱', hanja: '정', weapon: 'snake', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정욱이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 정욱입니다.' },
+  { id: 'wei_new_14', tier: 4, faction: 'wei', name: '순유', hanja: '순', weapon: 'sword', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 순유이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 순유입니다.' },
+  { id: 'wei_new_15', tier: 4, faction: 'wei', name: '가후', hanja: '가', weapon: 'glaive', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 가후이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 가후입니다.' },
+  { id: 'wei_new_16', tier: 4, faction: 'wei', name: '하후연', hanja: '하', weapon: 'bow', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 하후연이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 하후연입니다.' },
+  { id: 'wei_new_17', tier: 4, faction: 'wei', name: '조비', hanja: '조', weapon: 'spear', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 조비이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 조비입니다.' },
+  { id: 'wei_new_18', tier: 4, faction: 'wei', name: '사마사', hanja: '사', weapon: 'sword', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 사마사이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 사마사입니다.' },
+  { id: 'wei_new_19', tier: 5, faction: 'wei', name: '허저', hanja: '허', weapon: 'mace', atk: 573, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 허저이(가) 합류했습니다.', mount: 'white', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 허저입니다.' },
+  { id: 'wei_new_20', tier: 5, faction: 'wei', name: '전위', hanja: '전', weapon: 'sword', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 전위이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 전위입니다.' },
+  { id: 'wei_new_21', tier: 5, faction: 'wei', name: '사마소', hanja: '사', weapon: 'glaive', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 사마소이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 사마소입니다.' },
+  { id: 'wei_new_22', tier: 6, faction: 'wei', name: '순욱', hanja: '순', weapon: 'spear', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 순욱이(가) 합류했습니다.', mount: 'elephant', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 순욱입니다.' },
+  { id: 'wei_new_23', tier: 6, faction: 'wei', name: '곽가', hanja: '곽', weapon: 'axe', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 곽가이(가) 합류했습니다.', mount: 'elephant', wName: 'Axe Weapon', desc: '삼국지 역사에 기록된 명장 곽가입니다.' },
+  { id: 'wei_new_24', tier: 6, faction: 'wei', name: '하후패', hanja: '하', weapon: 'sword', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 하후패이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 하후패입니다.' },
+  { id: 'wu_new_1', tier: 1, faction: 'wu', name: '우번', hanja: '우', weapon: 'dual', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 우번이(가) 합류했습니다.', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 우번입니다.' },
+  { id: 'wu_new_2', tier: 1, faction: 'wu', name: '장소', hanja: '장', weapon: 'dual', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장소이(가) 합류했습니다.', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 장소입니다.' },
+  { id: 'wu_new_3', tier: 1, faction: 'wu', name: '고옹', hanja: '고', weapon: 'halberd', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 고옹이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 고옹입니다.' },
+  { id: 'wu_new_4', tier: 1, faction: 'wu', name: '보즐', hanja: '보', weapon: 'glaive', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 보즐이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 보즐입니다.' },
+  { id: 'wu_new_5', tier: 1, faction: 'wu', name: '여범', hanja: '여', weapon: 'sword', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 여범이(가) 합류했습니다.', beard: 'long', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 여범입니다.', helm: 'none' },
+  { id: 'wu_new_6', tier: 2, faction: 'wu', name: '한당', hanja: '한', weapon: 'snake', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 한당이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 한당입니다.' },
+  { id: 'wu_new_7', tier: 2, faction: 'wu', name: '정보', hanja: '정', weapon: 'spear', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정보이(가) 합류했습니다.', beard: 'long', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 정보입니다.', helm: 'none' },
+  { id: 'wu_new_8', tier: 2, faction: 'wu', name: '황개', hanja: '황', weapon: 'halberd', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 황개이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 황개입니다.' },
+  { id: 'wu_new_9', tier: 2, faction: 'wu', name: '조무', hanja: '조', weapon: 'fan', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 조무이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 조무입니다.' },
+  { id: 'wu_new_10', tier: 2, faction: 'wu', name: '진무', hanja: '진', weapon: 'halberd', atk: 55, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 진무이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 진무입니다.' },
+  { id: 'wu_new_11', tier: 3, faction: 'wu', name: '주환', hanja: '주', weapon: 'spear', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 주환이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 주환입니다.' },
+  { id: 'wu_new_12', tier: 3, faction: 'wu', name: '반장', hanja: '반', weapon: 'sword', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 반장이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 반장입니다.' },
+  { id: 'wu_new_13', tier: 3, faction: 'wu', name: '서성', hanja: '서', weapon: 'halberd', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 서성이(가) 합류했습니다.', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 서성입니다.' },
+  { id: 'wu_new_14', tier: 3, faction: 'wu', name: '정봉', hanja: '정', weapon: 'spear', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 정봉이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 정봉입니다.' },
+  { id: 'wu_new_15', tier: 3, faction: 'wu', name: '능통', hanja: '능', weapon: 'mace', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 능통이(가) 합류했습니다.', wName: 'Mace Weapon', desc: '삼국지 역사에 기록된 명장 능통입니다.' },
+  { id: 'wu_new_16', tier: 4, faction: 'wu', name: '장흠', hanja: '장', weapon: 'sword', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 장흠이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 장흠입니다.' },
+  { id: 'wu_new_17', tier: 4, faction: 'wu', name: '대교', hanja: '대', weapon: 'fan', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 대교이(가) 합류했습니다.', female: true, wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 대교입니다.' },
+  { id: 'wu_new_18', tier: 4, faction: 'wu', name: '소교', hanja: '소', weapon: 'bow', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 소교이(가) 합류했습니다.', female: true, wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 소교입니다.' },
+  { id: 'wu_new_19', tier: 4, faction: 'wu', name: '노숙', hanja: '노', weapon: 'dual', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 노숙이(가) 합류했습니다.', beard: 'long', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 노숙입니다.', helm: 'none' },
+  { id: 'wu_new_20', tier: 5, faction: 'wu', name: '태사자', hanja: '태', weapon: 'halberd', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 태사자이(가) 합류했습니다.', mount: 'white', beard: 'long', wName: 'Halberd Weapon', desc: '삼국지 역사에 기록된 명장 태사자입니다.', helm: 'none' },
+  { id: 'wu_new_21', tier: 5, faction: 'wu', name: '육항', hanja: '육', weapon: 'dual', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 육항이(가) 합류했습니다.', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 육항입니다.' },
+  { id: 'wu_new_22', tier: 5, faction: 'wu', name: '제갈각', hanja: '제', weapon: 'bow', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 제갈각이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 제갈각입니다.' },
+  { id: 'wu_new_23', tier: 6, faction: 'wu', name: '손견', hanja: '손', weapon: 'snake', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 손견이(가) 합류했습니다.', mount: 'black', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 손견입니다.' },
+  { id: 'wu_new_24', tier: 6, faction: 'wu', name: '손책', hanja: '손', weapon: 'bow', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 손책이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 손책입니다.' },
+  { id: 'wu_new_25', tier: 6, faction: 'wu', name: '여몽', hanja: '여', weapon: 'fan', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 여몽이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 여몽입니다.' },
+  { id: 'qun_new_1', tier: 1, faction: 'qun', name: '송헌', hanja: '송', weapon: 'sword', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 송헌이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 송헌입니다.' },
+  { id: 'qun_new_2', tier: 1, faction: 'qun', name: '후성', hanja: '후', weapon: 'axe', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 후성이(가) 합류했습니다.', wName: 'Axe Weapon', desc: '삼국지 역사에 기록된 명장 후성입니다.' },
+  { id: 'qun_new_3', tier: 1, faction: 'qun', name: '위속', hanja: '위', weapon: 'bow', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 위속이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 위속입니다.' },
+  { id: 'qun_new_4', tier: 1, faction: 'qun', name: '장만성', hanja: '장', weapon: 'glaive', atk: 25, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장만성이(가) 합류했습니다.', wName: 'Glaive Weapon', desc: '삼국지 역사에 기록된 명장 장만성입니다.' },
+  { id: 'qun_new_5', tier: 1, faction: 'qun', name: '파재', hanja: '파', weapon: 'fan', atk: 27, spd: 1.0, range: 9.7, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 파재이(가) 합류했습니다.', beard: 'long', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 파재입니다.', helm: 'none' },
+  { id: 'qun_new_6', tier: 2, faction: 'qun', name: '장보', hanja: '장', weapon: 'staff', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장보이(가) 합류했습니다.', wName: 'Staff Weapon', desc: '삼국지 역사에 기록된 명장 장보입니다.' },
+  { id: 'qun_new_7', tier: 2, faction: 'qun', name: '장량', hanja: '장', weapon: 'fan', atk: 58, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장량이(가) 합류했습니다.', beard: 'long', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 장량입니다.', helm: 'none' },
+  { id: 'qun_new_8', tier: 2, faction: 'qun', name: '고순', hanja: '고', weapon: 'staff', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 고순이(가) 합류했습니다.', beard: 'long', wName: 'Staff Weapon', desc: '삼국지 역사에 기록된 명장 고순입니다.', helm: 'none' },
+  { id: 'qun_new_9', tier: 2, faction: 'qun', name: '장임', hanja: '장', weapon: 'dual', atk: 59, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 장임이(가) 합류했습니다.', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 장임입니다.' },
+  { id: 'qun_new_10', tier: 2, faction: 'qun', name: '엄백호', hanja: '엄', weapon: 'staff', atk: 55, spd: 1.0, range: 9.9, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 엄백호이(가) 합류했습니다.', wName: 'Staff Weapon', desc: '삼국지 역사에 기록된 명장 엄백호입니다.' },
+  { id: 'qun_new_11', tier: 3, faction: 'qun', name: '번조', hanja: '번', weapon: 'fan', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 번조이(가) 합류했습니다.', wName: 'Fan Weapon', desc: '삼국지 역사에 기록된 명장 번조입니다.' },
+  { id: 'qun_new_12', tier: 3, faction: 'qun', name: '이각', hanja: '이', weapon: 'spear', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 이각이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 이각입니다.' },
+  { id: 'qun_new_13', tier: 3, faction: 'qun', name: '곽사', hanja: '곽', weapon: 'bow', atk: 127, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 곽사이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 곽사입니다.' },
+  { id: 'qun_new_14', tier: 3, faction: 'qun', name: '공손찬', hanja: '공', weapon: 'snake', atk: 125, spd: 1.1, range: 10.1, stamp: '名將出擊', unlockWave: 1, fameCost: 0, story: '도감에 등록된 명장 공손찬이(가) 합류했습니다.', beard: 'long', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 공손찬입니다.', helm: 'none' },
+  { id: 'qun_new_15', tier: 4, faction: 'qun', name: '안량', hanja: '안', weapon: 'snake', atk: 270, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 안량이(가) 합류했습니다.', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 안량입니다.' },
+  { id: 'qun_new_16', tier: 4, faction: 'qun', name: '문추', hanja: '문', weapon: 'snake', atk: 272, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 문추이(가) 합류했습니다.', beard: 'long', wName: 'Snake Weapon', desc: '삼국지 역사에 기록된 명장 문추입니다.', helm: 'none' },
+  { id: 'qun_new_17', tier: 4, faction: 'qun', name: '장로', hanja: '장', weapon: 'bow', atk: 274, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 장로이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 장로입니다.' },
+  { id: 'qun_new_18', tier: 4, faction: 'qun', name: '마등', hanja: '마', weapon: 'sword', atk: 271, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 마등이(가) 합류했습니다.', beard: 'long', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 마등입니다.', helm: 'none' },
+  { id: 'qun_new_19', tier: 4, faction: 'qun', name: '원술', hanja: '원', weapon: 'spear', atk: 273, spd: 1.2, range: 10.3, stamp: '名將出擊', unlockWave: 2, fameCost: 30, story: '도감에 등록된 명장 원술이(가) 합류했습니다.', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 원술입니다.' },
+  { id: 'qun_new_20', tier: 5, faction: 'qun', name: '원소', hanja: '원', weapon: 'dual', atk: 570, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 원소이(가) 합류했습니다.', mount: 'white', wName: 'Dual Weapon', desc: '삼국지 역사에 기록된 명장 원소입니다.' },
+  { id: 'qun_new_21', tier: 5, faction: 'qun', name: '진궁', hanja: '진', weapon: 'sword', atk: 572, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 진궁이(가) 합류했습니다.', wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 진궁입니다.' },
+  { id: 'qun_new_22', tier: 5, faction: 'qun', name: '축융', hanja: '축', weapon: 'sword', atk: 574, spd: 1.3, range: 10.5, stamp: '名將出擊', unlockWave: 5, fameCost: 70, story: '도감에 등록된 명장 축융이(가) 합류했습니다.', female: true, wName: 'Sword Weapon', desc: '삼국지 역사에 기록된 명장 축융입니다.' },
+  { id: 'qun_new_23', tier: 6, faction: 'qun', name: '좌자', hanja: '좌', weapon: 'bow', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 좌자이(가) 합류했습니다.', wName: 'Bow Weapon', desc: '삼국지 역사에 기록된 명장 좌자입니다.' },
+  { id: 'qun_new_24', tier: 6, faction: 'qun', name: '우길', hanja: '우', weapon: 'spear', atk: 1250, spd: 1.4, range: 10.7, stamp: '名將出擊', unlockWave: 10, fameCost: 130, story: '도감에 등록된 명장 우길이(가) 합류했습니다.', beard: 'long', wName: 'Spear Weapon', desc: '삼국지 역사에 기록된 명장 우길입니다.', helm: 'none' },
 ];
 
-const BOND_DB = [
-  { name:'🍑 도원결의', members:'장비(T5) · 관우(T6) · 제갈량(T7)', cond:'2인 이상 배치', effect:'전군 공격력 +25% 영구 증가' },
-  { name:'🐯 오호대장군', members:'황충(T3) · 조운(T4) · 장비(T5) · 관우(T6)', cond:'2인 이상 배치', effect:'전군 공격력 +25% 영구 증가' },
-  { name:'🦅 오자양장', members:'악진(T2) · 서황(T3) · 장료(T5)', cond:'2인 이상 배치', effect:'전군 공격력 +25% 영구 증가' },
-  { name:'🔥 적벽화신', members:'육손(T5) · 주유(T6) · 제갈량(T7)', cond:'2인 이상 배치', effect:'전군 공격력 +30% 영구 증가' },
-  { name:'🌙 연환계', members:'초선(T3) · 무신 여포(T7)', cond:'2인 모두 배치', effect:'전군 공격력 +35% 영구 증가' }
-];
+const BOND_DB = BOND_LIST.map(b => {
+    let cleanName = b.name;
+    const parts = b.name.split(' ');
+    // Remove the emoji if it's the first part
+    if (parts.length > 1 && parts[0].length <= 2) {
+      cleanName = parts.slice(1).join(' ');
+    }
+    return {
+      name: cleanName,
+      members: b.ids.map(id => {
+        const h = HERO_DB.find(x => x.id === id);
+        return h ? h.name + '(T' + h.tier + ')' : id;
+      }).join(' · '),
+      cond: '최소 ' + b.min + '인 출진',
+      effect: '출진 인연 화력 +25% / 보유 인연 +3%'
+    };
+});
 
 const TERRAIN_DB = [
   { pos:'3번 타일 (1행 3열)', name:'⛰️ 고지대', effect:'배치된 장수 사거리 +2.5m 및 공격력 +20% 상승', tip:'황충·제갈량·사마의 등 원거리 주력 배치 추천' },
@@ -722,17 +856,18 @@ let currentUnlockFilter = 'all';
 function getSaveData() {
   const defaultIds = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1 };
-    const data = JSON.parse(raw);
+    const rawStr = localStorage.getItem(SAVE_KEY);
+    if (!rawStr) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, raw: null };
+    const data = JSON.parse(rawStr);
     const merged = new Set([...defaultIds, ...(Array.isArray(data.unlockedIds) ? data.unlockedIds : [])]);
     return {
       unlockedSet: merged,
       fame: Number(data.fame) || 30,
-      bestWave: Number(data.bestWave || data.wave) || 1
+      bestWave: Number(data.bestWave || data.wave) || 1,
+      raw: data
     };
   } catch (e) {
-    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1 };
+    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, raw: null };
   }
 }
 
@@ -758,18 +893,35 @@ function renderTreeArticle(docId, saveInfo) {
       </ul>`;
     tocHtml = `<li><a href="#s1">1. 세력 계승 합성 법칙</a></li><li><a href="#s2">2. 자동합체 & 해산 공식</a></li>`;
   } else if (docId === 'factions') {
-    title = '3장. 4대 주군 패시브 · 세력 시너지 · 5대 명장 인연';
+    title = '3장. 4대 주군 · 세력 시너지 · 20대 역사 인연';
     bodyHtml = `
-      <h2 id="s1">👑 4대 주군 패시브 & 세력 시너지</h2>
-      <table class="wiki-table">
-        <tr><th>세력</th><th>출진 주군 패시브 (상시)</th><th>그리드 3인 이상 배치 시너지</th></tr>
-        ${Object.values(FACTION_META).map(f => `<tr><td><strong style="color:${f.color}">${f.name}</strong></td><td>${f.lord}</td><td>${f.syn}</td></tr>`).join('')}
-      </table>
-      <h2 id="s2">🍑 5대 명장 인연(Bond) 시너지 매트릭스</h2>
-      <table class="wiki-table">
-        <tr><th>인연 명칭</th><th>대상 명장</th><th>발동 조건</th><th>발동 효과</th></tr>
-        ${BOND_DB.map(b => `<tr><td><strong>${b.name}</strong></td><td>${b.members}</td><td>${b.cond}</td><td>${b.effect}</td></tr>`).join('')}
-      </table>`;
+      <h2 id="s1">👑 4대 주군과 세력 시너지</h2>
+      <p>전장에 특정 세력의 장수가 모이거나 인연 조건을 달성하면 강력한 부대 시너지가 발동합니다.</p>
+      <ul style="list-style: none; padding: 0;">
+        <li style="margin-bottom:8px;">🟢 <strong>촉(蜀) 3인:</strong> 전군 공속 30% 증가</li>
+        <li style="margin-bottom:8px;">🔵 <strong>위(魏) 3인:</strong> 전군 화력 25% 증가</li>
+        <li style="margin-bottom:8px;">🔴 <strong>오(吳) 3인:</strong> 오나라 장수 공격 시 확정 화상 부여</li>
+        <li style="margin-bottom:8px;">🟣 <strong>군(群) 3인:</strong> 군웅 장수 치명타율 22% 증가</li>
+      </ul>
+      <h2 id="s2">📜 20대 역사 인연 시너지</h2>
+      <p>도감에 인연 명장을 모두 해방하면 활성 인연 당 영구 화력 +3%가 부여되며, 전장에 동시 출진 시 강력한 화력 버프를 얻습니다.</p>
+      <table class="wiki-table" id="bonds-wiki-table">
+        <tr><th>인연 명칭</th><th>요구 장수 (최소 인원)</th><th>시너지 효과</th></tr>`;
+
+    BOND_LIST.forEach(b => {
+        const names = b.ids.map(id => {
+            const h = HERO_DB.find(x => x.id === id);
+            return h ? h.name : id;
+        }).join(', ');
+        let cleanName = b.name;
+        const parts = b.name.split(' ');
+        if (parts.length > 1 && parts[0].length <= 2) {
+            cleanName = parts.slice(1).join(' ');
+        }
+        bodyHtml += `<tr><td>${cleanName}</td><td>${names} (최소 ${b.min}인)</td><td>출진 시 공격력 +25% / 보유 시 +3%</td></tr>`;
+    });
+
+    bodyHtml += `</table>`;
     tocHtml = `<li><a href="#s1">1. 주군 패시브 & 세력 시너지</a></li><li><a href="#s2">2. 5대 명장 인연 매트릭스</a></li>`;
   } else if (docId === 'terrain') {
     title = '4장. 팔진도 5대 전술 지형 · 천시(기상) · 보스 일기토';
@@ -1066,8 +1218,28 @@ function openHero3DDialog(hero, isUnlocked) {
 function renderRouter() {
   const hash = location.hash || '#/tree/overview';
   const saveInfo = getSaveData();
+
   const cnt = saveInfo.unlockedSet.size;
-  document.getElementById('sync-badge').textContent = `📖 해방 동기화: ${cnt}/28 (+${cnt * 2}%)`;
+  document.getElementById('sync-badge').textContent = `📖 해방 명장: ${cnt} / 120`;
+
+  let completedBondsCount = 0;
+  BOND_LIST.forEach(b => {
+    let unlockedMatch = 0;
+    b.ids.forEach(id => { if (saveInfo.unlockedSet.has(id)) unlockedMatch++; });
+    if (unlockedMatch >= b.min) completedBondsCount++;
+  });
+  const elBond = document.getElementById('bond-badge');
+  if (elBond) elBond.textContent = `🤝 활성 도감 인연: ${completedBondsCount} / 20`;
+
+  let govCount = 0;
+  if (saveInfo.raw && saveInfo.raw.governors) {
+    for (let r in saveInfo.raw.governors) {
+      saveInfo.raw.governors[r].forEach(id => { if(id) govCount++; });
+    }
+  }
+  const elGov = document.getElementById('gov-badge');
+  if (elGov) elGov.textContent = `🗺️ 파견 태수: ${govCount} / 18`;
+
 
   const isDbMode = hash.startsWith('#/db');
   document.getElementById('tab-tree').classList.toggle('active', !isDbMode);
