@@ -857,19 +857,21 @@ function getSaveData() {
   const defaultIds = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
   try {
     const rawStr = localStorage.getItem(SAVE_KEY);
-    if (!rawStr) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }, raw: null };
+    if (!rawStr) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, towerFloor: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }, raw: null };
     const data = JSON.parse(rawStr);
     const merged = new Set([...defaultIds, ...(Array.isArray(data.unlockedIds) ? data.unlockedIds : [])]);
     return {
       unlockedSet: merged,
       fame: Number(data.fame) || 30,
+      towerFloor: Number(data.towerFloor) || 1,
       heroUpgrades: data.heroUpgrades || {},
       factionTech: data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 },
       bestWave: Number(data.bestWave || data.wave) || 1,
       raw: data
     };
   } catch (e) {
-    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }, raw: null };
+    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, towerFloor: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }, raw: null };
+
   }
 }
 

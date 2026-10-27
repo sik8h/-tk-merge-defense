@@ -431,6 +431,9 @@ function loadGameSafe() {
     gameState.governors = data.governors || { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] };
     gameState.heroUpgrades = data.heroUpgrades || {};
     gameState.factionTech = data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 };
+
+    gameState.towerFloor = Number(data.towerFloor) || 1;
+
     gameState.waveRemaining = 8 + gameState.wave * 3;
     return data.gridIds || null;
   } catch (e) {
@@ -484,6 +487,7 @@ let siegeLeftMesh = null, siegeRightMesh = null;
 const bannerTextureCache = {};
 
 const CAM_PRESETS = [
+
   { pos: new THREE.Vector3(0, 27, 25), look: new THREE.Vector3(0, 0, 1) },
   { pos: new THREE.Vector3(0, 40, 0.1), look: new THREE.Vector3(0, 0, 0) },
   { pos: new THREE.Vector3(0, 8, 16), look: new THREE.Vector3(0, 1, -10) }
@@ -1008,6 +1012,7 @@ function updateSynergyAndHUD() {
 
   document.getElementById('siege-l-lv').textContent = gameState.siegeLeftLv > 0 ? `Lv.${gameState.siegeLeftLv} (${80 + gameState.siegeLeftLv * 60}🌾)` : '건설(80🌾)';
   document.getElementById('siege-r-lv').textContent = gameState.siegeRightLv > 0 ? `Lv.${gameState.siegeRightLv} (${100 + gameState.siegeRightLv * 75}🌾)` : '건설(100🌾)';
+
 }
 
 function updateGame(dt) {
@@ -1087,45 +1092,56 @@ function updateGame(dt) {
       gameState.waveRemaining--;
     }
   } else if (gameState.enemies.length === 0) {
-    gameState.wave++;
-    gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
-    gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
-    gameState.waveRemaining = 8 + gameState.wave * 3;
+    if (gameState.isTowerMode) {
+      gameState.towerFloor++;
+      gameState.waveRemaining = 5 + Math.floor(gameState.towerFloor / 2);
+      const reward = 5 + Math.floor(gameState.towerFloor * 1.5);
+      gameState.fame += reward;
+      sound.playGong();
+      triggerHanjaStamp(Math.random() > 0.5 ? '登極' : '破竹', `백층탑 제${gameState.towerFloor - 1}층 돌파! 명성 +${reward}🎖️`);
+      updateSynergyAndHUD();
+      saveGameSafe();
+    } else {
+      gameState.wave++;
+      gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
+      gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
+      gameState.waveRemaining = 8 + gameState.wave * 3;
 
-    // Calculate Dispatch Power Rewards
-    let totalDispatchPower = 0;
-    try {
-      const rawSave = localStorage.getItem(SAVE_KEY);
-      const data = rawSave ? JSON.parse(rawSave) : {};
-      const heroUpgrades = data.heroUpgrades || {};
-      for(const region in gameState.governors) {
-        gameState.governors[region].forEach(id => {
-          const h = HERO_DB.find(x => x.id === id);
-          if(h) {
-            const rank = heroUpgrades[id] ? (heroUpgrades[id].rank || 0) : 0;
-            totalDispatchPower += h.tier + rank;
-          }
-        });
+      // Calculate Dispatch Power Rewards
+      let totalDispatchPower = 0;
+      try {
+        const rawSave = localStorage.getItem(SAVE_KEY);
+        const data = rawSave ? JSON.parse(rawSave) : {};
+        const heroUpgrades = data.heroUpgrades || {};
+        for(const region in gameState.governors) {
+          gameState.governors[region].forEach(id => {
+            const h = HERO_DB.find(x => x.id === id);
+            if(h) {
+              const rank = heroUpgrades[id] ? (heroUpgrades[id].rank || 0) : 0;
+              totalDispatchPower += h.tier + rank;
+            }
+          });
+        }
+      } catch(e) {}
+
+      const dispatchGold = Math.floor(totalDispatchPower * 1.5);
+      gameState.gold += 35 + gameState.wave * 8 + dispatchGold;
+
+      let fameGained = 10;
+      if (gameState.wave % 5 === 0) {
+          fameGained += Math.floor(totalDispatchPower * 0.5);
       }
-    } catch(e) {}
+      gameState.fame += fameGained;
 
-    const dispatchGold = Math.floor(totalDispatchPower * 1.5);
-    gameState.gold += 35 + gameState.wave * 8 + dispatchGold;
+      if(totalDispatchPower > 0) {
+        addFloatingText(`🗺️ 태수 징수 +(${dispatchGold}🌾)`, new THREE.Vector3(0, 3, 0), '#fbbf24');
+      }
 
-    let fameGained = 10;
-    if (gameState.wave % 5 === 0) {
-        fameGained += Math.floor(totalDispatchPower * 0.5);
+      checkStageLiberation(gameState.wave);
+      updateSynergyAndHUD();
+      saveGameSafe();
+      if (gameState.wave % 2 === 0) openStrategyModal();
     }
-    gameState.fame += fameGained;
-
-    if(totalDispatchPower > 0) {
-      addFloatingText(`🗺️ 태수 징수 +(${dispatchGold}🌾)`, new THREE.Vector3(0, 3, 0), '#fbbf24');
-    }
-
-    checkStageLiberation(gameState.wave);
-    updateSynergyAndHUD();
-    saveGameSafe();
-    if (gameState.wave % 2 === 0) openStrategyModal();
   }
 
   const syn = getActiveSynergies();
@@ -1139,10 +1155,25 @@ function updateGame(dt) {
     if (idx === gameState.draggedIndex) return;
 
     const tInfo = TERRAIN_MAP[idx];
-    const terrainSpd = (tInfo && tInfo.type === 'wind') ? 1.35 : 1.0;
-    const terrainRange = (tInfo && tInfo.type === 'high') ? 2.5 : 0;
-    const terrainAtk = (tInfo && tInfo.type === 'high') ? 1.2 : 1.0;
-    const terrainCrit = (tInfo && tInfo.type === 'taichi') ? 0.3 : 0;
+    let terrainSpd = (tInfo && tInfo.type === 'wind') ? 1.35 : 1.0;
+    let terrainRange = (tInfo && tInfo.type === 'high') ? 2.5 : 0;
+    let terrainAtk = (tInfo && tInfo.type === 'high') ? 1.2 : 1.0;
+    let terrainCrit = (tInfo && tInfo.type === 'taichi') ? 0.3 : 0;
+    let towerAtkBonus = 1.0;
+
+    if (gameState.isTowerMode) {
+      const modifierType = gameState.towerFloor % 4;
+      if (modifierType === 0 && (cell.data.faction === 'wu' || cell.data.faction === 'shu' && cell.data.branch === 'tactician')) {
+        towerAtkBonus = 1.5; // 적벽의 화풍
+      } else if (modifierType === 1 && cell.data.faction === 'shu') {
+        terrainSpd *= 1.35; // 정군산의 기세
+      } else if (modifierType === 2 && cell.data.faction === 'wei') {
+        terrainCrit += 0.35; // 관도의 철벽 (we will use this for crit)
+      } else if (modifierType === 3 && cell.data.faction === 'qun') {
+        towerAtkBonus = 1.4; // 무쌍의 포효
+      }
+    }
+
 
     cell.cooldown -= effDt * cell.data.spd * gameState.buffSpd * syn.shuMult * terrainSpd;
     if (cell.cooldown <= 0 && gameState.enemies.length > 0) {
@@ -1181,8 +1212,13 @@ function updateGame(dt) {
 
         const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0) + weaponCritBonus);
         const wuMod = cell.data.faction === 'wu' ? weather.fireMod : 1.0;
-        const dmg = cell.data.atk * starMult * terrainAtk * wuMod * gameState.buffAtk * syn.weiMult * codexMult * upgradeMult * (isCrit ? 2.2 : 1.0);
-        const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire');
+
+        const rankAtkBonus = 1 + (0.15 * upgrades.rankLv);
+        const totalCodexMult = codexMult + globalRankBonus;
+        const dmg = cell.data.atk * rankAtkBonus * starMult * terrainAtk * towerAtkBonus * wuMod * gameState.buffAtk * syn.weiMult * totalCodexMult * upgradeMult * factionTechBonus * (isCrit ? 2.2 : 1.0);
+        const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire') || (gameState.isTowerMode && gameState.towerFloor % 4 === 0 && cell.data.faction === 'wu');
+
+
         spawnProjectile(cell.mesh.position, target, dmg, FACTION_META[cell.data.faction].hex, isCrit, applyBurn);
       }
     }
@@ -1231,6 +1267,25 @@ function updateGame(dt) {
 
   for (let i = gameState.enemies.length - 1; i >= 0; i--) {
     const en = gameState.enemies[i];
+    if (en.giantType === 'lubu') {
+      if (en.shockwaveTimer === undefined) en.shockwaveTimer = 0;
+      en.shockwaveTimer += effDt;
+      if (en.shockwaveTimer >= 4.0) {
+        en.shockwaveTimer = 0;
+        sound.playWarDrum();
+        addFloatingText(`💥 마신의 파동!`, en.mesh.position, '#dc2626');
+        gameState.grid.forEach(cell => {
+          if (cell) {
+             const d = cell.mesh.position.distanceTo(en.mesh.position);
+             if (d < 5.0) {
+                 cell.cooldown += 0.8; // Slow nearby defenders
+                 addFloatingText(`공속 감소`, cell.mesh.position, '#ef4444');
+             }
+          }
+        });
+      }
+    }
+
     if (en.burnTimer > 0) {
       en.burnTimer -= effDt;
       en.hp -= en.burnDps * effDt;
@@ -1239,9 +1294,17 @@ function updateGame(dt) {
       scene.remove(en.mesh);
       gameState.enemies.splice(i, 1);
       gameState.kills++;
-      gameState.gold += en.isBoss ? 90 : 8 + Math.floor(gameState.wave * 1.5);
-      if (en.isBoss) gameState.fame += 20;
-      else if (gameState.kills % 5 === 0) gameState.fame += 2;
+      let goldReward = en.isBoss ? 90 : 8 + Math.floor(gameState.wave * 1.5);
+      let fameReward = en.isBoss ? 20 : (gameState.kills % 5 === 0 ? 2 : 0);
+
+      if (en.giantType === 'menghuo') {
+        goldReward += 150;
+        fameReward += 30; // bonus drops
+      }
+
+      gameState.gold += goldReward;
+      gameState.fame += fameReward;
+
       updateSynergyAndHUD();
       continue;
     }
@@ -1266,8 +1329,21 @@ function updateGame(dt) {
       }
     } else {
       dir.normalize();
-      const slowMod = weather.slowEnemy || 1.0;
-      en.mesh.position.addScaledVector(dir, effDt * en.speed * slowMod);
+
+      // Knockback resistance for Meng Huo
+      let moveSpd = en.speed;
+      let slowMod = weather.slowEnemy || 1.0;
+      if (en.giantType === 'menghuo') {
+        slowMod = 1.0; // Immune to weather slow
+      }
+
+      en.mesh.position.addScaledVector(dir, effDt * moveSpd * slowMod);
+
+      // Giant bosses face forward
+      if (en.isBoss && en.giantType) {
+        en.mesh.lookAt(new THREE.Vector3().addVectors(en.mesh.position, dir));
+      }
+
     }
   }
 
@@ -1436,7 +1512,7 @@ function startNewCampaign() {
 }
 
 
-// ==================== DECK & DISPATCH UI LOGIC ====================
+// ====== DECK & DISPATCH UI LOGIC ======
 function openDeckModal() {
   renderDeckGrid();
   renderGovGrid();
@@ -1581,7 +1657,7 @@ window.applyDeckPreset = function(type) {
   renderDeckGrid();
   alert('추천 인연 덱 프리셋이 적용되었습니다!');
 }
-// =================================================================
+// ==
 
 function bindEvents() {
   document.getElementById('upgrade-camp-btn').addEventListener('click', openUpgradeCampModal);
@@ -1714,12 +1790,18 @@ function bindEvents() {
     sound.playCatapultBoom();
     triggerHanjaStamp('赤壁業火', '적벽의 화공이 적진을 불태웁니다!');
     const weather = WEATHER_LIST[gameState.weatherIdx];
-    const skillDmg = Math.floor(150 * gameState.wave * weather.fireMod);
+    let skillDmg = Math.floor(150 * gameState.wave * weather.fireMod);
     gameState.enemies.forEach(en => {
-      en.hp -= skillDmg;
+      let finalDmg = skillDmg;
+      if (en.giantType === 'zhangjiao') {
+        finalDmg *= 2; // Heavenly General Zhang Jiao takes +100% bonus damage from Commander Stratagems
+        addFloatingText(`⚡ 약점 공격!`, en.mesh.position, '#fde047');
+      }
+      en.hp -= finalDmg;
       en.burnTimer = 4.0;
-      en.burnDps = skillDmg * 0.22;
-      addFloatingText(`🔥-${skillDmg}`, en.mesh.position, '#f97316');
+      en.burnDps = finalDmg * 0.22;
+      addFloatingText(`🔥-${finalDmg}`, en.mesh.position, '#f97316');
+
     });
   });
 
@@ -1745,13 +1827,35 @@ function bindEvents() {
     saveGameSafe();
   });
 
+  const towerBtn = document.getElementById('tower-mode-btn');
+  if (towerBtn) {
+    towerBtn.addEventListener('click', () => {
+      gameState.isTowerMode = !gameState.isTowerMode;
+      if (gameState.isTowerMode) {
+        gameState.waveRemaining = 5 + Math.floor(gameState.towerFloor / 2);
+        sound.playWarDrum();
+        triggerHanjaStamp('銅雀臺', `백층탑 제${gameState.towerFloor}층 도전에 진입합니다!`);
+      } else {
+        gameState.waveRemaining = 8 + gameState.wave * 3;
+        sound.playGong();
+        triggerHanjaStamp('中原復歸', `일반 전장으로 복귀합니다.`);
+      }
+      gameState.enemies.forEach(e => scene.remove(e.mesh));
+      gameState.enemies = [];
+      updateSynergyAndHUD();
+      saveGameSafe();
+    });
+  }
+
   document.getElementById('speed-btn').addEventListener('click', (e) => {
     gameState.gameSpeed = gameState.gameSpeed === 1 ? 2 : 1;
     e.currentTarget.textContent = `⏩ ${gameState.gameSpeed}x`;
   });
 
-  document.getElementById('cam-btn').addEventListener('click', () => {
+  document.getElementById('cam-btn').addEventListener('click', (e) => {
     gameState.camMode = (gameState.camMode + 1) % CAM_PRESETS.length;
+
+
   });
 
   document.getElementById('sound-btn').addEventListener('click', (e) => {
