@@ -2953,7 +2953,9 @@ const gameState = {
   waveRemaining: 10,
   isGameOver: false,
   heroUpgrades: {},
-  factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }
+  factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 },
+  towerFloor: 1,
+  isTowerMode: false
 };
 
 function saveGameSafe() {
@@ -2973,7 +2975,8 @@ function saveGameSafe() {
       unlockedIds: gameState.unlockedIds,
       gridIds: gameState.grid.map(h => h ? h.data.id : null),
       heroUpgrades: gameState.heroUpgrades,
-      factionTech: gameState.factionTech
+      factionTech: gameState.factionTech,
+      towerFloor: gameState.towerFloor
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
   } catch (e) {}
@@ -3001,6 +3004,7 @@ function loadGameSafe() {
     gameState.waveRemaining = 8 + gameState.wave * 3;
     gameState.heroUpgrades = data.heroUpgrades || {};
     gameState.factionTech = data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 };
+    gameState.towerFloor = Number(data.towerFloor) || 1;
     return data.gridIds || null;
   } catch (e) {
     return null;
@@ -3053,9 +3057,9 @@ let siegeLeftMesh = null, siegeRightMesh = null;
 const bannerTextureCache = {};
 
 const CAM_PRESETS = [
-  { pos: new THREE.Vector3(0, 27, 25), look: new THREE.Vector3(0, 0, 1) },
-  { pos: new THREE.Vector3(0, 40, 0.1), look: new THREE.Vector3(0, 0, 0) },
-  { pos: new THREE.Vector3(0, 8, 16), look: new THREE.Vector3(0, 1, -10) }
+  { pos: new THREE.Vector3(0, 27, 25), look: new THREE.Vector3(0, 0, 1), name: "시점: 전술뷰" },
+  { pos: new THREE.Vector3(0, 12, 18), look: new THREE.Vector3(0, 2, -2), name: "시점: 무쌍뷰" },
+  { pos: new THREE.Vector3(0, 18, 22), look: new THREE.Vector3(0, 0, 0), name: "시점: 관전뷰" }
 ];
 
 let campPreviewRenderer = null;
@@ -3770,35 +3774,83 @@ function dismissHero(idx) {
 }
 
 function spawnEnemy(isBoss = false) {
-  const hpBase = (45 + Math.pow(gameState.wave, 1.55) * 35) * (isBoss ? 7.0 : 1);
-  const group = new THREE.Group();
-  const color = isBoss ? 0xdc2626 : 0xa855f7;
-  const scale = isBoss ? 1.75 : 1.0;
+  let hpBase = (45 + Math.pow(gameState.wave, 1.55) * 35) * (isBoss ? 7.0 : 1);
+  if (gameState.isTowerMode) hpBase *= (1.5 + gameState.towerFloor * 0.1);
 
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.42 * scale, 0.5 * scale, 1.1 * scale, 8),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
-  );
-  body.position.y = 0.6 * scale;
-  group.add(body);
+  const group = new THREE.Group();
+  let enemyObj = {
+    mesh: group,
+    hp: hpBase,
+    maxHp: hpBase,
+    speed: 3.2 + Math.min(2.0, gameState.wave * 0.08),
+    wpIndex: 1,
+    isBoss,
+    burnTimer: 0,
+    burnDps: 0,
+    giantType: null
+  };
+
+  if (isBoss) {
+    enemyObj.speed = 1.8;
+    const bossRoll = Math.floor(Math.random() * 3);
+    let bossHeroData = null;
+    let scale = 2.6;
+
+    if (bossRoll === 0) {
+      bossHeroData = HERO_DB.find(h => h.id === 'qun_7'); // Demon Lu Bu
+      enemyObj.giantType = 'lubu';
+      enemyObj.auraColor = 0xdc2626;
+      enemyObj.shockwaveTimer = 0;
+    } else if (bossRoll === 1) {
+      bossHeroData = HERO_DB.find(h => h.id === 'qun_5'); // Zhang Jiao
+      enemyObj.giantType = 'zhangjiao';
+      enemyObj.auraColor = 0xfbbf24;
+    } else {
+      bossHeroData = HERO_DB.find(h => h.id === 'qun_4'); // Meng Huo
+      enemyObj.giantType = 'menghuo';
+      enemyObj.hp *= 2.5;
+      enemyObj.maxHp *= 2.5;
+    }
+
+    if (bossHeroData) {
+      const bossMesh = buildHeroCharacter3D(bossHeroData);
+      bossMesh.scale.setScalar(scale);
+      group.add(bossMesh);
+
+      // Add special aura ring for Giant Bosses
+      const bossAuraRing = new THREE.Mesh(
+        new THREE.RingGeometry(1.4, 1.6, 32),
+        new THREE.MeshBasicMaterial({ color: enemyObj.auraColor || 0xdc2626, side: THREE.DoubleSide })
+      );
+      bossAuraRing.rotation.x = -Math.PI / 2;
+      bossAuraRing.position.y = 0.4;
+      group.add(bossAuraRing);
+      group.userData.bossAura = bossAuraRing;
+    }
+  } else {
+    const color = 0xa855f7;
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42, 0.5, 1.1, 8),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
+    );
+    body.position.y = 0.6;
+    group.add(body);
+  }
 
   group.position.copy(ENEMY_PATH[0]);
   scene.add(group);
 
-  const enemyObj = {
-    mesh: group,
-    hp: hpBase,
-    maxHp: hpBase,
-    speed: isBoss ? 2.0 : 3.2 + Math.min(2.0, gameState.wave * 0.08),
-    wpIndex: 1,
-    isBoss,
-    burnTimer: 0,
-    burnDps: 0
-  };
   gameState.enemies.push(enemyObj);
-
   if (isBoss) {
-    triggerHanjaStamp('敵將來襲', `제${gameState.wave}장 보스 출현! 일기토 개시!`);
+    let stampText = '敵將來襲';
+    let subText = `제${gameState.wave}장 보스 출현! 일기토 개시!`;
+    if (gameState.isTowerMode) subText = `백층탑 보스 출현! 일기토 개시!`;
+
+    if (enemyObj.giantType === 'lubu') { stampText = '魔神呂布'; subText = '마신 여포가 강림했습니다!'; }
+    if (enemyObj.giantType === 'zhangjiao') { stampText = '太平妖術'; subText = '태평 요술사 장각 출현!'; }
+    if (enemyObj.giantType === 'menghuo') { stampText = '南蠻大王'; subText = '남만 코끼리 대왕 맹획 등장!'; }
+
+    triggerHanjaStamp(stampText, subText);
     gameState.activeBoss = enemyObj;
     gameState.duelTimer = 5.0;
     gameState.duelHits = 0;
@@ -3866,7 +3918,7 @@ function updateSynergyAndHUD() {
   const syn = getActiveSynergies();
   const codexBonus = gameState.unlockedIds.length * 2 + Math.round(syn.bondAtkBonus * 100);
   const weather = WEATHER_LIST[gameState.weatherIdx];
-  const chapTitle = CHAPTER_TITLES[gameState.wave] || `제${gameState.wave}장 중원 진격전`;
+  const chapTitle = gameState.isTowerMode ? `[🏯 동작대 백층탑] 제${gameState.towerFloor}층` : (CHAPTER_TITLES[gameState.wave] || `제${gameState.wave}장 중원 진격전`);
 
   document.getElementById('weather-badge').textContent = weather.name;
   document.getElementById('gold-val').textContent = Math.floor(gameState.gold);
@@ -3895,6 +3947,12 @@ function updateSynergyAndHUD() {
 
   document.getElementById('siege-l-lv').textContent = gameState.siegeLeftLv > 0 ? `Lv.${gameState.siegeLeftLv} (${80 + gameState.siegeLeftLv * 60}🌾)` : '건설(80🌾)';
   document.getElementById('siege-r-lv').textContent = gameState.siegeRightLv > 0 ? `Lv.${gameState.siegeRightLv} (${100 + gameState.siegeRightLv * 75}🌾)` : '건설(100🌾)';
+
+  const towerBtn = document.getElementById('tower-mode-btn');
+  if (towerBtn) {
+    towerBtn.textContent = gameState.isTowerMode ? `[🏯 백층탑 (종료)]` : `[🏯 백층탑 (${gameState.towerFloor}층)]`;
+    towerBtn.style.color = gameState.isTowerMode ? '#ef4444' : '#fde047';
+  }
 }
 
 function updateGame(dt) {
@@ -3945,13 +4003,41 @@ function updateGame(dt) {
     cdEl.textContent = gameState.skillCd > 0 ? `${gameState.skillCd.toFixed(1)}s` : '즉시 발동';
   }
 
-  const targetCam = CAM_PRESETS[gameState.camMode];
-  camera.position.lerp(targetCam.pos, 0.08);
+  let targetCamPos = CAM_PRESETS[gameState.camMode].pos.clone();
+  let targetCamLook = CAM_PRESETS[gameState.camMode].look.clone();
+
+  if (gameState.camMode === 2) {
+    // Cinematic Orbit
+    const orbitSpeed = 0.2;
+    const time = performance.now() * 0.001 * orbitSpeed;
+    const radius = 26;
+    targetCamPos.x = Math.sin(time) * radius;
+    targetCamPos.z = Math.cos(time) * radius;
+    targetCamPos.y = 16;
+    targetCamLook.set(0, 0, 0);
+  }
+
+  // Duel Zoom
+  if (gameState.duelTimer > 0 && gameState.activeBoss && gameState.activeBoss.mesh) {
+    const duelTargetPos = gameState.activeBoss.mesh.position.clone();
+    duelTargetPos.y += 2.5; // Look at boss's head/chest
+    const zoomPos = new THREE.Vector3(duelTargetPos.x, duelTargetPos.y + 3, duelTargetPos.z + 8);
+
+    targetCamPos.copy(zoomPos);
+    targetCamLook.copy(duelTargetPos);
+
+    if (gameState.duelTimer >= 4.9 && Math.random() < 0.3) {
+      addFloatingText('✨', duelTargetPos, '#fbbf24');
+      addFloatingText('✨', new THREE.Vector3(duelTargetPos.x + (Math.random()-0.5), duelTargetPos.y + (Math.random()-0.5), duelTargetPos.z), '#dc2626');
+    }
+  }
+
+  camera.position.lerp(targetCamPos, 0.08);
   if (gameState.screenShake > 0) {
     gameState.screenShake = Math.max(0, gameState.screenShake - dt * 1.8);
     camera.position.x += (Math.random() - 0.5) * gameState.screenShake * 1.4;
   }
-  camera.lookAt(targetCam.look);
+  camera.lookAt(targetCamLook);
 
   gameState.supplyCartTimer += effDt;
   if (gameState.supplyCartTimer >= 25) {
@@ -3970,21 +4056,32 @@ function updateGame(dt) {
     gameState.spawnTimer -= effDt;
     if (gameState.spawnTimer <= 0) {
       gameState.spawnTimer = 1.15;
-      const isBoss = (gameState.waveRemaining === 1 && gameState.wave % 5 === 0);
+      const isBoss = gameState.isTowerMode ? (gameState.waveRemaining === 1) : (gameState.waveRemaining === 1 && gameState.wave % 5 === 0);
       spawnEnemy(isBoss);
       gameState.waveRemaining--;
     }
   } else if (gameState.enemies.length === 0) {
-    gameState.wave++;
-    gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
-    gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
-    gameState.waveRemaining = 8 + gameState.wave * 3;
-    gameState.gold += 35 + gameState.wave * 8;
-    gameState.fame += 10;
-    checkStageLiberation(gameState.wave);
-    updateSynergyAndHUD();
-    saveGameSafe();
-    if (gameState.wave % 2 === 0) openStrategyModal();
+    if (gameState.isTowerMode) {
+      const reward = 10 + gameState.towerFloor * 2;
+      gameState.fame += reward;
+      gameState.towerFloor++;
+      gameState.waveRemaining = 5 + Math.floor(gameState.towerFloor / 2);
+      gameState.gold += 50 + gameState.towerFloor * 5;
+      triggerHanjaStamp(Math.random() > 0.5 ? '登極' : '破竹', `백층탑 제${gameState.towerFloor - 1}층 돌파! 명성 +${reward}🎖️`);
+      updateSynergyAndHUD();
+      saveGameSafe();
+    } else {
+      gameState.wave++;
+      gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
+      gameState.weatherIdx = (gameState.wave - 1) % WEATHER_LIST.length;
+      gameState.waveRemaining = 8 + gameState.wave * 3;
+      gameState.gold += 35 + gameState.wave * 8;
+      gameState.fame += 10;
+      checkStageLiberation(gameState.wave);
+      updateSynergyAndHUD();
+      saveGameSafe();
+      if (gameState.wave % 2 === 0) openStrategyModal();
+    }
   }
 
   const syn = getActiveSynergies();
@@ -4009,10 +4106,24 @@ function updateGame(dt) {
     const factionTech = gameState.factionTech[cell.data.faction] || 0;
 
     const tInfo = TERRAIN_MAP[idx];
-    const terrainSpd = (tInfo && tInfo.type === 'wind') ? 1.35 : 1.0;
-    const terrainRange = (tInfo && tInfo.type === 'high') ? 2.5 : 0;
-    const terrainAtk = (tInfo && tInfo.type === 'high') ? 1.2 : 1.0;
-    const terrainCrit = (tInfo && tInfo.type === 'taichi') ? 0.3 : 0;
+    let terrainSpd = (tInfo && tInfo.type === 'wind') ? 1.35 : 1.0;
+    let terrainRange = (tInfo && tInfo.type === 'high') ? 2.5 : 0;
+    let terrainAtk = (tInfo && tInfo.type === 'high') ? 1.2 : 1.0;
+    let terrainCrit = (tInfo && tInfo.type === 'taichi') ? 0.3 : 0;
+    let towerAtkBonus = 1.0;
+
+    if (gameState.isTowerMode) {
+      const modifierType = gameState.towerFloor % 4;
+      if (modifierType === 0 && (cell.data.faction === 'wu' || cell.data.faction === 'shu' && cell.data.branch === 'tactician')) {
+        towerAtkBonus = 1.5; // 적벽의 화풍
+      } else if (modifierType === 1 && cell.data.faction === 'shu') {
+        terrainSpd *= 1.35; // 정군산의 기세
+      } else if (modifierType === 2 && cell.data.faction === 'wei') {
+        terrainCrit += 0.35; // 관도의 철벽 (we will use this for crit)
+      } else if (modifierType === 3 && cell.data.faction === 'qun') {
+        towerAtkBonus = 1.4; // 무쌍의 포효
+      }
+    }
 
     const weaponSpdBonus = 1 + (0.06 * upgrades.weaponLv);
     cell.cooldown -= effDt * cell.data.spd * gameState.buffSpd * syn.shuMult * terrainSpd * weaponSpdBonus;
@@ -4049,8 +4160,8 @@ function updateGame(dt) {
         const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0) + weaponCritBonus);
         const wuMod = cell.data.faction === 'wu' ? weather.fireMod : 1.0;
         const totalCodexMult = codexMult + globalRankBonus;
-        const dmg = cell.data.atk * rankAtkBonus * starMult * terrainAtk * wuMod * gameState.buffAtk * syn.weiMult * totalCodexMult * upgradeMult * factionTechBonus * (isCrit ? 2.2 : 1.0);
-        const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire');
+        const dmg = cell.data.atk * rankAtkBonus * starMult * terrainAtk * towerAtkBonus * wuMod * gameState.buffAtk * syn.weiMult * totalCodexMult * upgradeMult * factionTechBonus * (isCrit ? 2.2 : 1.0);
+        const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire') || (gameState.isTowerMode && gameState.towerFloor % 4 === 0 && cell.data.faction === 'wu');
         spawnProjectile(cell.mesh.position, target, dmg, FACTION_META[cell.data.faction].hex, isCrit, applyBurn);
       }
     }
@@ -4099,6 +4210,25 @@ function updateGame(dt) {
 
   for (let i = gameState.enemies.length - 1; i >= 0; i--) {
     const en = gameState.enemies[i];
+    if (en.giantType === 'lubu') {
+      if (en.shockwaveTimer === undefined) en.shockwaveTimer = 0;
+      en.shockwaveTimer += effDt;
+      if (en.shockwaveTimer >= 4.0) {
+        en.shockwaveTimer = 0;
+        sound.playWarDrum();
+        addFloatingText(`💥 마신의 파동!`, en.mesh.position, '#dc2626');
+        gameState.grid.forEach(cell => {
+          if (cell) {
+             const d = cell.mesh.position.distanceTo(en.mesh.position);
+             if (d < 5.0) {
+                 cell.cooldown += 0.8; // Slow nearby defenders
+                 addFloatingText(`공속 감소`, cell.mesh.position, '#ef4444');
+             }
+          }
+        });
+      }
+    }
+
     if (en.burnTimer > 0) {
       en.burnTimer -= effDt;
       en.hp -= en.burnDps * effDt;
@@ -4107,9 +4237,16 @@ function updateGame(dt) {
       scene.remove(en.mesh);
       gameState.enemies.splice(i, 1);
       gameState.kills++;
-      gameState.gold += en.isBoss ? 90 : 8 + Math.floor(gameState.wave * 1.5);
-      if (en.isBoss) gameState.fame += 20;
-      else if (gameState.kills % 5 === 0) gameState.fame += 2;
+      let goldReward = en.isBoss ? 90 : 8 + Math.floor(gameState.wave * 1.5);
+      let fameReward = en.isBoss ? 20 : (gameState.kills % 5 === 0 ? 2 : 0);
+
+      if (en.giantType === 'menghuo') {
+        goldReward += 150;
+        fameReward += 30; // bonus drops
+      }
+
+      gameState.gold += goldReward;
+      gameState.fame += fameReward;
       updateSynergyAndHUD();
       continue;
     }
@@ -4134,8 +4271,20 @@ function updateGame(dt) {
       }
     } else {
       dir.normalize();
-      const slowMod = weather.slowEnemy || 1.0;
-      en.mesh.position.addScaledVector(dir, effDt * en.speed * slowMod);
+
+      // Knockback resistance for Meng Huo
+      let moveSpd = en.speed;
+      let slowMod = weather.slowEnemy || 1.0;
+      if (en.giantType === 'menghuo') {
+        slowMod = 1.0; // Immune to weather slow
+      }
+
+      en.mesh.position.addScaledVector(dir, effDt * moveSpd * slowMod);
+
+      // Giant bosses face forward
+      if (en.isBoss && en.giantType) {
+        en.mesh.lookAt(new THREE.Vector3().addVectors(en.mesh.position, dir));
+      }
     }
   }
 
@@ -4427,12 +4576,17 @@ function bindEvents() {
     sound.playCatapultBoom();
     triggerHanjaStamp('赤壁業火', '적벽의 화공이 적진을 불태웁니다!');
     const weather = WEATHER_LIST[gameState.weatherIdx];
-    const skillDmg = Math.floor(150 * gameState.wave * weather.fireMod);
+    let skillDmg = Math.floor(150 * gameState.wave * weather.fireMod);
     gameState.enemies.forEach(en => {
-      en.hp -= skillDmg;
+      let finalDmg = skillDmg;
+      if (en.giantType === 'zhangjiao') {
+        finalDmg *= 2; // Heavenly General Zhang Jiao takes +100% bonus damage from Commander Stratagems
+        addFloatingText(`⚡ 약점 공격!`, en.mesh.position, '#fde047');
+      }
+      en.hp -= finalDmg;
       en.burnTimer = 4.0;
-      en.burnDps = skillDmg * 0.22;
-      addFloatingText(`🔥-${skillDmg}`, en.mesh.position, '#f97316');
+      en.burnDps = finalDmg * 0.22;
+      addFloatingText(`🔥-${finalDmg}`, en.mesh.position, '#f97316');
     });
   });
 
@@ -4458,13 +4612,34 @@ function bindEvents() {
     saveGameSafe();
   });
 
+  const towerBtn = document.getElementById('tower-mode-btn');
+  if (towerBtn) {
+    towerBtn.addEventListener('click', () => {
+      gameState.isTowerMode = !gameState.isTowerMode;
+      if (gameState.isTowerMode) {
+        gameState.waveRemaining = 5 + Math.floor(gameState.towerFloor / 2);
+        sound.playWarDrum();
+        triggerHanjaStamp('銅雀臺', `백층탑 제${gameState.towerFloor}층 도전에 진입합니다!`);
+      } else {
+        gameState.waveRemaining = 8 + gameState.wave * 3;
+        sound.playGong();
+        triggerHanjaStamp('中原復歸', `일반 전장으로 복귀합니다.`);
+      }
+      gameState.enemies.forEach(e => scene.remove(e.mesh));
+      gameState.enemies = [];
+      updateSynergyAndHUD();
+      saveGameSafe();
+    });
+  }
+
   document.getElementById('speed-btn').addEventListener('click', (e) => {
     gameState.gameSpeed = gameState.gameSpeed === 1 ? 2 : 1;
     e.currentTarget.textContent = `⏩ ${gameState.gameSpeed}x`;
   });
 
-  document.getElementById('cam-btn').addEventListener('click', () => {
+  document.getElementById('cam-btn').addEventListener('click', (e) => {
     gameState.camMode = (gameState.camMode + 1) % CAM_PRESETS.length;
+    e.currentTarget.textContent = `🎥 ${CAM_PRESETS[gameState.camMode].name}`;
   });
 
   document.getElementById('sound-btn').addEventListener('click', (e) => {

@@ -3485,18 +3485,19 @@ function getSaveData() {
   const defaultIds = HERO_DB.filter(h => h.unlockWave <= 1).map(h => h.id);
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
+    if (!raw) return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, towerFloor: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
     const data = JSON.parse(raw);
     const merged = new Set([...defaultIds, ...(Array.isArray(data.unlockedIds) ? data.unlockedIds : [])]);
     return {
       unlockedSet: merged,
       fame: Number(data.fame) || 30,
       bestWave: Number(data.bestWave || data.wave) || 1,
+      towerFloor: Number(data.towerFloor) || 1,
       heroUpgrades: data.heroUpgrades || {},
       factionTech: data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 }
     };
   } catch (e) {
-    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
+    return { unlockedSet: new Set(defaultIds), fame: 30, bestWave: 1, towerFloor: 1, heroUpgrades: {}, factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 } };
   }
 }
 
@@ -3536,20 +3537,31 @@ function renderTreeArticle(docId, saveInfo) {
       </table>`;
     tocHtml = `<li><a href="#s1">1. 주군 패시브 & 세력 시너지</a></li><li><a href="#s2">2. 5대 명장 인연 매트릭스</a></li>`;
   } else if (docId === 'terrain') {
-    title = '4장. 팔진도 5대 전술 지형 · 천시(기상) · 보스 일기토';
+    title = '4장. 팔진도 5대 전술 지형 · 천시(기상) · 거대 보스 일기토';
     bodyHtml = `
       <h2 id="s1">☯️ 팔진도 5대 특수 전술 지형</h2>
       <table class="wiki-table">
         <tr><th>그리드 위치</th><th>지형 명칭</th><th>전술 효과</th><th>추천 배치</th></tr>
         ${TERRAIN_DB.map(t => `<tr><td>${t.pos}</td><td><strong>${t.name}</strong></td><td>${t.effect}</td><td>${t.tip}</td></tr>`).join('')}
       </table>
-      <h2 id="s2">🌦️ 4대 천시(기상 변화) & 보스 일기토(一騎討)</h2>
+      <h2 id="s2">🌦️ 4대 천시(기상 변화) & 3대 거대 월드 보스</h2>
       <table class="wiki-table">
         <tr><th>기상 상태</th><th>전장 환경 변화</th><th>전술 활용</th></tr>
         ${WEATHER_DB.map(w => `<tr><td><strong>${w.name}</strong></td><td>${w.effect}</td><td>${w.note}</td></tr>`).join('')}
       </table>
-      <p><strong>⚔️ 보스 일기토</strong>: 5웨이브마다 보스 출현 시 5초간 연타 대결이 열리며, 8타 이상 적중 시 추가 군량미와 <strong>무공 명성(+15🎖️)</strong>을 획득합니다.</p>`;
-    tocHtml = `<li><a href="#s1">1. 팔진도 5대 전술 지형</a></li><li><a href="#s2">2. 천시 기상 & 보스 일기토</a></li>`;
+      <p><strong>⚔️ 거대 3D 보스 일기토</strong>: 5웨이브 또는 백층탑 플로어마다 거대 보스가 출현합니다.</p>
+      <ul>
+        <li><strong>마신 여포</strong>: 붉은 아우라 방출, 주기적인 파동으로 아군 공속 감소.</li>
+        <li><strong>태평 요술사 장각</strong>: 노란 부적 아우라, [적벽 화공] 스킬 피격 시 2배 약점 타격.</li>
+        <li><strong>남만 코끼리 대왕 맹획</strong>: 초거대 코끼리 탑승, 엄청난 체력이나 처치 시 추가 150🌾 및 30🎖️ 획득.</li>
+      </ul>
+      <h2 id="s3">🎥 3D 시점 카메라 모드</h2>
+      <ul>
+        <li><strong>전술 부감뷰</strong>: 전체 전장을 내려다보는 기본 배치/합성 모드</li>
+        <li><strong>무쌍 근접뷰</strong>: 장수들의 3D 18파츠 디테일과 타격감을 가까이서 보는 뷰</li>
+        <li><strong>파노라마 관전뷰</strong>: 전장을 중심으로 부드럽게 360도 회전하는 관전 모드</li>
+      </ul>`;
+    tocHtml = `<li><a href="#s1">1. 팔진도 5대 전술 지형</a></li><li><a href="#s2">2. 천시 기상 & 3대 거대 보스</a></li><li><a href="#s3">3. 3D 시점 카메라 모드</a></li>`;
   } else if (docId === 'liberation') {
     title = '5장. 삼국지 연대기 등반 & 중요 명장 해방(삼고초려) 시스템';
     bodyHtml = `
@@ -3604,7 +3616,8 @@ function renderTreeArticle(docId, saveInfo) {
           • 해방 명장: <b style="color:var(--gold-soft)">${unlockedCnt} / 120</b><br>
           • 해방 화력 보너스: <b style="color:#6ee7b7">+${unlockedCnt * 2}%</b><br>
           • 보유 무공 명성: <b style="color:#e6e1d6">${saveInfo.fame} 🎖️</b><br>
-          • 최고 도달 기록: <b>제${saveInfo.bestWave}장</b>
+          • 최고 도달 기록: <b>제${saveInfo.bestWave}장</b><br>
+          • 백층탑 기록: <b style="color:#fde047">제 ${saveInfo.towerFloor} 층 / 100층</b>
         </div>
       </aside>
     </div>`;
