@@ -1898,3 +1898,106 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   requestAnimationFrame(animate);
 });
+/* ==========================================================================
+   AUTHENTIC ORIENTAL SUMI-E (수묵담채화) 3D ATMOSPHERE & THEME TOGGLE
+   ========================================================================== */
+(function initSumiEEngine() {
+  const SUMI_THEME_KEY = 'tk_merge_sumi_theme_mode'; // 'light' (백선지) or 'dark' (현묵지)
+
+  function getSavedSumiMode() {
+    try {
+      return localStorage.getItem(SUMI_THEME_KEY) || 'light';
+    } catch (e) {
+      return 'light';
+    }
+  }
+
+  function applySumiTheme(mode) {
+    const isLight = (mode === 'light');
+    document.body.classList.toggle('sumi-light-scroll', isLight);
+
+    try {
+      localStorage.setItem(SUMI_THEME_KEY, mode);
+    } catch (e) {}
+
+    if (typeof THREE !== 'undefined' && typeof scene !== 'undefined' && scene) {
+      const skyHex = isLight ? 0xdfd5c3 : 0x141210;
+      const fogDensity = isLight ? 0.016 : 0.022;
+      scene.background = new THREE.Color(skyHex);
+      scene.fog = new THREE.FogExp2(skyHex, fogDensity);
+    }
+
+    const btn = document.getElementById('sumi-theme-toggle-btn');
+    if (btn) {
+      btn.textContent = isLight ? '🖌️ 백선지(白宣)' : '🖌️ 현묵지(玄墨)';
+    }
+  }
+
+  function spawnInkSplatter3D(x, y, z) {
+    if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene) return;
+    const droplets = [];
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const isCinnabar = (i % 4 === 0);
+      const geo = new THREE.SphereGeometry(isCinnabar ? 0.11 : 0.14, 6, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: isCinnabar ? 0xb3241a : 0x141210,
+        transparent: true,
+        opacity: 0.9
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x || 0, y || 1.2, z || 0);
+      const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4);
+      const speed = 2.2 + Math.random() * 3.0;
+      mesh.userData.vx = Math.cos(angle) * speed;
+      mesh.userData.vy = 2.0 + Math.random() * 2.5;
+      mesh.userData.vz = Math.sin(angle) * speed;
+      scene.add(mesh);
+      droplets.push(mesh);
+    }
+
+    let elapsed = 0;
+    function animateInk() {
+      elapsed += 0.03;
+      droplets.forEach(d => {
+        d.position.x += d.userData.vx * 0.03;
+        d.position.y += d.userData.vy * 0.03;
+        d.position.z += d.userData.vz * 0.03;
+        d.userData.vy -= 9.8 * 0.03;
+        d.material.opacity = Math.max(0, 1 - elapsed * 1.4);
+      });
+      if (elapsed < 0.75) {
+        requestAnimationFrame(animateInk);
+      } else {
+        droplets.forEach(d => scene.remove(d));
+      }
+    }
+    requestAnimationFrame(animateInk);
+  }
+
+  function mountSumiToggleButton() {
+    if (document.getElementById('sumi-theme-toggle-btn')) return;
+    const targetBar = document.getElementById('v4-endgame-bar') || document.querySelector('.hud-controls') || document.body;
+    const btn = document.createElement('button');
+    btn.id = 'sumi-theme-toggle-btn';
+    btn.className = 'sumi-theme-toggle-btn';
+    btn.onclick = function () {
+      const next = document.body.classList.contains('sumi-light-scroll') ? 'dark' : 'light';
+      applySumiTheme(next);
+      spawnInkSplatter3D(0, 1.5, 0);
+    };
+    targetBar.appendChild(btn);
+    applySumiTheme(getSavedSumiMode());
+  }
+
+  window.SumiEngine = {
+    applySumiTheme: applySumiTheme,
+    spawnInkSplatter3D: spawnInkSplatter3D
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountSumiToggleButton);
+  } else {
+    mountSumiToggleButton();
+  }
+})();

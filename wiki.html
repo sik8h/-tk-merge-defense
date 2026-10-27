@@ -393,6 +393,15 @@
   </style>
 </head>
 <body>
+<!-- Oriental Sumi-e Ink-Wash SVG Filters -->
+<svg style="position:absolute; width:0; height:0; pointer-events:none;" aria-hidden="true">
+  <defs>
+    <filter id="ink-brush-filter" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" result="inkNoise" />
+      <feDisplacementMap in="SourceGraphic" in2="inkNoise" scale="2.8" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+</svg>
   <header id="wiki-header">
     <div class="header-left">
       <button id="drawer-toggle" aria-label="메뉴 열기">☰</button>

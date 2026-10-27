@@ -463,4 +463,80 @@ body, html {
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
+}/* ==========================================================================
+   AUTHENTIC ORIENTAL SUMI-E (수묵담채화 · 水墨淡彩畫) THEME ENGINE
+   ========================================================================== */
+:root {
+  --xuan-paper-bg: #efe6d5;
+  --xuan-paper-dark: #dfd2b8;
+  --sumi-ink-deep: #141210;
+  --sumi-ink-mid: #3d3831;
+  --sumi-ink-wash: rgba(24, 21, 18, 0.78);
+  --cinnabar-seal: #a82419;
+  --cinnabar-seal-bright: #cc2b1e;
+  --damchae-shu: #2d6a4f;
+  --damchae-wei: #2b4c7e;
+  --damchae-wu: #a8332a;
+  --damchae-qun: #8f6b29;
+}
+
+/* Light Rice-Paper Scroll Mode (백선지 산수화 모드) */
+body.sumi-light-scroll {
+  background-color: var(--xuan-paper-bg) !important;
+  color: var(--sumi-ink-deep) !important;
+}
+
+body.sumi-light-scroll .modal-content,
+body.sumi-light-scroll .v4-modal-card,
+body.sumi-light-scroll .panel,
+body.sumi-light-scroll .card {
+  background: linear-gradient(145deg, rgba(244, 236, 220, 0.96) 0%, rgba(226, 214, 190, 0.98) 100%) !important;
+  color: var(--sumi-ink-deep) !important;
+  border: 2px solid #2b2620 !important;
+  box-shadow: 0 10px 30px rgba(20, 18, 15, 0.35), inset 0 0 24px rgba(138, 118, 88, 0.25) !important;
+}
+
+/* Cinnabar Red Seal (주사 낙관 인장) Action Buttons */
+button.cinnabar-seal-btn,
+#recruit-btn,
+.v4-btn {
+  position: relative;
+  background: linear-gradient(180deg, var(--cinnabar-seal-bright) 0%, var(--cinnabar-seal) 100%) !important;
+  color: #f9f4eb !important;
+  border: 2px double #f2d8b3 !important;
+  border-radius: 3px !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 3px 10px rgba(168, 36, 25, 0.45), inset 0 0 6px rgba(255, 230, 210, 0.25) !important;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease !important;
+}
+
+button.cinnabar-seal-btn:active,
+#recruit-btn:active,
+.v4-btn:active {
+  transform: scale(0.94) !important;
+  box-shadow: 0 0 18px rgba(168, 36, 25, 0.85) !important;
+}
+
+/* 4-Character Seal Cut-in Ink Stamp Enhancement */
+#seal-cutin {
+  border: 3px double #b3241a !important;
+  background: radial-gradient(circle, rgba(242, 234, 216, 0.95) 0%, rgba(214, 198, 168, 0.92) 100%) !important;
+  color: #a82419 !important;
+  text-shadow: 2px 2px 0px rgba(20, 18, 16, 0.25) !important;
+  box-shadow: 0 0 40px rgba(168, 36, 25, 0.65) !important;
+}
+
+.sumi-theme-toggle-btn {
+  cursor: pointer;
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid #2b2620;
+  background: linear-gradient(135deg, #f2ead8, #dfd2b8);
+  color: #1a1714;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
