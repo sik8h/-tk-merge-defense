@@ -375,7 +375,9 @@ const gameState = {
   waveRemaining: 10,
   isGameOver: false,
   activeDeck: [],
-  governors: { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] }
+  governors: { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] },
+  heroUpgrades: {},
+  factionTech: { shu: 0, wei: 0, wu: 0, qun: 0 }
 };
 
 function saveGameSafe() {
@@ -396,7 +398,9 @@ function saveGameSafe() {
       unlockedIds: gameState.unlockedIds,
       gridIds: gameState.grid.map(h => h ? h.data.id : null),
       activeDeck: gameState.activeDeck,
-      governors: gameState.governors
+      governors: gameState.governors,
+      heroUpgrades: gameState.heroUpgrades,
+      factionTech: gameState.factionTech
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
   } catch (e) {}
@@ -424,6 +428,8 @@ function loadGameSafe() {
     gameState.unlockedIds = Array.from(mergedUnlock);
     gameState.activeDeck = data.activeDeck || [...DEFAULT_ORIGINAL_28];
     gameState.governors = data.governors || { luoyang: [], chengdu: [], ye: [], jianye: [], xiangyang: [], changan: [] };
+    gameState.heroUpgrades = data.heroUpgrades || {};
+    gameState.factionTech = data.factionTech || { shu: 0, wei: 0, wu: 0, qun: 0 };
     gameState.waveRemaining = 8 + gameState.wave * 3;
     return data.gridIds || null;
   } catch (e) {
@@ -917,6 +923,13 @@ function addFloatingText(text, worldPos, color = '#ffffff') {
 }
 
 function getActiveSynergies() {
+
+  let totalRankLv = 0;
+  for (const id in gameState.heroUpgrades) {
+    totalRankLv += gameState.heroUpgrades[id].rankLv || 0;
+  }
+  const globalRankBonus = totalRankLv * 0.01;
+
   const counts = { shu: 0, wei: 0, wu: 0, qun: 0 };
   const activeIds = new Set();
   gameState.grid.forEach(cell => {
@@ -1158,7 +1171,14 @@ function updateGame(dt) {
         }
         const starMult = 1 + (cell.stars - 1) * 0.28;
 
-        const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0));
+                const upgrades = gameState.heroUpgrades[cell.data.id] || { rankLv: 0, weaponLv: 0 };
+        const factionTech = gameState.factionTech[cell.data.faction] || 0;
+
+        const upgradeMult = 1 + (0.15 * upgrades.rankLv) + (0.25 * upgrades.weaponLv);
+        const factionTechBonus = 1 + (0.05 * factionTech);
+        const weaponCritBonus = 0.04 * upgrades.weaponLv;
+
+        const isCrit = Math.random() < (gameState.buffCrit + syn.qunCrit + terrainCrit + (weather.critMod || 0) + weaponCritBonus);
         const wuMod = cell.data.faction === 'wu' ? weather.fireMod : 1.0;
         const dmg = cell.data.atk * starMult * terrainAtk * wuMod * gameState.buffAtk * syn.weiMult * codexMult * upgradeMult * (isCrit ? 2.2 : 1.0);
         const applyBurn = syn.wuBurn || (tInfo && tInfo.type === 'fire');
@@ -1563,6 +1583,12 @@ window.applyDeckPreset = function(type) {
 // =================================================================
 
 function bindEvents() {
+  document.getElementById('upgrade-camp-btn').addEventListener('click', openUpgradeCampModal);
+  document.getElementById('close-upgrade-camp-btn').addEventListener('click', () => {
+    document.getElementById('upgrade-camp-modal').classList.add('hidden');
+    if (campPreviewAnimId) cancelAnimationFrame(campPreviewAnimId);
+    campPreviewAnimId = null;
+  });
 
   const canvas = document.getElementById('hudCanvas');
 

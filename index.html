@@ -186,6 +186,55 @@
     </div>
 
 
+    <!-- 군영 육성 모달 -->
+    <div id="upgrade-camp-modal" class="modal hidden">
+      <div class="modal-content" style="max-width:850px;width:90%;">
+        <div class="modal-header">
+          <h2>⚔️ 군영 육성소 (3-Pillar Progression)</h2>
+          <p>무공 명성(🎖️ <b id="camp-fame-val">0</b>)을 소모하여 장수의 관직, 신병·명마, 태학 병법을 강화합니다.</p>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+
+          <div style="flex:1;min-width:300px;background:#1e293b;padding:12px;border-radius:8px;border:1px solid #334155;">
+            <h3 style="color:#fbbf24;font-size:14px;margin-bottom:8px;border-bottom:1px solid #334155;padding-bottom:4px;">🏛️ 4대 세력 태학 병법 연구 (명성 소모)</h3>
+            <p style="font-size:11px;color:#94a3b8;margin-bottom:12px;">세력별 화력 +5% & 합체 시 크리티컬 도약(2T승급) +1%</p>
+            <div id="faction-tech-container" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+
+          <div style="flex:2;min-width:300px;background:#1e293b;padding:12px;border-radius:8px;border:1px solid #334155;">
+            <h3 style="color:#fbbf24;font-size:14px;margin-bottom:8px;border-bottom:1px solid #334155;padding-bottom:4px;">🎖️ 해방 명장 육성 (관직 승진 & 단조)</h3>
+            <div style="display:flex;gap:12px;">
+              <div id="camp-hero-grid" style="flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px;max-height:260px;overflow-y:auto;align-content:start;"></div>
+
+              <div id="camp-hero-detail" style="flex:1.5;background:#0f172a;border-radius:6px;border:1px solid #334155;display:flex;flex-direction:column;">
+                <div id="camp-hero-empty" style="padding:20px;text-align:center;color:#64748b;font-size:12px;margin:auto;">장수를 선택하세요</div>
+
+                <div id="camp-hero-content" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+                  <div style="display:flex;flex:1;min-height:160px;">
+                    <div id="camp-3d-preview" style="flex:1;background:radial-gradient(circle, #334155 0%, #0f172a 80%);position:relative;border-radius:6px 0 0 0;overflow:hidden;"></div>
+                    <div style="flex:1;padding:10px;font-size:11px;color:#cbd5e1;display:flex;flex-direction:column;gap:6px;">
+                      <div id="camp-hero-name" style="font-size:14px;font-weight:bold;color:#fde047;">T1 백이병</div>
+                      <div id="camp-hero-stats" style="margin-top:6px;line-height:1.5;"></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;border-top:1px solid #334155;background:#1e293b;border-radius:0 0 6px 6px;">
+                    <button id="btn-upgrade-rank" style="flex:1;padding:12px 6px;background:none;border:none;border-right:1px solid #334155;color:#fbbf24;cursor:pointer;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                      <span>관직 승진</span><span id="cost-rank" style="font-size:10px;color:#fff;">10 🎖️</span>
+                    </button>
+                    <button id="btn-upgrade-weapon" style="flex:1;padding:12px 6px;background:none;border:none;color:#38bdf8;cursor:pointer;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                      <span>신병 단조</span><span id="cost-weapon" style="font-size:10px;color:#fff;">15 🎖️</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <button id="close-upgrade-camp-btn" class="modal-action-btn" style="margin-top:16px;">닫기</button>
+      </div>
+    </div>
+
     <!-- 출진 편성소 & 태학 모달 -->
     <div id="deck-modal" class="modal hidden">
       <div class="modal-content" style="max-width: 800px; padding: 15px;">
