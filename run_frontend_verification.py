@@ -10,30 +10,13 @@ def run_cuj(page):
     page.click("#continue-game-btn")
     page.wait_for_timeout(1000)
 
-    # Click recruit buttons
-    page.click("#recruit-btn")
+    # Click upgrade camp
+    page.click("#upgrade-camp-btn")
+    page.wait_for_timeout(1000)
+
+    # Screenshot upgrade camp modal
+    page.screenshot(path="/home/jules/verification/screenshots/upgrade_camp_modal.png")
     page.wait_for_timeout(500)
-    page.click("#recruit-btn")
-    page.wait_for_timeout(500)
-    page.click("#recruit-btn")
-    page.wait_for_timeout(500)
-
-    # Click Camera preset toggles
-    page.click("#cam-btn") # Blueprint top view
-    page.wait_for_timeout(1000)
-
-    page.click("#cam-btn") # Gate 1st person view
-    page.wait_for_timeout(1000)
-
-    page.click("#cam-btn") # Isometric 3D view
-    page.wait_for_timeout(1000)
-
-    # Trigger skill
-    page.click("#skill-btn")
-    page.wait_for_timeout(1000)
-
-    page.screenshot(path="/home/jules/verification/screenshots/verification_3d_final.png")
-    page.wait_for_timeout(1500)
 
 if __name__ == "__main__":
     os.makedirs("/home/jules/verification/videos", exist_ok=True)
