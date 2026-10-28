@@ -498,5 +498,178 @@
   </div>
 </div>
 
+
+<!-- ================= PATCH v6.0: HIGH-DETAIL GRAPHICS & TACTICAL ENGINE ================= -->
+<style>
+  #v6-fx-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 320;
+    display: none;
+  }
+  #v6-fever-vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 325;
+    display: none;
+    box-shadow: inset 0 0 65px rgba(255, 168, 0, 0.75), inset 0 0 130px rgba(184, 41, 33, 0.55);
+    animation: v6FeverPulse 0.8s infinite alternate;
+  }
+  @keyframes v6FeverPulse {
+    from { opacity: 0.65; }
+    to { opacity: 1.0; }
+  }
+  #v6-combo-banner {
+    position: fixed;
+    top: 112px;
+    left: 16px;
+    z-index: 410;
+    pointer-events: none;
+    display: none;
+    background: linear-gradient(90deg, rgba(142, 28, 22, 0.92) 0%, rgba(28, 20, 15, 0.85) 75%, transparent 100%);
+    border-left: 4px solid #f5c542;
+    padding: 6px 18px 6px 12px;
+    color: #fff8e7;
+    font-family: 'Noto Serif KR', serif;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+    transform-origin: left center;
+    transition: transform 0.12s ease;
+  }
+  #v6-combo-count {
+    font-size: 22px;
+    font-weight: 900;
+    color: #ffd54f;
+    margin-right: 6px;
+  }
+  #v6-combo-title {
+    font-size: 12px;
+    color: #ffab91;
+    font-weight: 700;
+  }
+  #v6-tactical-dock {
+    position: fixed;
+    bottom: 66px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 420;
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    width: min(96vw, 620px);
+    background: linear-gradient(180deg, rgba(26, 20, 16, 0.92) 0%, rgba(15, 11, 9, 0.96) 100%);
+    border: 1.5px solid #c89b3c;
+    border-radius: 8px;
+    padding: 7px 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.85), inset 0 0 12px rgba(200,155,60,0.18);
+    font-family: 'Noto Serif KR', serif;
+  }
+  .v6-dock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .v6-formation-group {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+  }
+  .v6-form-btn {
+    flex: 1;
+    background: #241b15;
+    color: #cbb692;
+    border: 1px solid #5a4631;
+    border-radius: 4px;
+    padding: 5px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+  }
+  .v6-form-btn.active {
+    background: linear-gradient(135deg, #9e2a22 0%, #681712 100%);
+    color: #fff6d6;
+    border-color: #f5c542;
+    box-shadow: 0 0 8px rgba(245, 197, 66, 0.45);
+  }
+  .v6-morale-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 190px;
+  }
+  .v6-morale-bar-bg {
+    flex: 1;
+    height: 12px;
+    background: #140f0c;
+    border: 1px solid #6e5536;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  #v6-morale-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #d32f2f 0%, #ff9800 60%, #ffee58 100%);
+    transition: width 0.2s ease;
+  }
+  .v6-util-btn {
+    background: #2b2119;
+    color: #e8dcc4;
+    border: 1px solid #8c6f3e;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .v6-util-btn.on {
+    background: #1f4d36;
+    border-color: #66ff99;
+    color: #ffffff;
+  }
+</style>
+
+<canvas id="v6-fx-canvas"></canvas>
+<div id="v6-fever-vignette"></div>
+
+<div id="v6-combo-banner">
+  <span id="v6-combo-count">0連斬</span>
+  <span id="v6-combo-title">무쌍 격파!</span>
+</div>
+
+<div id="v6-tactical-dock">
+  <div class="v6-dock-row">
+    <span style="font-size:11px; color:#f0c36d; font-weight:700;">☯ 팔진도:</span>
+    <div class="v6-formation-group">
+      <button id="v6-btn-heyi" class="v6-form-btn active" onclick="window.setV6Formation('heyi')" title="광역 확산 피해 +25% · 사거리 증가">🦅 학익진(광역)</button>
+      <button id="v6-btn-fengshi" class="v6-form-btn" onclick="window.setV6Formation('fengshi')" title="공격력 +55% · 보스 특화 극딜">🗡 봉시진(극딜)</button>
+      <button id="v6-btn-yulin" class="v6-form-btn" onclick="window.setV6Formation('yulin')" title="공속 +40% · 치명타율 +25%">🐟 어린진(속공)</button>
+      <button id="v6-btn-fangyuan" class="v6-form-btn" onclick="window.setV6Formation('fangyuan')" title="성벽 초당 회복 · 적 이동 둔화">🐢 방원진(수비)</button>
+    </div>
+  </div>
+  <div class="v6-dock-row">
+    <div class="v6-morale-wrap">
+      <span id="v6-morale-label" style="font-size:11px; color:#ffcc66; font-weight:700;">🔥 사기 0%</span>
+      <div class="v6-morale-bar-bg">
+        <div id="v6-morale-fill"></div>
+      </div>
+      <button id="v6-fever-btn" class="v6-util-btn" onclick="window.triggerV6MusouFever()" disabled>⚡ 무쌍폭주</button>
+    </div>
+    <div style="display:flex; gap:4px;">
+      <button id="v6-weather-btn" class="v6-util-btn" onclick="window.cycleV6Weather()" title="천시(날씨) 및 전장 셰이더 전환">☀ 백주쾌청</button>
+      <button id="v6-smart-merge-btn" class="v6-util-btn" onclick="window.toggleV6SmartMerge()" title="6~7성 명장은 보존하고 저등급 장수만 지능형 합체">🤖 부관합체: OFF</button>
+      <button id="v6-hd-btn" class="v6-util-btn on" onclick="window.toggleV6HD()" title="고디테일 3D 오라 및 환경 파티클 토글">✨ HD연출</button>
+    </div>
+  </div>
+
 </body>
 </html>
