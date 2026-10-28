@@ -2105,3 +2105,312 @@ window.addEventListener('DOMContentLoaded', () => {
     mountSumiToggleButton();
   }
 })();
+
+
+// ================= PATCH v5.0: CONQUEST, LIEUTENANT & TRUE AWAKENING ENGINE =================
+(function() {
+  const V5_PROVINCE_DB = [
+    { id: 'sili', name: '사주 (司州·낙양)', bossName: '태사 동탁', reqPower: 1500, clearPrestige: 50, buffDesc: '전군 공격력 +10%', buffType: 'atkPct', val: 0.10 },
+    { id: 'yuzhou', name: '예주 (豫州·허창)', bossName: '패왕 조조', reqPower: 2800, clearPrestige: 80, buffDesc: '초기 군량미 +30🌾', buffType: 'startGold', val: 30 },
+    { id: 'jizhou', name: '기주 (冀州·업성)', bossName: '명문 원소', reqPower: 4200, clearPrestige: 120, buffDesc: '합체 도약 확률 +5%', buffType: 'critMerge', val: 0.05 },
+    { id: 'xuzhou', name: '서주 (徐州·하비)', bossName: '무신 여포', reqPower: 6000, clearPrestige: 180, buffDesc: '치명타 피해 +30%', buffType: 'critDmg', val: 0.30 },
+    { id: 'jingzhou', name: '형주 (荊州·양양)', bossName: '무성 관우', reqPower: 8500, clearPrestige: 250, buffDesc: '주군 계책 쿨타임 -20%', buffType: 'stratCd', val: 0.20 },
+    { id: 'yangzhou', name: '양주 (揚州·건업)', bossName: '미주랑 주유', reqPower: 11500, clearPrestige: 350, buffDesc: '전군 공격 속도 +15%', buffType: 'spdPct', val: 0.15 },
+    { id: 'yizhou', name: '익주 (益州·성도)', bossName: '와룡 제갈량', reqPower: 15000, clearPrestige: 500, buffDesc: '인연 시너지 효과 1.5배', buffType: 'bondMult', val: 1.50 },
+    { id: 'yongzhou', name: '옹주 (雍州·장안)', bossName: '금마초', reqPower: 20000, clearPrestige: 800, buffDesc: '성벽 최대 내구도 +100', buffType: 'wallHp', val: 100 }
+  ];
+
+  const V5_ELITE_SLOTS = [6, 7, 12, 13];
+  window.V5_PROVINCE_DB = V5_PROVINCE_DB;
+
+  function ensureV5State() {
+    if (typeof gameState === 'undefined') return;
+    if (!Array.isArray(gameState.conqueredProvinces)) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('tk_v5_conquered') || '[]');
+        gameState.conqueredProvinces = Array.isArray(saved) ? saved : [];
+      } catch (e) { gameState.conqueredProvinces = []; }
+    }
+    if (!gameState.lieutenants || typeof gameState.lieutenants !== 'object') {
+      try {
+        const savedL = JSON.parse(localStorage.getItem('tk_v5_lieutenants') || '{}');
+        gameState.lieutenants = savedL && typeof savedL === 'object' ? savedL : {};
+      } catch (e) { gameState.lieutenants = {}; }
+    }
+    if (!Array.isArray(gameState.awakenedSlots)) {
+      gameState.awakenedSlots = [];
+    }
+  }
+
+  function saveV5State() {
+    if (typeof gameState === 'undefined') return;
+    localStorage.setItem('tk_v5_conquered', JSON.stringify(gameState.conqueredProvinces || []));
+    localStorage.setItem('tk_v5_lieutenants', JSON.stringify(gameState.lieutenants || {}));
+    updateV5Badges();
+  }
+
+  function calculateArmyPower() {
+    ensureV5State();
+    let power = 500;
+    if (typeof gameState !== 'undefined') {
+      const unlockedCount = Array.isArray(gameState.unlockedIds) ? gameState.unlockedIds.length : 12;
+      power += unlockedCount * 65;
+      if (Array.isArray(gameState.grid)) {
+        gameState.grid.forEach((cell, idx) => {
+          if (cell && cell.hero) {
+            const tier = cell.hero.tier || 1;
+            const stars = cell.stars || 1;
+            const awakeMult = (gameState.awakenedSlots && gameState.awakenedSlots.includes(idx)) ? 2.2 : 1.0;
+            power += Math.round(tier * 180 * stars * awakeMult);
+          }
+        });
+      }
+      power += (gameState.prestige || 0) * 15;
+    }
+    return power;
+  }
+
+  window.getV5BuffMultiplier = function(buffType) {
+    ensureV5State();
+    let total = 0;
+    V5_PROVINCE_DB.forEach(p => {
+      if (gameState.conqueredProvinces.includes(p.id) && p.buffType === buffType) {
+        total += p.val;
+      }
+    });
+    return total;
+  };
+
+  function updateV5Badges() {
+    ensureV5State();
+    const cBadge = document.getElementById('v5-conquest-badge');
+    if (cBadge) cBadge.textContent = (gameState.conqueredProvinces.length) + '/8';
+    const lBadge = document.getElementById('v5-lieut-badge');
+    if (lBadge) {
+      const cnt = V5_ELITE_SLOTS.filter(s => Boolean(gameState.lieutenants[s])).length;
+      lBadge.textContent = cnt + '/4';
+    }
+    const aBadge = document.getElementById('v5-awaken-badge');
+    if (aBadge) {
+      aBadge.textContent = (gameState.awakenedSlots ? gameState.awakenedSlots.length : 0) + '명';
+    }
+  }
+
+  let currentV5Tab = 'conquest';
+
+  window.openV5Modal = function(tabName) {
+    ensureV5State();
+    currentV5Tab = tabName || 'conquest';
+    const modal = document.getElementById('v5-conquest-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      window.switchV5Tab(currentV5Tab);
+    }
+  };
+
+  window.closeV5Modal = function() {
+    const modal = document.getElementById('v5-conquest-modal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  window.switchV5Tab = function(tabName) {
+    currentV5Tab = tabName;
+    ['conquest', 'lieutenant', 'awaken'].forEach(t => {
+      const btn = document.getElementById('v5-tab-' + t);
+      if (btn) btn.classList.toggle('active', t === tabName);
+    });
+    renderV5ModalBody();
+  };
+
+  window.conquerProvinceV5 = function(provId) {
+    ensureV5State();
+    const prov = V5_PROVINCE_DB.find(p => p.id === provId);
+    if (!prov || gameState.conqueredProvinces.includes(provId)) return;
+    const power = calculateArmyPower();
+    if (power < prov.reqPower) {
+      alert('전군 전투력이 부족합니다! (현재: ' + power + ' / 필요: ' + prov.reqPower + ')');
+      return;
+    }
+    gameState.conqueredProvinces.push(provId);
+    gameState.prestige = (gameState.prestige || 0) + prov.clearPrestige;
+    if (prov.buffType === 'startGold') {
+      gameState.gold = (gameState.gold || 0) + prov.val;
+    }
+    if (prov.buffType === 'wallHp') {
+      gameState.maxHp = (gameState.maxHp || 100) + prov.val;
+      gameState.hp = Math.min(gameState.maxHp, (gameState.hp || 100) + prov.val);
+    }
+    saveV5State();
+    if (typeof updateUI === 'function') updateUI();
+    renderV5ModalBody();
+  };
+
+  window.autoAssignLieutenantsV5 = function() {
+    ensureV5State();
+    const pool = (typeof HERO_DB !== 'undefined' && Array.isArray(HERO_DB)) ? HERO_DB.slice().sort((a,b) => (b.tier||1) - (a.tier||1)) : [];
+    V5_ELITE_SLOTS.forEach((slotIdx, i) => {
+      if (pool[i]) {
+        gameState.lieutenants[slotIdx] = pool[i].id || pool[i].name;
+      }
+    });
+    saveV5State();
+    renderV5ModalBody();
+  };
+
+  window.assignLieutenantSlotV5 = function(slotIdx, heroKey) {
+    ensureV5State();
+    if (!heroKey) {
+      delete gameState.lieutenants[slotIdx];
+    } else {
+      gameState.lieutenants[slotIdx] = heroKey;
+    }
+    saveV5State();
+    renderV5ModalBody();
+  };
+
+  window.awakenSlotV5 = function(slotIdx) {
+    ensureV5State();
+    if (!Array.isArray(gameState.grid) || !gameState.grid[slotIdx] || !gameState.grid[slotIdx].hero) return;
+    const cell = gameState.grid[slotIdx];
+    if ((cell.hero.tier || 1) < 7) return;
+    if (gameState.awakenedSlots.includes(slotIdx)) return;
+    if ((gameState.gold || 0) < 300 || (gameState.prestige || 0) < 50) {
+      alert('진·무쌍 각성에는 군량미 300🌾 및 무공 명성 50🎖이 필요합니다.');
+      return;
+    }
+    gameState.gold -= 300;
+    gameState.prestige -= 50;
+    gameState.awakenedSlots.push(slotIdx);
+    cell.stars = Math.max((cell.stars || 3) + 1, 4);
+    if (cell.hero) {
+      cell.hero.atk = Math.round((cell.hero.atk || 500) * 2.2);
+    }
+    saveV5State();
+    if (typeof updateUI === 'function') updateUI();
+    renderV5ModalBody();
+  };
+
+  function renderV5ModalBody() {
+    const container = document.getElementById('v5-modal-body');
+    if (!container) return;
+    ensureV5State();
+    const power = calculateArmyPower();
+
+    if (currentV5Tab === 'conquest') {
+      let html = `<div style="margin-bottom:12px; padding:10px; background:#2a2019; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+        <span>⚔ 현재 전군 통합 무력(전투력): <strong style="color:#f0c36d; font-size:16px;">${power.toLocaleString()}</strong></span>
+        <span>점령한 주(州): <strong style="color:#66ff99;">${gameState.conqueredProvinces.length} / 8</strong></span>
+      </div><div class="v5-grid">`;
+
+      V5_PROVINCE_DB.forEach(p => {
+        const done = gameState.conqueredProvinces.includes(p.id);
+        const canConquer = !done && power >= p.reqPower;
+        html += `<div class="v5-card ${done ? 'conquered' : ''}">
+          <div>
+            <div style="font-size:16px; font-weight:700; color:#f0c36d;">${p.name}</div>
+            <div style="font-size:12px; color:#c2b092; margin-top:4px;">수비장: ${p.bossName} · 권장 전투력: ${p.reqPower.toLocaleString()}</div>
+            <div style="font-size:13px; color:#7ce89b; margin-top:6px;">영구 효과: ${p.buffDesc}</div>
+            <div style="font-size:12px; color:#ffcc66;">점령 보상: 🎖 +${p.clearPrestige} 명성</div>
+          </div>
+          <button class="v5-action-btn" ${canConquer ? '' : 'disabled'} onclick="window.conquerProvinceV5('${p.id}')">
+            ${done ? '✔ 평정 완료 (영구 적용중)' : (canConquer ? '⚔ 즉시 공성 출격' : '전투력 부족')}
+          </button>
+        </div>`;
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    } else if (currentV5Tab === 'lieutenant') {
+      const heroes = (typeof HERO_DB !== 'undefined' && Array.isArray(HERO_DB)) ? HERO_DB : [];
+      let html = `<div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span>전장 중앙 4대 핵심 정예석(타일 #7, #8, #13, #14)에 부장을 결속해 화력 +30% 및 연환 협공을 발동합니다.</span>
+        <button class="v5-action-btn" onclick="window.autoAssignLieutenantsV5()">⚡ 최고 등급 부장 일괄 책봉</button>
+      </div><div class="v5-grid">`;
+
+      V5_ELITE_SLOTS.forEach(slotIdx => {
+        const assigned = gameState.lieutenants[slotIdx] || '';
+        const mainCell = (Array.isArray(gameState.grid) && gameState.grid[slotIdx]) ? gameState.grid[slotIdx] : null;
+        const mainName = (mainCell && mainCell.hero) ? mainCell.hero.name : '배치된 주장 없음';
+        let opts = `<option value="">-- 부장 미지정 --</option>`;
+        heroes.slice(0, 40).forEach(h => {
+          const key = h.id || h.name;
+          const sel = (String(assigned) === String(key)) ? 'selected' : '';
+          opts += `<option value="${key}" ${sel}>[T${h.tier || 1}] ${h.name}</option>`;
+        });
+        html += `<div class="v5-card">
+          <div>
+            <div style="font-weight:700; color:#f0c36d;">🛡 중앙 정예 타일 #${slotIdx + 1}</div>
+            <div style="font-size:13px; margin:4px 0;">현재 주장: <strong>${mainName}</strong></div>
+            <div style="font-size:12px; color:#7ce89b;">결속 보너스: 주장 공격력 +30% · 25% 확률 연환 협공</div>
+          </div>
+          <select style="background:#140f0c; color:#f4e8c1; border:1px solid #c89b3c; padding:6px; border-radius:4px;"
+                  onchange="window.assignLieutenantSlotV5(${slotIdx}, this.value)">
+            ${opts}
+          </select>
+        </div>`;
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    } else if (currentV5Tab === 'awaken') {
+      let html = `<div style="margin-bottom:12px; padding:10px; background:#2a2019; border-radius:6px;">
+        전장에 배치된 <strong>Tier 7 무신급 장수</strong>에게 군량미 300🌾와 명성 50🎖을 주입하여 <strong>[★8 진·무쌍 신장]</strong>으로 초월 각성시킵니다. (공격력 2.2배 폭증 & 5타마다 전장 전체 묵룡 참격)
+      </div><div class="v5-grid">`;
+
+      let foundT7 = false;
+      if (Array.isArray(gameState.grid)) {
+        gameState.grid.forEach((cell, idx) => {
+          if (cell && cell.hero && (cell.hero.tier || 1) >= 7) {
+            foundT7 = true;
+            const isAwakened = gameState.awakenedSlots.includes(idx);
+            html += `<div class="v5-card ${isAwakened ? 'conquered' : ''}">
+              <div>
+                <div style="font-size:16px; font-weight:700; color:#f0c36d;">🐉 [타일 #${idx + 1}]${cell.hero.name}</div>
+                <div style="font-size:13px; color:#e0cda9; margin-top:4px;">현재 공격력: ${cell.hero.atk || 500} · 성급: ★${cell.stars || 1}</div>
+                <div style="font-size:12px; color:#ff9966; margin-top:4px;">소모: 300🌾 군량 + 50🎖 명성</div>
+              </div>
+              <button class="v5-action-btn" ${isAwakened ? 'disabled' : ''} onclick="window.awakenSlotV5(${idx})">
+                ${isAwakened ? '🐉 진·무쌍 각성 완료' : '⚡ 진·무쌍 각성 돌파'}
+              </button>
+            </div>`;
+          }
+        });
+      }
+      if (!foundT7) {
+        html += `<div class="v5-card" style="grid-column: 1 / -1; text-align:center; padding:24px;">
+          현재 전장 타일에 배치된 <strong>7성(Tier 7) 장수</strong>가 없습니다. 합체를 통해 7성 명장을 소환한 뒤 각성소를 여십시오!
+        </div>`;
+      }
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+  }
+
+  // Periodic Combat Hook for Lieutenant Bonus & Awakened AoE Strike
+  setInterval(function() {
+    if (typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) return;
+    ensureV5State();
+    updateV5Badges();
+
+    const provAtkBonus = window.getV5BuffMultiplier('atkPct');
+    gameState.grid.forEach((cell, idx) => {
+      if (cell && cell.hero) {
+        if (!cell._v5BaseAtk) cell._v5BaseAtk = cell.hero.atk || 100;
+        const lieutBonus = gameState.lieutenants[idx] ? 0.30 : 0;
+        const awakeMult = gameState.awakenedSlots.includes(idx) ? 2.2 : 1.0;
+        cell.hero.atk = Math.round(cell._v5BaseAtk * (1 + provAtkBonus + lieutBonus) * awakeMult);
+      }
+    });
+
+    // Awakened AoE Dragon Slash every tick on active enemies
+    if (gameState.awakenedSlots && gameState.awakenedSlots.length > 0 && Array.isArray(gameState.enemies)) {
+      gameState.enemies.forEach(en => {
+        if (en && typeof en.hp === 'number' && en.hp > 0) {
+          en.hp -= 18 * gameState.awakenedSlots.length;
+        }
+      });
+    }
+  }, 1500);
+
+  window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(updateV5Badges, 600);
+  });
+})();

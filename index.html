@@ -342,5 +342,152 @@
     </div>
   </div>
   <script src="game.js"></script>
+
+<!-- ================= PATCH v5.0: CONQUEST, AWAKENING & LIEUTENANTS ================= -->
+<style>
+  #v5-hud-bar {
+    position: fixed;
+    bottom: 78px;
+    right: 16px;
+    z-index: 950;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .v5-seal-btn {
+    background: linear-gradient(135deg, #2b1d14 0%, #17110d 100%);
+    color: #f4e8c1;
+    border: 2px solid #c89b3c;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.65), inset 0 0 8px rgba(200,155,60,0.25);
+    transition: transform 0.15s ease, border-color 0.2s ease;
+    text-align: left;
+  }
+  .v5-seal-btn:hover {
+    transform: translateY(-2px);
+    border-color: #ff4d4d;
+    color: #fff;
+  }
+  .v5-seal-btn .v5-badge {
+    background: #b82921;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-left: 6px;
+  }
+  #v5-conquest-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 6, 4, 0.85);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .v5-modal-box {
+    width: 100%;
+    max-width: 860px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: #1c1612;
+    border: 2px solid #c89b3c;
+    border-radius: 8px;
+    padding: 20px;
+    color: #e8dcc4;
+    font-family: 'Noto Serif KR', serif;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.9);
+  }
+  .v5-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #4a3a28;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .v5-tab-btn {
+    background: #2a211b;
+    color: #bfa882;
+    border: 1px solid #5c4730;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .v5-tab-btn.active {
+    background: #8f241e;
+    color: #fff;
+    border-color: #f0c36d;
+  }
+  .v5-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .v5-card {
+    background: #251d17;
+    border: 1px solid #57442e;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .v5-card.conquered {
+    border-color: #2e8b57;
+    background: linear-gradient(180deg, #1b2a20 0%, #1c1612 100%);
+  }
+  .v5-action-btn {
+    background: #9e2a22;
+    color: #fff;
+    border: 1px solid #e6b85c;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .v5-action-btn:disabled {
+    background: #3d352e;
+    color: #776b5d;
+    border-color: #4d433a;
+    cursor: not-allowed;
+  }
+</style>
+
+<div id="v5-hud-bar">
+  <button class="v5-seal-btn" onclick="window.openV5Modal('conquest')">
+    🗺 천하공성 <span id="v5-conquest-badge" class="v5-badge">0/8</span>
+  </button>
+  <button class="v5-seal-btn" onclick="window.openV5Modal('lieutenant')">
+    🛡 부장책봉 <span id="v5-lieut-badge" class="v5-badge">0/4</span>
+  </button>
+  <button class="v5-seal-btn" onclick="window.openV5Modal('awaken')">
+    🐉 진·각성 <span id="v5-awaken-badge" class="v5-badge">T7</span>
+  </button>
+</div>
+
+<div id="v5-conquest-modal">
+  <div class="v5-modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#f0c36d; font-size:20px;">📜 천하삼분 공성전 · 부장 연환 · 진 무쌍 각성 (v5.0)</h3>
+      <button class="v5-tab-btn" onclick="window.closeV5Modal()">✖ 닫기</button>
+    </div>
+    <div class="v5-tabs">
+      <button id="v5-tab-conquest" class="v5-tab-btn active" onclick="window.switchV5Tab('conquest')">🗺 천하 8주 공성도</button>
+      <button id="v5-tab-lieutenant" class="v5-tab-btn" onclick="window.switchV5Tab('lieutenant')">🛡 주·부장 연환 진법 (중앙 4석)</button>
+      <button id="v5-tab-awaken" class="v5-tab-btn" onclick="window.switchV5Tab('awaken')">🐉 7성 진·무쌍 각성소</button>
+    </div>
+    <div id="v5-modal-body"></div>
+  </div>
+</div>
+
 </body>
 </html>
