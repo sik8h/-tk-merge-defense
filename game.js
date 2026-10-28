@@ -2854,3 +2854,609 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 1000);
 })();
+
+
+// ================= PATCH v7.0: 120-HERO BESPOKE ILLUSTRATION & 3D APPEARANCE ENGINE =================
+(function() {
+  const HERO_PRESETS = {
+    '관우': { skin: '#c85a3c', helm: 'green_hood', beard: 'long5', eye: 'phoenix', weapon: 'guandao', mount: 'red_hare', cape: '#1e7e34', label: '녹포·청룡언월도·오绺장수' },
+    '장비': { skin: '#8d553a', helm: 'iron_band', beard: 'wild', eye: 'fierce', weapon: 'serpent_spear', mount: 'black_steed', cape: '#1b4f28', label: '환안호수·장팔사모·흑갑' },
+    '조운': { skin: '#f3d8c2', helm: 'silver_helm', beard: 'none', eye: 'heroic', weapon: 'silver_spear', mount: 'white_steed', cape: '#e8f4f8', label: '백마은창·청강검·백은갑' },
+    '제갈량': { skin: '#f5dec9', helm: 'wolong_crown', beard: 'scholar', eye: 'wise', weapon: 'feather_fan', mount: 'chariot', cape: '#d8e8e0', label: '와룡관·백우선·학창의' },
+    '유비': { skin: '#f0d4be', helm: 'emperor_crown', beard: 'imperial', eye: 'benevolent', weapon: 'twin_swords', mount: 'white_steed', cape: '#2ecc71', label: '제왕면류관·자웅일대검' },
+    '마초': { skin: '#f2d6bd', helm: 'lion_helm', beard: 'none', eye: 'fierce', weapon: 'tiger_spear', mount: 'white_steed', cape: '#ffffff', label: '백수사자투구·호두찬금창' },
+    '황충': { skin: '#dfb99b', helm: 'gold_helm', beard: 'white_long', eye: 'sharp', weapon: 'great_bow', mount: 'red_steed', cape: '#27ae60', label: '백발노익장·만석신궁' },
+    '위연': { skin: '#a35c3f', helm: 'horned_helm', beard: 'goatee', eye: 'fierce', weapon: 'double_glaive', mount: 'black_steed', cape: '#196f3d', label: '반골뿔투구·쌍날대도' },
+    '방통': { skin: '#bca085', helm: 'scholar_hood', beard: 'goatee', eye: 'wise', weapon: 'fire_staff', mount: 'none', cape: '#1e8449', label: '봉추두건·연환화계장' },
+    '강유': { skin: '#f0d2b8', helm: 'silver_plume', beard: 'none', eye: 'heroic', weapon: 'lightning_spear', mount: 'white_steed', cape: '#2ecc71', label: '기린금갑·녹침창' },
+    '조조': { skin: '#ead0b8', helm: 'emperor_crown', beard: 'imperial', eye: 'sharp', weapon: 'heaven_sword', mount: 'black_steed', cape: '#1f4e78', label: '위왕금관·의천검·절영' },
+    '하후돈': { skin: '#d8b496', helm: 'wei_plume', beard: 'short_rough', eye: 'eyepatch_L', weapon: 'heavy_blade', mount: 'black_steed', cape: '#2874a6', label: '좌안안대·칠성단도·창룡갑' },
+    '하후연': { skin: '#dfc0a4', helm: 'wei_helm', beard: 'mustache', eye: 'sharp', weapon: 'great_bow', mount: 'white_steed', cape: '#2e86c1', label: '질풍신궁·하후금갑' },
+    '장료': { skin: '#e2c4a8', helm: 'gold_wings', beard: 'mustache', eye: 'heroic', weapon: 'guandao', mount: 'black_steed', cape: '#21618c', label: '비익금투구·황룡구렴도' },
+    '전위': { skin: '#96583e', helm: 'iron_band', beard: 'wild', eye: 'fierce', weapon: 'twin_axes', mount: 'none', cape: '#1b4f72', label: '악래철갑·쌍철극' },
+    '허저': { skin: '#b97755', helm: 'tiger_hood', beard: 'wild', eye: 'fierce', weapon: 'heavy_mace', mount: 'none', cape: '#2874a6', label: '호치백호투구·구환대도' },
+    '사마의': { skin: '#e8ded5', helm: 'wolong_crown', beard: 'scholar', eye: 'cunning', weapon: 'feather_fan', mount: 'chariot', cape: '#154360', label: '낭고지상·흑우선·현수포' },
+    '곽가': { skin: '#f5e1d0', helm: 'scholar_hood', beard: 'none', eye: 'wise', weapon: 'jade_scroll', mount: 'none', cape: '#3498db', label: '귀재옥관·병법죽간' },
+    '손권': { skin: '#eccfb4', helm: 'emperor_crown', beard: 'jade_beard', eye: 'heroic', weapon: 'heaven_sword', mount: 'red_steed', cape: '#b03a2e', label: '벽안자수염·고정도·오왕관' },
+    '손책': { skin: '#efd2b8', helm: 'lion_helm', beard: 'none', eye: 'fierce', weapon: 'tiger_spear', mount: 'red_steed', cape: '#e74c3c', label: '소패왕적금투구·패왕창' },
+    '손견': { skin: '#d9b18e', helm: 'tiger_hood', beard: 'short_rough', eye: 'fierce', weapon: 'heavy_blade', mount: 'red_steed', cape: '#922b21', label: '강동맹호투구·고정도' },
+    '주유': { skin: '#f7e2ce', helm: 'crimson_cap', beard: 'none', eye: 'wise', weapon: 'heaven_sword', mount: 'white_steed', cape: '#cb4335', label: '미주랑적관·적벽화검' },
+    '육손': { skin: '#f5dfca', helm: 'scholar_hood', beard: 'none', eye: 'heroic', weapon: 'twin_swords', mount: 'white_steed', cape: '#e74c3c', label: '유생화공관·이릉화검' },
+    '감녕': { skin: '#c58762', helm: 'bell_band', beard: 'goatee', eye: 'fierce', weapon: 'chain_flail', mount: 'none', cape: '#c0392b', label: '방울비단두건·쌍철쇄' },
+    '태사자': { skin: '#e0be9f', helm: 'gold_wings', beard: 'mustache', eye: 'sharp', weapon: 'twin_axes', mount: 'red_steed', cape: '#a93226', label: '강동신궁·수극쌍창' },
+    '손상향': { skin: '#fce8df', helm: 'floral_crown', beard: 'female', eye: 'female', weapon: 'great_bow', mount: 'white_steed', cape: '#ff6b6b', label: '궁요희화관·일월쌍륜궁' },
+    '대교': { skin: '#fdf0e8', helm: 'floral_crown', beard: 'female', eye: 'female', weapon: 'feather_fan', mount: 'none', cape: '#f1948a', label: '강동절색·금비녀·비단선' },
+    '소교': { skin: '#fdf0e8', helm: 'floral_crown', beard: 'female', eye: 'female', weapon: 'feather_fan', mount: 'none', cape: '#ec7063', label: '국색천향·옥비녀·홍매선' },
+    '여포': { skin: '#e5be9e', helm: 'lu_bu_crown', beard: 'none', eye: 'fierce', weapon: 'sky_halberd', mount: 'red_hare', cape: '#8e44ad', label: '삼차자금관·장꿩깃·방천화극·적토마' },
+    '초선': { skin: '#fdf0ea', helm: 'floral_crown', beard: 'female', eye: 'female', weapon: 'twin_swords', mount: 'none', cape: '#d2b4de', label: '모란금비녀·폐월홍포·쌍무검' },
+    '장각': { skin: '#dfd3c3', helm: 'yellow_talisman', beard: 'white_long', eye: 'cunning', weapon: 'fire_staff', mount: 'none', cape: '#f1c40f', label: '태평황건부적·구절요술장' },
+    '동탁': { skin: '#b57c62', helm: 'emperor_crown', beard: 'wild', eye: 'cunning', weapon: 'heavy_blade', mount: 'black_steed', cape: '#5b2c6f', label: '폭군흑금관·칠성보도' },
+    '원소': { skin: '#f2dac4', helm: 'gold_wings', beard: 'imperial', eye: 'heroic', weapon: 'heaven_sword', mount: 'white_steed', cape: '#f4d03f', label: '사세삼공황금투구·사왕검' },
+    '맹획': { skin: '#9e5b3b', helm: 'nanman_horns', beard: 'wild', eye: 'fierce', weapon: 'heavy_mace', mount: 'elephant', cape: '#d35400', label: '남만왕뿔투구·전투코끼리' },
+    '축융': { skin: '#c47d56', helm: 'nanman_horns', beard: 'female', eye: 'female', weapon: 'twin_swords', mount: 'elephant', cape: '#e67e22', label: '불의여신깃털관·비도·전상' }
+  };
+
+  const HELM_LIST = ['wei_helm', 'silver_helm', 'gold_wings', 'iron_band', 'scholar_hood', 'tiger_hood', 'horned_helm', 'green_hood', 'crimson_cap', 'wolong_crown'];
+  const BEARD_LIST = ['none', 'mustache', 'goatee', 'short_rough', 'scholar', 'long5', 'wild', 'imperial'];
+  const WEAPON_LIST = ['guandao', 'serpent_spear', 'silver_spear', 'sky_halberd', 'heaven_sword', 'heavy_blade', 'twin_axes', 'feather_fan', 'great_bow', 'fire_staff'];
+  const SKIN_LIST = ['#f2d6bd', '#e5be9e', '#d8b292', '#c88f68', '#ebcfb6', '#dca884'];
+
+  function hashStr(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return Math.abs(h);
+  }
+
+  function cleanHeroBaseName(rawName) {
+    if (!rawName) return '무명장수';
+    const parts = String(rawName).trim().split(/\s+/);
+    return parts[parts.length - 1];
+  }
+
+  window.getHeroVisualDNA = function(hero) {
+    if (!hero) hero = { name: '장수', faction: 'shu', tier: 1 };
+    const baseName = cleanHeroBaseName(hero.name);
+    const fac = hero.faction || 'shu';
+    const tier = hero.tier || 1;
+    const h = hashStr(baseName + '_' + fac);
+
+    const facColors = {
+      shu: { main: '#1e7e34', accent: '#66ff99', ink: '#12381b', kor: '촉(蜀)' },
+      wei: { main: '#1f5a8c', accent: '#66ccff', ink: '#102a42', kor: '위(魏)' },
+      wu:  { main: '#9c2720', accent: '#ff8a80', ink: '#47120f', kor: '오(吳)' },
+      qun: { main: '#6c3483', accent: '#e0b0ff', ink: '#2e1538', kor: '군(群)' }
+    };
+    const fCol = facColors[fac] || facColors.shu;
+
+    if (HERO_PRESETS[baseName]) {
+      const p = HERO_PRESETS[baseName];
+      return {
+        baseName: baseName,
+        fullName: hero.name || baseName,
+        sealChar: baseName.charAt(0),
+        faction: fac,
+        facColor: fCol,
+        tier: tier,
+        skin: p.skin,
+        helm: p.helm,
+        beard: p.beard,
+        eye: p.eye,
+        weapon: p.weapon,
+        mount: p.mount,
+        cape: p.cape,
+        label: p.label,
+        seed: h
+      };
+    }
+
+    const isFemale = /교|희|녀|부인|초선|상향|축융|채문희|장춘화|황월영|관은병|여령기/.test(baseName);
+    const isScholar = /량|통|욱|가|유|의|숙|소|각|흠|윤|식|정|지의|법정|마속|미축|손건|간옹|진궁|이유|가후|정욱|순유|장소|장굉|고옹|제갈근|보즐|육항/.test(baseName);
+
+    const helm = isFemale ? 'floral_crown' : (isScholar ? (h % 2 === 0 ? 'wolong_crown' : 'scholar_hood') : HELM_LIST[h % HELM_LIST.length]);
+    const beard = isFemale ? 'female' : (isScholar ? 'scholar' : BEARD_LIST[(h >> 3) % BEARD_LIST.length]);
+    const weapon = isScholar ? (h % 2 === 0 ? 'feather_fan' : 'fire_staff') : WEAPON_LIST[(h >> 5) % WEAPON_LIST.length];
+    const mount = tier >= 6 ? (h % 2 === 0 ? 'white_steed' : 'red_steed') : (tier >= 4 && h % 3 === 0 ? 'black_steed' : 'none');
+
+    const helmKor = {
+      floral_crown: '화관비녀', wolong_crown: '학창관모', scholar_hood: '책사두건',
+      wei_helm: '철혈투구', silver_helm: '백은투구', gold_wings: '비익금관',
+      iron_band: '호법두건', tiger_hood: '맹호투구', horned_helm: '쌍각투구',
+      green_hood: '청록두건', crimson_cap: '적염관모'
+    }[helm] || '전술투구';
+
+    const weapKor = {
+      guandao: '언월대도', serpent_spear: '장창', silver_spear: '은창',
+      sky_halberd: '방천극', heaven_sword: '보검', heavy_blade: '참마도',
+      twin_axes: '쌍철극', feather_fan: '백우선', great_bow: '철태궁', fire_staff: '병법장'
+    }[weapon] || '신병';
+
+    return {
+      baseName: baseName,
+      fullName: hero.name || baseName,
+      sealChar: baseName.charAt(0),
+      faction: fac,
+      facColor: fCol,
+      tier: tier,
+      skin: isFemale ? '#fceae3' : SKIN_LIST[h % SKIN_LIST.length],
+      helm: helm,
+      beard: beard,
+      eye: isFemale ? 'female' : (h % 4 === 0 ? 'fierce' : 'heroic'),
+      weapon: weapon,
+      mount: mount,
+      cape: fCol.main,
+      label: helmKor + '·' + weapKor + (mount !== 'none' ? '·기승' : ''),
+      seed: h
+    };
+  };
+
+  // Memoized 2D Ink-Wash Portrait Generator (DataURL)
+  const portraitCache = {};
+
+  window.getHeroPortraitDataURL = function(hero) {
+    if (!hero) return '';
+    const dna = window.getHeroVisualDNA(hero);
+    const cacheKey = dna.baseName + '_' + dna.faction + '_' + dna.tier;
+    if (portraitCache[cacheKey]) return portraitCache[cacheKey];
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 160;
+    cvs.height = 200;
+    const ctx = cvs.getContext('2d');
+
+    // 1. Xuan Paper (한지 화선지) Background Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, 200);
+    bgGrad.addColorStop(0, '#efe4cc');
+    bgGrad.addColorStop(0.65, '#dccab0');
+    bgGrad.addColorStop(1, '#b89f7d');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 160, 200);
+
+    // 2. Faction Ink Halo (수묵 후광) & Mountain Silhouette
+    ctx.save();
+    ctx.fillStyle = dna.facColor.ink;
+    ctx.globalAlpha = 0.22;
+    ctx.beginPath();
+    ctx.arc(80, 92, 58, 0, Math.PI * 2);
+    ctx.fill();
+    if (dna.tier >= 6) {
+      ctx.strokeStyle = '#d4af37';
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(80, 92, 62, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 3. Background Signature Weapon Silhouette
+    ctx.save();
+    ctx.strokeStyle = '#2c221b';
+    ctx.lineWidth = 5;
+    if (dna.weapon === 'guandao' || dna.weapon === 'sky_halberd' || dna.weapon === 'serpent_spear' || dna.weapon === 'silver_spear') {
+      ctx.beginPath();
+      ctx.moveTo(22, 185);
+      ctx.lineTo(138, 20);
+      ctx.stroke();
+      ctx.fillStyle = dna.weapon === 'sky_halberd' ? '#d4af37' : '#85929e';
+      ctx.beginPath();
+      ctx.moveTo(138, 20);
+      ctx.quadraticCurveTo(155, 42, 120, 56);
+      ctx.lineTo(126, 36);
+      ctx.closePath();
+      ctx.fill();
+    } else if (dna.weapon === 'great_bow') {
+      ctx.strokeStyle = '#6e4720';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(95, 95, 56, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 4. Armor & Cape Shoulders
+    ctx.save();
+    ctx.fillStyle = dna.cape;
+    ctx.beginPath();
+    ctx.moveTo(20, 195);
+    ctx.quadraticCurveTo(80, 122, 140, 195);
+    ctx.closePath();
+    ctx.fill();
+
+    // Armor trim
+    ctx.strokeStyle = dna.tier >= 5 ? '#f5c542' : '#7f6a4d';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(42, 145);
+    ctx.lineTo(80, 175);
+    ctx.lineTo(118, 145);
+    ctx.stroke();
+    ctx.restore();
+
+    // 5. Head & Face Contour
+    ctx.save();
+    ctx.fillStyle = dna.skin;
+    ctx.strokeStyle = '#2b1d14';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(80, 96, dna.beard === 'female' ? 25 : 28, 33, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 6. Eyes, Eyebrows & Eyepatch (하후돈 안대 등)
+    ctx.fillStyle = '#1f1610';
+    if (dna.eye === 'eyepatch_L') {
+      // Left eye eyepatch strap
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(52, 82);
+      ctx.lineTo(108, 96);
+      ctx.stroke();
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(67, 92, 8, 0, Math.PI * 2);
+      ctx.fill();
+      // Right fierce eye
+      ctx.fillRect(89, 90, 9, 4);
+    } else if (dna.eye === 'female') {
+      // Delicate arched brows & rouge cheeks
+      ctx.strokeStyle = '#2e1d14';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.quadraticCurveTo(66, 82, 74, 86);
+      ctx.moveTo(86, 86);
+      ctx.quadraticCurveTo(94, 82, 100, 86);
+      ctx.stroke();
+      ctx.fillStyle = '#1a110b';
+      ctx.beginPath();
+      ctx.arc(68, 92, 3.2, 0, Math.PI * 2);
+      ctx.arc(92, 92, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(225, 85, 85, 0.35)';
+      ctx.beginPath();
+      ctx.arc(61, 102, 6, 0, Math.PI * 2);
+      ctx.arc(99, 102, 6, 0, Math.PI * 2);
+      ctx.fill();
+      // Red lips
+      ctx.fillStyle = '#c0392b';
+      ctx.beginPath();
+      ctx.arc(80, 114, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Heroic / Phoenix / Fierce male eyes & brows
+      ctx.strokeStyle = '#1a120c';
+      ctx.lineWidth = dna.eye === 'fierce' ? 3.5 : 2.5;
+      ctx.beginPath();
+      ctx.moveTo(58, dna.eye === 'fierce' ? 84 : 87);
+      ctx.lineTo(74, 90);
+      ctx.moveTo(102, dna.eye === 'fierce' ? 84 : 87);
+      ctx.lineTo(86, 90);
+      ctx.stroke();
+      ctx.fillStyle = '#1a120c';
+      ctx.fillRect(63, 91, 8, 3.5);
+      ctx.fillRect(89, 91, 8, 3.5);
+    }
+
+    // 7. Beard & Mustache Variations
+    const beardCol = dna.beard === 'white_long' ? '#e5e8e8' : '#1c1510';
+    ctx.fillStyle = beardCol;
+    ctx.strokeStyle = beardCol;
+    if (dna.beard === 'long5') {
+      // Guan Yu's iconic 5-strand long beard
+      ctx.lineWidth = 3;
+      for (let b = -2; b <= 2; b++) {
+        ctx.beginPath();
+        ctx.moveTo(80 + b * 5, 114);
+        ctx.quadraticCurveTo(80 + b * 8, 152, 80 + b * 6, 184);
+        ctx.stroke();
+      }
+    } else if (dna.beard === 'wild') {
+      // Zhang Fei / Dian Wei bristling full beard
+      ctx.beginPath();
+      for (let a = 0; a <= Math.PI; a += 0.22) {
+        const r = 30 + (a % 0.44 === 0 ? 7 : 0);
+        const bx = 80 + Math.cos(a) * r;
+        const by = 104 + Math.sin(a) * r;
+        if (a === 0) ctx.moveTo(bx, by);
+        else ctx.lineTo(bx, by);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else if (dna.beard === 'scholar' || dna.beard === 'imperial' || dna.beard === 'jade_beard') {
+      if (dna.beard === 'jade_beard') ctx.strokeStyle = '#5c3317';
+      ctx.lineWidth = 2.4;
+      [-6, 0, 6].forEach(dx => {
+        ctx.beginPath();
+        ctx.moveTo(80 + dx, 115);
+        ctx.quadraticCurveTo(80 + dx * 1.2, 140, 80 + dx, 158);
+        ctx.stroke();
+      });
+    } else if (dna.beard === 'mustache' || dna.beard === 'goatee' || dna.beard === 'short_rough') {
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(66, 112);
+      ctx.quadraticCurveTo(80, 108, 94, 112);
+      ctx.stroke();
+      if (dna.beard !== 'mustache') {
+        ctx.fillRect(76, 120, 8, 12);
+      }
+    }
+    ctx.restore();
+
+    // 8. Bespoke Headgear / Helmet / Plumes
+    ctx.save();
+    if (dna.helm === 'lu_bu_crown') {
+      // Lu Bu Golden Crown + Twin Long Pheasant Feathers
+      ctx.strokeStyle = '#c0392b';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(74, 58);
+      ctx.quadraticCurveTo(32, 12, 12, 8);
+      ctx.moveTo(86, 58);
+      ctx.quadraticCurveTo(128, 12, 148, 8);
+      ctx.stroke();
+      ctx.fillStyle = '#f1c40f';
+      ctx.fillRect(58, 54, 44, 16);
+    } else if (dna.helm === 'green_hood') {
+      ctx.fillStyle = '#196f3d';
+      ctx.beginPath();
+      ctx.arc(80, 74, 31, Math.PI, 0);
+      ctx.lineTo(114, 92);
+      ctx.lineTo(46, 92);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(68, 58, 24, 10);
+    } else if (dna.helm === 'wolong_crown' || dna.helm === 'scholar_hood') {
+      ctx.fillStyle = '#2c3e50';
+      ctx.fillRect(56, 44, 48, 28);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(66, 48, 28, 18);
+    } else if (dna.helm === 'emperor_crown') {
+      ctx.fillStyle = '#1c1612';
+      ctx.fillRect(46, 46, 68, 12);
+      ctx.fillStyle = '#f1c40f';
+      ctx.fillRect(56, 56, 48, 14);
+      // Hanging jade beads
+      ctx.strokeStyle = '#f5c542';
+      ctx.lineWidth = 1.5;
+      for (let x = 50; x <= 110; x += 10) {
+        ctx.beginPath();
+        ctx.moveTo(x, 58);
+        ctx.lineTo(x, 72);
+        ctx.stroke();
+      }
+    } else if (dna.helm === 'yellow_talisman') {
+      ctx.fillStyle = '#d4ac0d';
+      ctx.fillRect(50, 56, 60, 18);
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(73, 52, 14, 24);
+    } else if (dna.helm === 'floral_crown') {
+      ctx.fillStyle = '#1a110b';
+      ctx.beginPath();
+      ctx.arc(80, 76, 30, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(62, 58, 8, 0, Math.PI * 2);
+      ctx.arc(98, 58, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.arc(80, 54, 7, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Standard armored war helmet + crest
+      ctx.fillStyle = dna.helm === 'silver_helm' ? '#bdc3c7' : (dna.helm === 'gold_wings' ? '#d4af37' : '#34495e');
+      ctx.beginPath();
+      ctx.arc(80, 74, 30, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = dna.facColor.main;
+      ctx.beginPath();
+      ctx.moveTo(80, 34);
+      ctx.lineTo(68, 56);
+      ctx.lineTo(92, 56);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 9. Feather Fan in front for Strategists
+    if (dna.weapon === 'feather_fan') {
+      ctx.fillStyle = '#f8f9f9';
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(115, 152, 24, Math.PI * 0.85, Math.PI * 1.95);
+      ctx.lineTo(115, 152);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 10. Top-Left Cinnabar Seal Stamp (경면주사 성씨 낙관)
+    ctx.save();
+    ctx.fillStyle = '#b82921';
+    ctx.fillRect(10, 10, 28, 28);
+    ctx.strokeStyle = '#f7dc6f';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(12, 12, 24, 24);
+    ctx.fillStyle = '#fff8e7';
+    ctx.font = '900 17px "Noto Serif KR", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(dna.sealChar, 24, 24);
+    ctx.restore();
+
+    // 11. Bottom Nameplate & Tier Stars
+    ctx.fillStyle = 'rgba(18, 13, 10, 0.88)';
+    ctx.fillRect(0, 162, 160, 38);
+    ctx.strokeStyle = '#c89b3c';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 158, 198);
+
+    ctx.fillStyle = '#ffd54f';
+    ctx.font = '700 10px "Noto Serif KR", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('★'.repeat(Math.min(7, dna.tier)), 80, 173);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 13px "Noto Serif KR", serif';
+    ctx.fillText(dna.baseName, 80, 191);
+
+    const url = cvs.toDataURL('image/png');
+    portraitCache[cacheKey] = url;
+    return url;
+  };
+
+  // 3D Individual Mesh Customizer for Three.js Battlefield Units
+  window.applyHeroBespoke3DAppearance = function(cell) {
+    if (!cell || !cell.hero || !cell.mesh || typeof THREE === 'undefined') return;
+    const mesh = cell.mesh;
+    if (!mesh.userData) mesh.userData = {};
+    const dna = window.getHeroVisualDNA(cell.hero);
+    const sigKey = dna.baseName + '_' + dna.tier;
+    if (mesh.userData.v7AppearanceId === sigKey) return;
+
+    if (mesh.userData.v7CustomGroup) {
+      try { mesh.remove(mesh.userData.v7CustomGroup); } catch (e) {}
+    }
+
+    try {
+      const grp = new THREE.Group();
+
+      // 1. Bespoke 3D Back Banner (대장군 등깃발 - 4성 이상 또는 주요 명장)
+      if (dna.tier >= 4 || HERO_PRESETS[dna.baseName]) {
+        const poleGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.55, 6);
+        const poleMat = new THREE.MeshBasicMaterial({ color: 0xd4af37 });
+        const pole = new THREE.Mesh(poleGeo, poleMat);
+        pole.position.set(-0.28, 0.85, -0.25);
+        grp.add(pole);
+
+        const flagGeo = new THREE.PlaneGeometry(0.42, 0.55);
+        const flagCol = dna.faction === 'shu' ? 0x1e8449 : (dna.faction === 'wei' ? 0x2874a6 : (dna.faction === 'wu' ? 0xb03a2e : 0x7d3c98));
+        const flagMat = new THREE.MeshBasicMaterial({ color: flagCol, side: THREE.DoubleSide });
+        const flag = new THREE.Mesh(flagGeo, flagMat);
+        flag.position.set(-0.08, 1.32, -0.25);
+        grp.add(flag);
+      }
+
+      // 2. Bespoke 3D Headgear / Plume Attachment
+      if (dna.helm === 'lu_bu_crown') {
+        const plumeMat = new THREE.MeshBasicMaterial({ color: 0xe74c3c });
+        const pGeo = new THREE.CylinderGeometry(0.015, 0.04, 0.85, 6);
+        const pL = new THREE.Mesh(pGeo, plumeMat);
+        pL.position.set(-0.22, 1.65, -0.1);
+        pL.rotation.z = 0.45;
+        const pR = new THREE.Mesh(pGeo, plumeMat);
+        pR.position.set(0.22, 1.65, -0.1);
+        pR.rotation.z = -0.45;
+        grp.add(pL);
+        grp.add(pR);
+      } else if (dna.helm === 'emperor_crown' || dna.helm === 'gold_wings') {
+        const crownGeo = new THREE.CylinderGeometry(0.22, 0.18, 0.22, 8);
+        const crownMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+        const crown = new THREE.Mesh(crownGeo, crownMat);
+        crown.position.set(0, 1.42, 0);
+        grp.add(crown);
+      }
+
+      // 3. Bespoke 3D Signature Weapon Attachment
+      if (dna.weapon === 'guandao' || dna.weapon === 'sky_halberd') {
+        const bladeGeo = new THREE.ConeGeometry(0.18, 0.48, 4);
+        const bladeMat = new THREE.MeshBasicMaterial({ color: dna.weapon === 'sky_halberd' ? 0xffd700 : 0x5dade2 });
+        const blade = new THREE.Mesh(bladeGeo, bladeMat);
+        blade.position.set(0.42, 1.35, 0.18);
+        grp.add(blade);
+      } else if (dna.weapon === 'feather_fan') {
+        const fanGeo = new THREE.CircleGeometry(0.24, 12);
+        const fanMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        const fan = new THREE.Mesh(fanGeo, fanMat);
+        fan.position.set(0.38, 0.95, 0.28);
+        grp.add(fan);
+      }
+
+      // 4. Bespoke 3D Mount Pedestal Ring (적토마/백마/남만코끼리 식별 조형)
+      if (dna.mount !== 'none') {
+        const mountColors = { red_hare: 0xd32f2f, red_steed: 0xc0392b, white_steed: 0xf4f6f7, black_steed: 0x2c3e50, elephant: 0x8d6e63, chariot: 0xd4af37 };
+        const mGeo = new THREE.TorusGeometry(0.46, 0.06, 8, 20);
+        const mMat = new THREE.MeshBasicMaterial({ color: mountColors[dna.mount] || 0xd4af37 });
+        const mRing = new THREE.Mesh(mGeo, mMat);
+        mRing.rotation.x = Math.PI / 2;
+        mRing.position.y = 0.12;
+        grp.add(mRing);
+      }
+
+      mesh.add(grp);
+      mesh.userData.v7CustomGroup = grp;
+      mesh.userData.v7AppearanceId = sigKey;
+    } catch (e) {}
+  };
+})();
+
+// ================= PATCH v7.0: BATTLEFIELD PORTRAIT CARD & MODAL AVATAR INJECTOR =================
+(function() {
+  function isLobbyOpen() {
+    const overlay = document.getElementById('main-menu-overlay');
+    if (overlay) return !overlay.classList.contains('hidden') && getComputedStyle(overlay).display !== 'none';
+    return false;
+  }
+
+  function updateSelectedHeroPortraitCard() {
+    const card = document.getElementById('v7-hero-portrait-card');
+    if (!card) return;
+    if (isLobbyOpen() || typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) {
+      card.style.display = 'none';
+      return;
+    }
+
+    // Find currently selected cell or highest-tier active hero on grid
+    let targetCell = null;
+    if (typeof selectedCellIndex === 'number' && selectedCellIndex >= 0 && gameState.grid[selectedCellIndex] && gameState.grid[selectedCellIndex].hero) {
+      targetCell = gameState.grid[selectedCellIndex];
+    } else if (typeof gameState.selectedSlot === 'number' && gameState.grid[gameState.selectedSlot] && gameState.grid[gameState.selectedSlot].hero) {
+      targetCell = gameState.grid[gameState.selectedSlot];
+    } else {
+      gameState.grid.forEach(c => {
+        if (c && c.hero) {
+          if (!targetCell || (c.hero.tier || 1) > (targetCell.hero.tier || 1)) targetCell = c;
+        }
+      });
+    }
+
+    if (!targetCell || !targetCell.hero) {
+      card.style.display = 'none';
+      return;
+    }
+
+    const dna = window.getHeroVisualDNA(targetCell.hero);
+    const imgEl = document.getElementById('v7-portrait-img');
+    const nameEl = document.getElementById('v7-portrait-name');
+    const subEl = document.getElementById('v7-portrait-sub');
+    const tagsEl = document.getElementById('v7-portrait-tags');
+
+    if (imgEl) imgEl.src = window.getHeroPortraitDataURL(targetCell.hero);
+    if (nameEl) nameEl.textContent = dna.fullName + ' ★' + (targetCell.stars || 1);
+    if (subEl) subEl.textContent = dna.facColor.kor + ' · ' + dna.tier + '성 명장 · 공격력 ' + (targetCell.hero.atk || 100);
+    if (tagsEl) {
+      tagsEl.innerHTML = dna.label.split('·').map(t => `<span class="v7-app-tag">${t}</span>`).join('');
+    }
+    card.style.display = 'flex';
+  }
+
+  setInterval(function() {
+    if (typeof gameState !== 'undefined' && Array.isArray(gameState.grid)) {
+      gameState.grid.forEach(cell => {
+        if (cell && cell.hero) {
+          window.applyHeroBespoke3DAppearance(cell);
+        }
+      });
+    }
+    updateSelectedHeroPortraitCard();
+  }, 900);
+})();
