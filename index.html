@@ -747,5 +747,129 @@
   </div>
 </div>
 
+
+<!-- ================= PATCH v8.0: UI ANTI-OVERLAP, INK-WASH DESIGN & HERO DETAIL OVERHAUL ================= -->
+<style>
+  /* 1. High-Quality Xuan Paper (한지 수묵화) Aesthetic & Ink Borders */
+  :root {
+    --v8-paper-bg: rgba(238, 228, 205, 0.94);
+    --v8-ink-dark: rgba(20, 16, 13, 0.92);
+    --v8-gold: #c89b3c;
+    --v8-cinnabar: #b82921;
+  }
+
+  /* Fix Top Resource & Synergy Bar spacing on mobile so nothing overlaps */
+  #v5-hud-bar {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 188px !important;
+    right: 8px !important;
+    left: auto !important;
+    display: flex;
+    flex-direction: column !important;
+    gap: 4px !important;
+    z-index: 390 !important;
+    transform: scale(0.88);
+    transform-origin: bottom right;
+  }
+
+  /* Move Combo Banner to Top-Center below stage title so it NEVER covers 좌성루 제갈연노 */
+  #v6-combo-banner {
+    top: 158px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(142, 28, 22, 0.92) 20%, rgba(24, 17, 13, 0.95) 80%, transparent 100%) !important;
+    border-left: none !important;
+    border-bottom: 2px solid #f5c542 !important;
+    padding: 3px 20px !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+    z-index: 380 !important;
+  }
+
+  /* Reposition Tactical Dock neatly above recruitment buttons without covering #hero-info */
+  #v6-tactical-dock {
+    bottom: 64px !important;
+    width: min(96vw, 540px) !important;
+    padding: 5px 8px !important;
+    gap: 4px !important;
+    background: linear-gradient(180deg, rgba(24, 19, 15, 0.94) 0%, rgba(14, 11, 8, 0.97) 100%) !important;
+    border: 1px solid rgba(200, 155, 60, 0.75) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.85) !important;
+    z-index: 400 !important;
+  }
+
+  /* Elevate #hero-info (Selected Hero Panel) ABOVE the tactical dock with Ink-Wash Scroll styling */
+  #hero-info, .hero-info-panel, [id*="hero-info"] {
+    position: fixed !important;
+    bottom: 142px !important;
+    left: 8px !important;
+    right: auto !important;
+    width: min(72vw, 310px) !important;
+    z-index: 430 !important;
+    background: linear-gradient(135deg, rgba(242, 232, 212, 0.96) 0%, rgba(222, 206, 178, 0.96) 100%) !important;
+    color: #1c140d !important;
+    border: 2px solid #3a2a1d !important;
+    border-left: 6px solid #b82921 !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.8) !important;
+    font-family: 'Noto Serif KR', serif !important;
+    pointer-events: none !important;
+  }
+  #hero-info *, .hero-info-panel * {
+    color: #1c140d !important;
+    text-shadow: none !important;
+  }
+
+  /* Hide duplicate v7 card if #hero-info is integrated with Ink Portrait */
+  #v7-hero-portrait-card {
+    bottom: 142px !important;
+    left: 8px !important;
+    max-width: 295px !important;
+    padding: 6px 9px !important;
+    background: linear-gradient(135deg, rgba(244, 235, 215, 0.96) 0%, rgba(224, 208, 180, 0.96) 100%) !important;
+    color: #1a120b !important;
+    border: 2px solid #2e2015 !important;
+    border-left: 6px solid #b82921 !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.75) !important;
+    z-index: 435 !important;
+    pointer-events: none !important;
+  }
+  #v7-portrait-name {
+    color: #8e1c16 !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+  #v7-portrait-sub {
+    color: #2c2016 !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+  }
+  .v7-app-tag {
+    background: rgba(44, 32, 22, 0.12) !important;
+    border: 1px solid #5c4328 !important;
+    color: #2b1d12 !important;
+    font-weight: 700 !important;
+  }
+  #v7-portrait-img {
+    width: 54px !important;
+    height: 68px !important;
+    border: 1.5px solid #2e2015 !important;
+  }
+
+  /* Ink-Wash Mountain & Xuan Paper Vignette Overlay on 3D Battlefield */
+  #v8-ink-scroll-frame {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 310;
+    display: none;
+    box-shadow: inset 0 0 45px rgba(12, 9, 6, 0.85), inset 0 0 12px rgba(200, 155, 60, 0.25);
+  }
+</style>
+
+<div id="v8-ink-scroll-frame"></div>
+
 </body>
 </html>

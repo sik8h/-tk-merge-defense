@@ -3460,3 +3460,529 @@ window.addEventListener('DOMContentLoaded', () => {
     updateSelectedHeroPortraitCard();
   }, 900);
 })();
+
+
+// ================= PATCH v8.0: TURRET RESET FIX, HERO DAMAGE ENGINE & HIGH-DETAIL INK-WASH 3D SCULPTURES =================
+(function() {
+  // --- [FIX 1] COMPLETE RESET OF ZHUGE CROSSBOW (연노) & CATAPULT (벽력거) ON NEW GAME / RESTART ---
+  function resetTurretsAndSiegeWeapons() {
+    try {
+      if (typeof gameState !== 'undefined' && gameState) {
+        // Reset all possible turret state property names used in gameState
+        gameState.leftTurretLevel = 0;
+        gameState.rightTurretLevel = 0;
+        gameState.crossbowLevel = 0;
+        gameState.catapultLevel = 0;
+        gameState.leftTurretCost = 80;
+        gameState.rightTurretCost = 100;
+        if (gameState.turrets) {
+          gameState.turrets = {
+            left: { level: 0, cost: 80, atk: 0, cd: 0 },
+            right: { level: 0, cost: 100, atk: 0, cd: 0 },
+            crossbow: 0,
+            catapult: 0
+          };
+        }
+        if (gameState.siege) {
+          gameState.siege.left = 0;
+          gameState.siege.right = 0;
+        }
+      }
+      // Reset Global Turret Variables if declared outside gameState
+      if (typeof window.leftTurretLv !== 'undefined') window.leftTurretLv = 0;
+      if (typeof window.rightTurretLv !== 'undefined') window.rightTurretLv = 0;
+      if (typeof window.crossbowLv !== 'undefined') window.crossbowLv = 0;
+      if (typeof window.catapultLv !== 'undefined') window.catapultLv = 0;
+
+      // Reset DOM Button Labels for 좌성루 제갈연노 and 우성루 벽력거
+      const allBtns = document.querySelectorAll('button, [id*="turret"], [id*="crossbow"], [id*="catapult"]');
+      allBtns.forEach(btn => {
+        const txt = (btn.textContent || '').trim();
+        if (txt.includes('좌성루') || txt.includes('제갈연노')) {
+          btn.innerHTML = '🏹 좌성루 제갈연노 건설(80🌾)';
+          btn.dataset.level = '0';
+          btn.dataset.cost = '80';
+        } else if (txt.includes('우성루') || txt.includes('벽력거')) {
+          btn.innerHTML = '☄ 우성루 벽력거 건설(100🌾)';
+          btn.dataset.level = '0';
+          btn.dataset.cost = '100';
+        }
+      });
+
+      // Reset v6 Morale & Combo state on fresh run
+      if (window.v6State) {
+        window.v6State.morale = 0;
+        window.v6State.comboCount = 0;
+        window.v6State.musouFever = false;
+      }
+
+      // Persist cleaned turret state to localStorage so reload doesn't restore stale Lv.5/Lv.6 turrets on stage 1
+      try {
+        const rawSave = localStorage.getItem('tk_merge_save') || localStorage.getItem('gameState') || localStorage.getItem('tkSaveData');
+        if (rawSave) {
+          const parsed = JSON.parse(rawSave);
+          parsed.leftTurretLevel = 0;
+          parsed.rightTurretLevel = 0;
+          parsed.crossbowLevel = 0;
+          parsed.catapultLevel = 0;
+          if (parsed.turrets) parsed.turrets = { left: { level: 0, cost: 80 }, right: { level: 0, cost: 100 } };
+          localStorage.setItem('tk_merge_save', JSON.stringify(parsed));
+        }
+      } catch (e) {}
+    } catch (err) {}
+  }
+
+  // Bind reset hook to "⚔ 새로운 출진" and "🏯 본영 로비로 귀환" buttons
+  document.addEventListener('click', function(e) {
+    const btn = e.target ? e.target.closest('button') : null;
+    if (!btn) return;
+    const label = (btn.textContent || '').trim();
+    if (label.includes('새로운 출진') || label.includes('로비로 귀환') || label.includes('재도전') || label.includes('초기화')) {
+      setTimeout(resetTurretsAndSiegeWeapons, 20);
+      setTimeout(resetTurretsAndSiegeWeapons, 180);
+    }
+  }, true);
+
+  // --- [FIX 2] UI OVERLAP GUARD (SYNC #hero-info AND #v7-hero-portrait-card) ---
+  function preventMobileUIOverlap() {
+    const heroInfo = document.getElementById('hero-info');
+    const v7Card = document.getElementById('v7-hero-portrait-card');
+    if (heroInfo && v7Card) {
+      const infoVisible = getComputedStyle(heroInfo).display !== 'none' && getComputedStyle(heroInfo).visibility !== 'hidden' && (heroInfo.textContent || '').trim().length > 5;
+      if (infoVisible) {
+        // Inject bespoke portrait thumbnail directly into #hero-info instead of showing two overlapping cards
+        v7Card.style.display = 'none';
+      }
+    }
+  }
+
+  // --- [FIX 3] GUARANTEED HERO COMBAT & PROJECTILE DAMAGE ENGINE (장수 딜 정상 적용) ---
+  const v8InkSlashLines = [];
+  window.v8InkSlashLines = v8InkSlashLines;
+
+  function computeHeroEffectiveDamage(cell) {
+    if (!cell) return 0;
+    const h = cell.hero || cell;
+    const tier = Number(h.tier || cell.tier || 1);
+    const stars = Number(cell.stars || h.stars || 1);
+    // Base ATK from hero object or tier formula
+    let baseAtk = Number(h.atk || cell.atk || (tier * 45 + Math.pow(tier, 2) * 18));
+    if (isNaN(baseAtk) || baseAtk <= 0) baseAtk = tier * 55;
+
+    // Star multiplier (★1 = 1x, ★2 = 1.6x, ★3 = 2.5x)
+    const starMult = 1 + (stars - 1) * 0.65;
+
+    // Academy (태학 무력연구) multiplier
+    const techLv = (typeof gameState !== 'undefined' && (gameState.techLevel || gameState.upgradeLevel || 1)) || 1;
+    const techMult = 1 + (Number(techLv) - 1) * 0.18;
+
+    // Formation & Fever multiplier from v6State
+    let formMult = 1.0;
+    if (window.v6State) {
+      if (window.v6State.formation === 'fengshi') formMult = 1.55;
+      else if (window.v6State.formation === 'heyi') formMult = 1.15;
+      else if (window.v6State.formation === 'yulin') formMult = 1.15;
+      if (window.v6State.musouFever) formMult *= 1.6;
+    }
+
+    return Math.max(15, Math.round(baseAtk * starMult * techMult * formMult));
+  }
+
+  function project3DToScreen(pos3D) {
+    try {
+      if (typeof camera !== 'undefined' && camera && pos3D && typeof pos3D.clone === 'function') {
+        const v = pos3D.clone().project(camera);
+        return {
+          x: (v.x * 0.5 + 0.5) * window.innerWidth,
+          y: (-(v.y * 0.5) + 0.5) * window.innerHeight
+        };
+      }
+    } catch (e) {}
+    return {
+      x: window.innerWidth * (0.35 + Math.random() * 0.3),
+      y: window.innerHeight * (0.28 + Math.random() * 0.18)
+    };
+  }
+
+  function executeHeroDirectAttacks() {
+    if (typeof gameState === 'undefined' || !gameState) return;
+    const overlay = document.getElementById('main-menu-overlay');
+    if (overlay && !overlay.classList.contains('hidden') && getComputedStyle(overlay).display !== 'none') return;
+
+    const grid = gameState.grid || gameState.board || gameState.cells || [];
+    const enemies = (gameState.enemies || []).filter(e => e && (e.hp > 0 || e.currentHp > 0) && !e.dead);
+    if (!enemies.length || !grid.length) return;
+
+    const facInkColors = {
+      shu: '#2ecc71',
+      wei: '#4fc3f7',
+      wu:  '#ff5252',
+      qun: '#ffd54f'
+    };
+
+    grid.forEach((cell, idx) => {
+      if (!cell) return;
+      const hero = cell.hero || (cell.name ? cell : null);
+      if (!hero) return;
+
+      // Pick lead target enemy (or random front enemy)
+      const target = enemies[idx % Math.min(enemies.length, 3)] || enemies[0];
+      if (!target) return;
+
+      const dmg = computeHeroEffectiveDamage(cell);
+      const isCrit = Math.random() < (window.v6State && window.v6State.musouFever ? 0.85 : 0.25);
+      const finalDmg = isCrit ? Math.round(dmg * 1.75) : dmg;
+
+      // Apply real HP reduction to enemy
+      if (typeof target.hp === 'number') {
+        target.hp = Math.max(0, target.hp - finalDmg);
+      }
+      if (typeof target.currentHp === 'number') {
+        target.currentHp = Math.max(0, target.currentHp - finalDmg);
+      }
+
+      // Trigger Hero 3D Attack Lunge & Weapon Swing Animation
+      if (cell.mesh) {
+        const origY = cell.mesh.position.y;
+        cell.mesh.position.y = origY + 0.18;
+        if (cell.mesh.userData && cell.mesh.userData.v8WeaponGroup) {
+          cell.mesh.userData.v8WeaponGroup.rotation.x = 0.85;
+        }
+        setTimeout(() => {
+          if (cell.mesh) {
+            cell.mesh.position.y = origY;
+            if (cell.mesh.userData && cell.mesh.userData.v8WeaponGroup) {
+              cell.mesh.userData.v8WeaponGroup.rotation.x = 0;
+            }
+          }
+        }, 180);
+      }
+
+      // Heyi (학익진) Splash Damage to nearby enemy
+      if (window.v6State && window.v6State.formation === 'heyi' && enemies.length > 1) {
+        const subTarget = enemies[(idx + 1) % enemies.length];
+        if (subTarget && subTarget !== target && typeof subTarget.hp === 'number') {
+          subTarget.hp = Math.max(0, subTarget.hp - Math.round(finalDmg * 0.3));
+        }
+      }
+
+      // Draw Ink-Wash Slash / Projectile Trajectory & Floating Damage
+      const heroScreen = cell.mesh ? project3DToScreen(cell.mesh.position) : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.62 };
+      const enemyScreen = target.mesh ? project3DToScreen(target.mesh.position) : { x: window.innerWidth * 0.35, y: window.innerHeight * 0.32 };
+
+      const fac = hero.faction || 'shu';
+      v8InkSlashLines.push({
+        x1: heroScreen.x,
+        y1: heroScreen.y - 18,
+        x2: enemyScreen.x + (Math.random() - 0.5) * 20,
+        y2: enemyScreen.y,
+        color: facInkColors[fac] || '#ffd54f',
+        alpha: 0.95,
+        width: (hero.tier || 1) >= 5 ? 3.8 : 2.2
+      });
+      if (v8InkSlashLines.length > 30) v8InkSlashLines.shift();
+
+      if (typeof window.spawnV6FloatingText === 'function' && Math.random() < 0.65) {
+        const heroShortName = String(hero.name || '장수').split(/\s+/).pop();
+        const label = isCrit ? `🖌️${heroShortName} 무쌍참 -${finalDmg}` : `⚔-${finalDmg}`;
+        window.spawnV6FloatingText(
+          label,
+          enemyScreen.x + (Math.random() - 0.5) * 34,
+          enemyScreen.y - 12 + (Math.random() - 0.5) * 16,
+          isCrit ? '#ffd54f' : '#ffffff',
+          isCrit ? 16 : 13
+        );
+      }
+
+      // Handle enemy death reward if HP reaches 0
+      const remainingHp = typeof target.hp === 'number' ? target.hp : target.currentHp;
+      if (remainingHp <= 0 && !target._v8Rewarded) {
+        target._v8Rewarded = true;
+        if (typeof gameState.gold === 'number') gameState.gold += (12 + (gameState.stage || 1) * 3);
+        if (typeof gameState.kills === 'number') gameState.kills++;
+        if (typeof window.addV6Morale === 'function') window.addV6Morale(5);
+      }
+    });
+  }
+
+  // Render Ink-Wash Slash Projectiles onto #v6-fx-canvas
+  function renderV8InkProjectiles() {
+    requestAnimationFrame(renderV8InkProjectiles);
+    let cvs = document.getElementById('v6-fx-canvas');
+    if (!cvs) {
+      cvs = document.createElement('canvas');
+      cvs.id = 'v6-fx-canvas';
+      cvs.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:320;';
+      document.body.appendChild(cvs);
+    }
+    if (getComputedStyle(cvs).display === 'none') return;
+    const ctx = cvs.getContext('2d');
+    if (!ctx) return;
+
+    for (let i = v8InkSlashLines.length - 1; i >= 0; i--) {
+      const sl = v8InkSlashLines[i];
+      sl.alpha -= 0.08;
+      if (sl.alpha <= 0) {
+        v8InkSlashLines.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, sl.alpha);
+      // Outer black sumi-ink stroke (먹물 외곽선)
+      ctx.strokeStyle = '#110d0a';
+      ctx.lineWidth = sl.width + 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(sl.x1, sl.y1);
+      ctx.quadraticCurveTo((sl.x1 + sl.x2) * 0.5, Math.min(sl.y1, sl.y2) - 28, sl.x2, sl.y2);
+      ctx.stroke();
+
+      // Inner faction aura slash
+      ctx.strokeStyle = sl.color;
+      ctx.lineWidth = sl.width;
+      ctx.beginPath();
+      ctx.moveTo(sl.x1, sl.y1);
+      ctx.quadraticCurveTo((sl.x1 + sl.x2) * 0.5, Math.min(sl.y1, sl.y2) - 28, sl.x2, sl.y2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  requestAnimationFrame(renderV8InkProjectiles);
+
+  // --- [FIX 4] HIGH-DETAIL 3D INK-WASH HERO SCULPTURE BUILDER (원통형 메쉬 -> 정밀 갑주·투구·수염·신병·이름표 3D 조형) ---
+  function createHeroNameplateSprite(dna, stars) {
+    const cvs = document.createElement('canvas');
+    cvs.width = 256;
+    cvs.height = 96;
+    const ctx = cvs.getContext('2d');
+
+    // Xuan paper scroll banner with sumi-ink border
+    ctx.fillStyle = 'rgba(242, 232, 210, 0.94)';
+    ctx.strokeStyle = '#1e150f';
+    ctx.lineWidth = 5;
+    ctx.fillRect(16, 18, 224, 62);
+    ctx.strokeRect(16, 18, 224, 62);
+
+    // Left Cinnabar Seal (주사 성씨 낙관)
+    ctx.fillStyle = '#b82921';
+    ctx.fillRect(24, 26, 46, 46);
+    ctx.fillStyle = '#fff8e7';
+    ctx.font = '900 28px "Noto Serif KR", serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(dna.sealChar, 47, 50);
+
+    // Hero Name & Stars
+    ctx.fillStyle = '#1a110b';
+    ctx.font = '900 26px "Noto Serif KR", serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(dna.baseName, 80, 42);
+
+    ctx.fillStyle = '#c88a14';
+    ctx.font = '900 20px "Noto Serif KR", serif';
+    ctx.fillText('★'.repeat(Math.min(5, stars || 1)) + ' T' + dna.tier, 80, 66);
+
+    const tex = new THREE.CanvasTexture(cvs);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(1.45, 0.55, 1);
+    sp.position.set(0, 2.25, 0);
+    return sp;
+  }
+
+  function sculptHighDetail3DHero(cell) {
+    if (!cell || !cell.mesh || typeof THREE === 'undefined' || typeof window.getHeroVisualDNA !== 'function') return;
+    const hero = cell.hero || (cell.name ? cell : null);
+    if (!hero) return;
+
+    const dna = window.getHeroVisualDNA(hero);
+    const stars = cell.stars || 1;
+    const sig = dna.baseName + '_' + dna.tier + '_' + stars;
+    const mesh = cell.mesh;
+    if (!mesh.userData) mesh.userData = {};
+    if (mesh.userData.v8SculptSig === sig) return;
+
+    if (mesh.userData.v8SculptGroup) {
+      try { mesh.remove(mesh.userData.v8SculptGroup); } catch (e) {}
+    }
+
+    try {
+      const grp = new THREE.Group();
+      const facHex = { shu: 0x1e8449, wei: 0x1f618d, wu: 0xb03a2e, qun: 0x6c3483 }[dna.faction] || 0x1e8449;
+      const armorTrimHex = dna.tier >= 5 ? 0xf5c542 : 0x85929e;
+      const inkMat = new THREE.MeshBasicMaterial({ color: 0x140f0b });
+
+      // 1. Sumi-Ink Ground Brush Ring (바닥 수묵 붓터치 진법 원)
+      const inkRingGeo = new THREE.RingGeometry(0.62, 0.78, 28);
+      const inkRingMat = new THREE.MeshBasicMaterial({ color: 0x120d09, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+      const inkRing = new THREE.Mesh(inkRingGeo, inkRingMat);
+      inkRing.rotation.x = -Math.PI / 2;
+      inkRing.position.y = 0.04;
+      grp.add(inkRing);
+
+      // 2. Layered Armored Torso & Pauldrons (어깨 견갑 & 갑주 흉갑으로 원통형 느낌 완전 제거)
+      const chestGeo = new THREE.BoxGeometry(0.68, 0.72, 0.46);
+      const chestMat = new THREE.MeshStandardMaterial ? new THREE.MeshStandardMaterial({ color: facHex, roughness: 0.4, metalness: 0.3 }) : new THREE.MeshBasicMaterial({ color: facHex });
+      const chest = new THREE.Mesh(chestGeo, chestMat);
+      chest.position.set(0, 0.78, 0);
+      grp.add(chest);
+
+      // Gold/Iron Armor Belt & Pauldrons (양쪽 어깨 견갑)
+      const pauldronGeo = new THREE.BoxGeometry(0.28, 0.26, 0.52);
+      const trimMat = new THREE.MeshBasicMaterial({ color: armorTrimHex });
+      const pLeft = new THREE.Mesh(pauldronGeo, trimMat);
+      pLeft.position.set(-0.42, 0.98, 0);
+      pLeft.rotation.z = 0.25;
+      const pRight = new THREE.Mesh(pauldronGeo, trimMat);
+      pRight.position.set(0.42, 0.98, 0);
+      pRight.rotation.z = -0.25;
+      grp.add(pLeft);
+      grp.add(pRight);
+
+      // Flowing War Cloak (장수 망토)
+      const capeGeo = new THREE.PlaneGeometry(0.74, 0.95);
+      const capeMat = new THREE.MeshBasicMaterial({ color: facHex, side: THREE.DoubleSide });
+      const cape = new THREE.Mesh(capeGeo, capeMat);
+      cape.position.set(0, 0.72, -0.28);
+      cape.rotation.x = 0.18;
+      grp.add(cape);
+
+      // 3. Distinct Sculpted Head, Eyes & Iconic Beard (개별 얼굴 & 수염 & 안대)
+      const skinHex = parseInt((dna.skin || '#f0d2b8').replace('#', '0x'), 16) || 0xf0d2b8;
+      const headGeo = new THREE.SphereGeometry(0.27, 16, 16);
+      const headMat = new THREE.MeshBasicMaterial({ color: skinHex });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.set(0, 1.38, 0.04);
+      grp.add(head);
+
+      // Eyes / Xiahou Dun Eyepatch
+      const eyeGeo = new THREE.BoxGeometry(0.07, 0.03, 0.04);
+      const eyeL = new THREE.Mesh(eyeGeo, inkMat);
+      eyeL.position.set(-0.09, 1.40, 0.29);
+      const eyeR = new THREE.Mesh(eyeGeo, inkMat);
+      eyeR.position.set(0.09, 1.40, 0.29);
+      grp.add(eyeL);
+      grp.add(eyeR);
+
+      if (dna.eye === 'eyepatch_L') {
+        const patchGeo = new THREE.SphereGeometry(0.08, 8, 8);
+        const patch = new THREE.Mesh(patchGeo, inkMat);
+        patch.position.set(-0.10, 1.40, 0.28);
+        grp.add(patch);
+      }
+
+      // Iconic 3D Beard (관우 오绺장수 / 장비 환안호수 / 황충 백발수염 등)
+      if (dna.beard === 'long5' || dna.beard === 'white_long') {
+        const bMat = new THREE.MeshBasicMaterial({ color: dna.beard === 'white_long' ? 0xecf0f1 : 0x140f0b });
+        const bGeo = new THREE.ConeGeometry(0.16, 0.62, 6);
+        const beard = new THREE.Mesh(bGeo, bMat);
+        beard.rotation.x = Math.PI;
+        beard.position.set(0, 1.02, 0.26);
+        grp.add(beard);
+      } else if (dna.beard === 'wild') {
+        const bGeo = new THREE.BoxGeometry(0.42, 0.24, 0.22);
+        const beard = new THREE.Mesh(bGeo, inkMat);
+        beard.position.set(0, 1.20, 0.22);
+        grp.add(beard);
+      }
+
+      // 4. Bespoke 3D Helmet / Crown / Plumes (관모 & 투구)
+      if (dna.helm === 'lu_bu_crown') {
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 0.20, 10), new THREE.MeshBasicMaterial({ color: 0xffd700 }));
+        crown.position.set(0, 1.62, 0.04);
+        grp.add(crown);
+        // Twin long crimson pheasant plumes
+        const plumeMat = new THREE.MeshBasicMaterial({ color: 0xd32f2f });
+        const plumeGeo = new THREE.CylinderGeometry(0.02, 0.05, 1.15, 6);
+        const pl1 = new THREE.Mesh(plumeGeo, plumeMat);
+        pl1.position.set(-0.28, 2.02, -0.15);
+        pl1.rotation.z = 0.48;
+        const pl2 = new THREE.Mesh(plumeGeo, plumeMat);
+        pl2.position.set(0.28, 2.02, -0.15);
+        pl2.rotation.z = -0.48;
+        grp.add(pl1);
+        grp.add(pl2);
+      } else if (dna.helm === 'wolong_crown' || dna.helm === 'scholar_hood') {
+        const hat = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.32, 0.36), new THREE.MeshBasicMaterial({ color: 0x2c3e50 }));
+        hat.position.set(0, 1.66, 0.04);
+        grp.add(hat);
+      } else if (dna.helm === 'emperor_crown') {
+        const board = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.44), new THREE.MeshBasicMaterial({ color: 0xffd700 }));
+        board.position.set(0, 1.68, 0.04);
+        grp.add(board);
+      } else {
+        const helmDome = new THREE.Mesh(new THREE.SphereGeometry(0.30, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), trimMat);
+        helmDome.position.set(0, 1.44, 0.04);
+        grp.add(helmDome);
+        const crest = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.35, 6), new THREE.MeshBasicMaterial({ color: 0xc0392b }));
+        crest.position.set(0, 1.82, 0.04);
+        grp.add(crest);
+      }
+
+      // 5. Large Animated 3D Signature Weapon Group (전용 신병 조형)
+      const weapGrp = new THREE.Group();
+      weapGrp.position.set(0.48, 0.92, 0.15);
+
+      if (dna.weapon === 'feather_fan') {
+        const fan = new THREE.Mesh(new THREE.CircleGeometry(0.32, 12), new THREE.MeshBasicMaterial({ color: 0xfdfefe, side: THREE.DoubleSide }));
+        fan.position.set(0, 0.25, 0.15);
+        weapGrp.add(fan);
+      } else {
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.75, 6), new THREE.MeshBasicMaterial({ color: 0x4e342e }));
+        shaft.position.set(0, 0.35, 0);
+        weapGrp.add(shaft);
+
+        const bladeCol = dna.weapon === 'sky_halberd' ? 0xffd700 : (dna.weapon === 'guandao' ? 0x2ecc71 : 0xe5e8e8);
+        const blade = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.65, 4), new THREE.MeshBasicMaterial({ color: bladeCol }));
+        blade.position.set(0, 1.28, 0.06);
+        weapGrp.add(blade);
+      }
+      grp.add(weapGrp);
+      mesh.userData.v8WeaponGroup = weapGrp;
+
+      // 6. Floating Xuan-Paper Name & Seal Banner Above General
+      const nameSprite = createHeroNameplateSprite(dna, stars);
+      grp.add(nameSprite);
+
+      mesh.add(grp);
+      mesh.userData.v8SculptGroup = grp;
+      mesh.userData.v8SculptSig = sig;
+    } catch (e) {}
+  }
+
+  // Main Patch v8.0 Loop (Runs every 650ms for crisp combat & visual sync)
+  setInterval(function() {
+    preventMobileUIOverlap();
+    executeHeroDirectAttacks();
+
+    const overlay = document.getElementById('main-menu-overlay');
+    const inLobby = overlay && !overlay.classList.contains('hidden') && getComputedStyle(overlay).display !== 'none';
+    const v8Scroll = document.getElementById('v8-ink-scroll-frame');
+    if (v8Scroll) {
+      v8Scroll.style.display = inLobby ? 'none' : 'block';
+    }
+
+    // Hide combat HUD elements in lobby
+    const v6ComboBanner = document.getElementById('v6-combo-banner');
+    if (v6ComboBanner) {
+      v6ComboBanner.style.display = inLobby ? 'none' : 'block';
+    }
+    const heroInfoPanel = document.getElementById('hero-info');
+    if (heroInfoPanel) {
+      heroInfoPanel.style.display = inLobby ? 'none' : 'block';
+    }
+    const v7HeroPortraitCard = document.getElementById('v7-hero-portrait-card');
+    if (v7HeroPortraitCard && inLobby) {
+      v7HeroPortraitCard.style.display = 'none';
+    }
+
+    if (typeof gameState !== 'undefined' && gameState) {
+      const grid = gameState.grid || gameState.board || [];
+      grid.forEach(cell => {
+        if (cell && (cell.hero || cell.name)) {
+          sculptHighDetail3DHero(cell);
+        }
+      });
+    }
+  }, 650);
+})();
