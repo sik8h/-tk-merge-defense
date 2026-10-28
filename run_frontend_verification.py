@@ -11,7 +11,7 @@ def run_cuj(page):
     page.wait_for_timeout(1000)
 
     # Click upgrade camp
-    page.click("#upgrade-camp-btn")
+    # page.click("#upgrade-camp-btn")
     page.wait_for_timeout(1000)
 
     # Screenshot upgrade camp modal

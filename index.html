@@ -347,7 +347,8 @@
 <style>
   #v5-hud-bar {
     position: fixed;
-    top: 72px;
+    top: 68px;
+    bottom: auto;
     right: 10px;
     z-index: 850;
     display: flex;
@@ -467,6 +468,7 @@
     border-color: #4d433a;
     cursor: not-allowed;
   }
+  body:not(.in-battle) #v5-hud-bar { display: none; }
 </style>
 
 <div id="v5-hud-bar">

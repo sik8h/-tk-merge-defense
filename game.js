@@ -1506,6 +1506,7 @@ function startNewCampaign() {
   spawnHeroAtGrid(12, starterHero);
 
   document.getElementById('main-menu-overlay').classList.add('hidden');
+    document.body.classList.add('in-battle');
   document.getElementById('gameover-modal').classList.add('hidden');
   updateSynergyAndHUD();
   saveGameSafe();
@@ -1660,8 +1661,10 @@ window.applyDeckPreset = function(type) {
 // ==
 
 function bindEvents() {
-  document.getElementById('upgrade-camp-btn').addEventListener('click', openUpgradeCampModal);
-  document.getElementById('close-upgrade-camp-btn').addEventListener('click', () => {
+  const upgradeCampBtn = document.getElementById('upgrade-camp-btn');
+  if (upgradeCampBtn) upgradeCampBtn.addEventListener('click', openUpgradeCampModal);
+  const closeUpgradeCampBtn = document.getElementById('close-upgrade-camp-btn');
+  if (closeUpgradeCampBtn) closeUpgradeCampBtn.addEventListener('click', () => {
     document.getElementById('upgrade-camp-modal').classList.add('hidden');
     if (campPreviewAnimId) cancelAnimationFrame(campPreviewAnimId);
     campPreviewAnimId = null;
@@ -1685,6 +1688,7 @@ function bindEvents() {
     sound.playGong();
     gameState.inLobby = false;
     document.getElementById('main-menu-overlay').classList.add('hidden');
+    document.body.classList.add('in-battle');
     updateSynergyAndHUD();
   });
 
@@ -1696,6 +1700,7 @@ function bindEvents() {
     refreshMainMenuUI();
     gameState.inLobby = true;
     document.getElementById('main-menu-overlay').classList.remove('hidden');
+    document.body.classList.remove('in-battle');
   });
 
   const onDown = (e) => {
@@ -1784,7 +1789,8 @@ function bindEvents() {
     saveGameSafe();
   });
 
-  document.getElementById('skill-btn').addEventListener('click', () => {
+  const skillBtn = document.getElementById('skill-btn');
+  if (skillBtn) skillBtn.addEventListener('click', () => {
     if (gameState.skillCd > 0) return;
     gameState.skillCd = 18;
     sound.playCatapultBoom();
@@ -1890,13 +1896,15 @@ function bindEvents() {
     document.getElementById('codex-modal').classList.add('hidden');
   });
 
-  document.getElementById('restart-btn').addEventListener('click', () => {
+  const restartBtn = document.getElementById('restart-btn');
+  if (restartBtn) restartBtn.addEventListener('click', () => {
     document.getElementById('gameover-modal').classList.add('hidden');
     gameState.hp = 100;
     gameState.isGameOver = false;
     gameState.inLobby = true;
     refreshMainMenuUI();
     document.getElementById('main-menu-overlay').classList.remove('hidden');
+    document.body.classList.remove('in-battle');
   });
 
   window.addEventListener('resize', () => {

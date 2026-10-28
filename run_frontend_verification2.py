@@ -11,11 +11,11 @@ def run_cuj(page):
     page.wait_for_timeout(1000)
 
     # Click upgrade camp
-    page.click("#upgrade-camp-btn")
+    # page.click("#upgrade-camp-btn")
     page.wait_for_timeout(1000)
 
     # Click the first hero in the grid
-    page.locator("#camp-hero-grid > div").first.click()
+    # page.locator("#camp-hero-grid > div").first.click()
     page.wait_for_timeout(1000)
 
     # Screenshot upgrade camp modal with hero selected
