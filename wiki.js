@@ -1312,3 +1312,16 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 // === END OF WIKI.JS ===
+
+
+// ================= PATCH v5.0 WIKI SYNC =================
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    const provs = JSON.parse(localStorage.getItem('tk_v5_conquered') || '[]');
+    const lieuts = JSON.parse(localStorage.getItem('tk_v5_lieutenants') || '{}');
+    const pEl = document.getElementById('wiki-v5-prov-cnt');
+    if (pEl) pEl.textContent = (Array.isArray(provs) ? provs.length : 0) + ' / 8';
+    const lEl = document.getElementById('wiki-v5-lieut-cnt');
+    if (lEl) lEl.textContent = Object.keys(lieuts || {}).length + ' / 4';
+  } catch (e) {}
+});
