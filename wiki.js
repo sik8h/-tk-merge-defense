@@ -1325,3 +1325,10 @@ window.addEventListener('DOMContentLoaded', function() {
     if (lEl) lEl.textContent = Object.keys(lieuts || {}).length + ' / 4';
   } catch (e) {}
 });
+
+
+// ================= PATCH v6.0 WIKI SYNC =================
+window.V6_TACTICAL_ARCHIVE = {
+  formations: ['학익진(鶴翼陣)', '봉시진(鋒矢陣)', '어린진(魚鱗陣)', '방원진(方圓陣)'],
+  weathers: ['백주쾌청(☀)', '적벽화풍(🔥)', '폭우뇌전(⛈)', '북방설원(❄)']
+};

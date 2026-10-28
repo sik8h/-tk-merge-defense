@@ -2477,3 +2477,380 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(safeInitLobbyAndButtons, 150);
   }
 })();
+
+
+// ================= PATCH v6.0: HIGH-DETAIL GRAPHICS & TACTICAL GAMEPLAY ENGINE =================
+(function() {
+  const V6_FORMATIONS = {
+    heyi:     { id: 'heyi', name: '학익진', seal: '鶴翼陣 · 광역포위', atkMult: 1.15, spdMult: 1.10, critAdd: 0.05, splash: 0.25 },
+    fengshi:  { id: 'fengshi', name: '봉시진', seal: '鋒矢陣 · 단기극딜', atkMult: 1.55, spdMult: 1.00, critAdd: 0.15, bossBonus: 0.35 },
+    yulin:    { id: 'yulin', name: '어린진', seal: '魚鱗陣 · 질풍속공', atkMult: 1.10, spdMult: 1.40, critAdd: 0.25, comboExt: 2.0 },
+    fangyuan: { id: 'fangyuan', name: '방원진', seal: '方圓陣 · 철벽수호', atkMult: 0.95, spdMult: 1.00, critAdd: 0.00, wallRegen: 2, slow: 0.30 }
+  };
+
+  const V6_WEATHERS = [
+    { id: 'clear',    label: '☀ 백주쾌청', tint: '#f4e8c1', fogHex: 0x1a1510, atkMod: 1.10, moraleRate: 1.25 },
+    { id: 'firewind', label: '🔥 적벽화풍', tint: '#ff6e40', fogHex: 0x2b120c, atkMod: 1.30, burnDot: 12 },
+    { id: 'storm',    label: '⛈ 폭우뇌전', tint: '#4fc3f7', fogHex: 0x0d1b26, atkMod: 1.25, lightningDmg: 45 },
+    { id: 'blizzard', label: '❄ 북방설원', tint: '#b3e5fc', fogHex: 0x162229, atkMod: 1.15, enemySlow: 0.25 }
+  ];
+
+  const v6State = {
+    formation: 'heyi',
+    weatherIdx: 0,
+    morale: 0,
+    musouFever: false,
+    feverTimer: 0,
+    comboCount: 0,
+    comboExpire: 0,
+    smartAutoMerge: false,
+    hdGraphics: true,
+    floatingTexts: [],
+    particles: [],
+    lightningFlash: 0
+  };
+  window.v6State = v6State;
+
+  function isLobbyVisible() {
+    const overlay = document.getElementById('main-menu-overlay');
+    if (overlay) {
+      return !overlay.classList.contains('hidden') && getComputedStyle(overlay).display !== 'none';
+    }
+    return false;
+  }
+
+  function syncV6Visibility() {
+    const inLobby = isLobbyVisible();
+    const dock = document.getElementById('v6-tactical-dock');
+    const cvs = document.getElementById('v6-fx-canvas');
+    const v5Bar = document.getElementById('v5-hud-bar');
+    if (dock) dock.style.display = inLobby ? 'none' : 'flex';
+    if (cvs) cvs.style.display = (inLobby || !v6State.hdGraphics) ? 'none' : 'block';
+    if (v5Bar) v5Bar.style.display = inLobby ? 'none' : 'flex';
+  }
+
+  window. spawnV6FloatingText = function(text, x, y, color, size) {
+    if (!v6State.hdGraphics) return;
+    v6State.floatingTexts.push({
+      text: text,
+      x: x || (window.innerWidth * (0.35 + Math.random() * 0.3)),
+      y: y || (window.innerHeight * (0.32 + Math.random() * 0.25)),
+      vy: -1.4 - Math.random() * 0.8,
+      alpha: 1.0,
+      color: color || '#ffd54f',
+      size: size || 16
+    });
+    if (v6State.floatingTexts.length > 45) v6State.floatingTexts.shift();
+  };
+
+  window.setV6Formation = function(formId) {
+    if (!V6_FORMATIONS[formId]) return;
+    v6State.formation = formId;
+    ['heyi', 'fengshi', 'yulin', 'fangyuan'].forEach(k => {
+      const btn = document.getElementById('v6-btn-' + k);
+      if (btn) btn.classList.toggle('active', k === formId);
+    });
+    const f = V6_FORMATIONS[formId];
+    window.spawnV6FloatingText('☯ ' + f.seal + ' 전개!', window.innerWidth * 0.5, window.innerHeight * 0.35, '#ffd54f', 22);
+    applyV6TacticalMultipliers();
+  };
+
+  window.cycleV6Weather = function() {
+    v6State.weatherIdx = (v6State.weatherIdx + 1) % V6_WEATHERS.length;
+    const w = V6_WEATHERS[v6State.weatherIdx];
+    const btn = document.getElementById('v6-weather-btn');
+    if (btn) btn.textContent = w.label;
+    window.spawnV6FloatingText('천시 변화: ' + w.label, window.innerWidth * 0.5, window.innerHeight * 0.28, w.tint, 20);
+    // Update 3D Scene Fog/Ambient if available
+    try {
+      if (typeof scene !== 'undefined' && scene && scene.fog) {
+        scene.fog.color.setHex(w.fogHex);
+      }
+    } catch (e) {}
+  };
+
+  window.toggleV6SmartMerge = function() {
+    v6State.smartAutoMerge = !v6State.smartAutoMerge;
+    const btn = document.getElementById('v6-smart-merge-btn');
+    if (btn) {
+      btn.textContent = '🤖 부관합체: ' + (v6State.smartAutoMerge ? 'ON' : 'OFF');
+      btn.classList.toggle('on', v6State.smartAutoMerge);
+    }
+  };
+
+  window.toggleV6HD = function() {
+    v6State.hdGraphics = !v6State.hdGraphics;
+    const btn = document.getElementById('v6-hd-btn');
+    if (btn) btn.classList.toggle('on', v6State.hdGraphics);
+    syncV6Visibility();
+  };
+
+  window.addV6Morale = function(amount) {
+    if (v6State.musouFever) return;
+    const w = V6_WEATHERS[v6State.weatherIdx];
+    const rate = w.moraleRate || 1.0;
+    v6State.morale = Math.min(100, Math.round(v6State.morale + amount * rate));
+    updateV6MoraleUI();
+  };
+
+  function updateV6MoraleUI() {
+    const fill = document.getElementById('v6-morale-fill');
+    const lbl = document.getElementById('v6-morale-label');
+    const btn = document.getElementById('v6-fever-btn');
+    if (fill) fill.style.width = v6State.morale + '%';
+    if (lbl) lbl.textContent = v6State.musouFever ? '🐉 무쌍폭주 중!' : ('🔥 사기 ' + v6State.morale + '%');
+    if (btn) {
+      btn.disabled = !v6State.musouFever && v6State.morale < 100;
+      btn.classList.toggle('on', v6State.morale >= 100 || v6State.musouFever);
+    }
+  }
+
+  window.triggerV6MusouFever = function() {
+    if (v6State.musouFever || v6State.morale < 100) return;
+    v6State.musouFever = true;
+    v6State.feverTimer = 10;
+    const vig = document.getElementById('v6-fever-vignette');
+    if (vig) vig.style.display = 'block';
+    window.spawnV6FloatingText('🐉 全軍 無雙暴走! (10초간 화력·공속 폭증)', window.innerWidth * 0.5, window.innerHeight * 0.3, '#ffeb3b', 26);
+    applyV6TacticalMultipliers();
+    updateV6MoraleUI();
+  };
+
+  function registerV6KillCombo() {
+    const now = Date.now();
+    const ext = (v6State.formation === 'yulin') ? 7000 : 4000;
+    if (now < v6State.comboExpire) {
+      v6State.comboCount++;
+    } else {
+      v6State.comboCount = 1;
+    }
+    v6State.comboExpire = now + ext;
+    window.addV6Morale(4);
+
+    const banner = document.getElementById('v6-combo-banner');
+    const cntEl = document.getElementById('v6-combo-count');
+    const titEl = document.getElementById('v6-combo-title');
+    if (banner && cntEl && titEl && !isLobbyVisible()) {
+      banner.style.display = 'block';
+      cntEl.textContent = v6State.comboCount + '連斬';
+      if (v6State.comboCount >= 100) titEl.textContent = '🐉 천하무쌍(天下無雙)! 화력 +25%';
+      else if (v6State.comboCount >= 50) titEl.textContent = '⚡ 일기당천(一騎當千)! 화력 +15%';
+      else if (v6State.comboCount >= 15) titEl.textContent = '🔥 파죽지세(破竹之勢)! 화력 +8%';
+      else titEl.textContent = '⚔ 무쌍 격파!';
+    }
+  }
+
+  // Upgrade 3D Hero Meshes with Procedural Halo Rings & Floating Orbs if Three.js is active
+  function enhance3DHeroMeshes() {
+    if (!v6State.hdGraphics || typeof THREE === 'undefined' || typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) return;
+    const factionColors = { shu: 0x2ecc71, wei: 0x3498db, wu: 0xe74c3c, qun: 0x9b59b6 };
+
+    gameState.grid.forEach((cell) => {
+      if (!cell || !cell.hero || !cell.mesh) return;
+      const mesh = cell.mesh;
+      if (!mesh.userData) mesh.userData = {};
+      const tier = cell.hero.tier || 1;
+      const fac = cell.hero.faction || 'shu';
+      const col = factionColors[fac] || 0xf5c542;
+
+      if (!mesh.userData.v6AuraRing || mesh.userData.v6AuraTier !== tier) {
+        if (mesh.userData.v6AuraRing) {
+          try { mesh.remove(mesh.userData.v6AuraRing); } catch (e) {}
+        }
+        try {
+          const ringGeo = new THREE.RingGeometry(0.55 + tier * 0.05, 0.72 + tier * 0.06, 24);
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: tier >= 6 ? 0xffd700 : col,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: tier >= 5 ? 0.75 : 0.42
+          });
+          const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+          ringMesh.rotation.x = -Math.PI / 2;
+          ringMesh.position.y = 0.06;
+          mesh.add(ringMesh);
+          mesh.userData.v6AuraRing = ringMesh;
+          mesh.userData.v6AuraTier = tier;
+        } catch (e) {}
+      }
+      if (mesh.userData.v6AuraRing) {
+        mesh.userData.v6AuraRing.rotation.z += 0.04;
+      }
+    });
+  }
+
+  function applyV6TacticalMultipliers() {
+    if (typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) return;
+    const form = V6_FORMATIONS[v6State.formation] || V6_FORMATIONS.heyi;
+    const weath = V6_WEATHERS[v6State.weatherIdx] || V6_WEATHERS[0];
+    const feverAtk = v6State.musouFever ? 1.50 : 1.0;
+    const comboBonus = v6State.comboCount >= 100 ? 1.25 : (v6State.comboCount >= 50 ? 1.15 : (v6State.comboCount >= 15 ? 1.08 : 1.0));
+
+    gameState.grid.forEach((cell) => {
+      if (cell && cell.hero) {
+        if (!cell._v6CleanAtk) cell._v6CleanAtk = cell.hero.atk || 100;
+        const rawAtk = cell._v6CleanAtk * form.atkMult * weath.atkMod * feverAtk * comboBonus;
+        // Clamp max multiplier to prevent overflow
+        cell.hero.atk = Math.round(Math.min(cell._v6CleanAtk * 25, rawAtk));
+      }
+    });
+  }
+
+  // Smart Adjutant Auto-Merge (preserves Tier 6 & Tier 7 heroes, merges Tier 1~5 safely)
+  function runSmartAdjutantMerge() {
+    if (!v6State.smartAutoMerge || isLobbyVisible() || typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) return;
+    for (let i = 0; i < gameState.grid.length; i++) {
+      const a = gameState.grid[i];
+      if (!a || !a.hero || (a.hero.tier || 1) >= 6) continue;
+      for (let j = i + 1; j < gameState.grid.length; j++) {
+        const b = gameState.grid[j];
+        if (!b || !b.hero) continue;
+        if (a.hero.id === b.hero.id && (a.hero.tier || 1) === (b.hero.tier || 1) && (a.stars || 1) === (b.stars || 1)) {
+          if (typeof mergeCells === 'function') {
+            try { mergeCells(i, j); window.addV6Morale(6); return; } catch (e) {}
+          } else if (typeof autoMerge === 'function') {
+            try { autoMerge(); window.addV6Morale(6); return; } catch (e) {}
+          }
+        }
+      }
+    }
+  }
+
+  // 2D High-Detail Weather & Floating Combat Text Renderer
+  const canvas = document.getElementById('v6-fx-canvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+
+  function resizeV6Canvas() {
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeV6Canvas);
+  resizeV6Canvas();
+
+  function initWeatherParticles() {
+    v6State.particles = [];
+    for (let i = 0; i < 55; i++) {
+      v6State.particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: 1.2 + Math.random() * 2.5,
+        size: 1.5 + Math.random() * 2.5
+      });
+    }
+  }
+  initWeatherParticles();
+
+  function renderV6GraphicsLoop() {
+    requestAnimationFrame(renderV6GraphicsLoop);
+    if (!ctx || !v6State.hdGraphics || isLobbyVisible()) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = V6_WEATHERS[v6State.weatherIdx];
+
+    // Lightning flash overlay during storm
+    if (v6State.lightningFlash > 0) {
+      ctx.fillStyle = `rgba(200, 235, 255, ${v6State.lightningFlash})`; ctx.fillRect(0, 0, canvas.width, canvas.height); v6State.lightningFlash -= 0.04; }  // Weather particles
+    v6State.particles.forEach(p => {
+        if (w.id === 'clear') {
+            p.x += Math.sin(Date.now() * 0.001 + p.y) * 0.4; p.y += p.vy * 0.45; ctx.fillStyle = 'rgba(245, 215, 120, 0.45)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        } else if (w.id === 'firewind') {
+            p.x += 1.2; p.y -= p.vy * 0.9; ctx.fillStyle = 'rgba(255, 105, 45, 0.65)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 1.1, 0, Math.PI * 2); ctx.fill();
+        } else if (w.id === 'storm') {
+            p.x -= 1.8; p.y += p.vy * 3.2; ctx.strokeStyle = 'rgba(130, 205, 255, 0.52)'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - 4, p.y + 12); ctx.stroke();
+        } else if (w.id === 'blizzard') {
+            p.x -= 1.4; p.y += p.vy * 0.85; ctx.fillStyle = 'rgba(225, 245, 255, 0.68)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 1.15, 0, Math.PI * 2); ctx.fill();
+        }
+        if (p.y > canvas.height + 10) { p.y = -10; p.x = Math.random() * canvas.width; }
+        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+        if (p.x > canvas.width + 10) p.x = -10;
+        if (p.x < -10) p.x = canvas.width + 10;
+    });  // Floating Combat Damage & Seal Callouts
+    for (let i = v6State.floatingTexts.length - 1; i >= 0; i--) {
+        const ft = v6State.floatingTexts[i];
+        ft.y += ft.vy;
+        ft.alpha -= 0.018;
+        if (ft.alpha <= 0) {
+            v6State.floatingTexts.splice(i, 1);
+            continue;
+        }
+        ctx.save();
+        ctx.font = `900 ${ft.size}px "Noto Serif KR", serif`;
+      ctx.fillStyle = ft.color;
+      ctx.globalAlpha = Math.max(0, ft.alpha);
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 5;
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+  }
+  requestAnimationFrame(renderV6GraphicsLoop);
+
+  // Tactical Combat Tick (1s interval)
+  let lastEnemyCount = 0;
+  setInterval(function() {
+    syncV6Visibility();
+    if (isLobbyVisible() || typeof gameState === 'undefined') return;
+
+    enhance3DHeroMeshes();
+    applyV6TacticalMultipliers();
+    runSmartAdjutantMerge();
+
+    // Detect enemy kills & trigger combat damage visuals
+    if (Array.isArray(gameState.enemies)) {
+      const aliveEnemies = gameState.enemies.filter(e => e && e.hp > 0);
+      if (aliveEnemies.length < lastEnemyCount) {
+        const killed = lastEnemyCount - aliveEnemies.length;
+        for (let k = 0; k < killed; k++) registerV6KillCombo();
+      }
+      lastEnemyCount = aliveEnemies.length;
+
+      // Apply Weather & Formation Combat Effects on active enemies
+      const w = V6_WEATHERS[v6State.weatherIdx];
+      const f = V6_FORMATIONS[v6State.formation];
+
+      aliveEnemies.forEach((en, idx) => {
+        if (w.id === 'firewind' && w.burnDot) {
+          en.hp -= w.burnDot;
+        }
+        if (w.id === 'storm' && idx === 0 && Math.random() < 0.35) {
+          en.hp -= w.lightningDmg;
+          v6State.lightningFlash = 0.35;
+          window.spawnV6FloatingText('⚡ 뇌전 격파 -' + w.lightningDmg, window.innerWidth * (0.4 + Math.random() * 0.2), window.innerHeight * 0.38, '#80d8ff', 17);
+        }
+        if (idx === 0 && Math.random() < (0.35 + (f.critAdd || 0) + (v6State.musouFever ? 0.5 : 0))) {
+          const critVal = Math.round(85 * f.atkMult * (v6State.musouFever ? 1.8 : 1.0));
+          en.hp -= critVal;
+          window.spawnV6FloatingText('💥 치명타 -' + critVal, window.innerWidth * (0.38 + Math.random() * 0.24), window.innerHeight * (0.32 + Math.random() * 0.16), '#ff5252', 18);
+        }
+      });
+    }
+
+    // Fangyuan Formation Wall HP Regen
+    if (v6State.formation === 'fangyuan' && typeof gameState.hp === 'number') {
+      const maxHp = gameState.maxHp || 100;
+      gameState.hp = Math.min(maxHp, gameState.hp + 2);
+    }
+
+    // Musou Fever Countdown
+    if (v6State.musouFever) {
+      v6State.feverTimer--;
+      if (v6State.feverTimer <= 0) {
+        v6State.musouFever = false;
+        v6State.morale = 0;
+        const vig = document.getElementById('v6-fever-vignette');
+        if (vig) vig.style.display = 'none';
+      }
+      updateV6MoraleUI();
+    }
+
+    // Expire Combo Banner
+    if (v6State.comboCount > 0 && Date.now() > v6State.comboExpire) {
+      v6State.comboCount = 0;
+      const banner = document.getElementById('v6-combo-banner');
+      if (banner) banner.style.display = 'none';
+    }
+  }, 1000);
+})();
