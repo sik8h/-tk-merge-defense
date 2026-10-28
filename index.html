@@ -12,6 +12,20 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+<style id="v5-lobby-fix">
+  #v5-hud-bar {
+    top: 64px !important;
+    bottom: auto !important;
+    right: 8px !important;
+    flex-direction: row !important;
+    z-index: 400 !important;
+  }
+  body:not(.in-battle) #v5-hud-bar {
+    display: none !important;
+  }
+</style>
+
 </head>
 <body>
 <!-- Oriental Sumi-e Ink-Wash SVG Filters -->
@@ -497,6 +511,58 @@
     <div id="v5-modal-body"></div>
   </div>
 </div>
+
+
+<script id="standalone-recovery-bootloader">
+(function() {
+  // 1. Catch and sanitize corrupted localStorage that freezes lobby initialization
+  window.resetCorruptedSaveAndReload = function() {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
+    location.reload();
+  };
+
+  function bootRecover() {
+    // Force-bind Start / Continue buttons directly to bypass any game.js crashes
+    const allButtons = Array.from(document.querySelectorAll('button'));
+    const continueBtn = allButtons.find(b => (b.textContent || '').includes('전장 이어하기'));
+    const newGameBtn = allButtons.find(b => (b.textContent || '').includes('새로운 출진'));
+
+    if (continueBtn) {
+        continueBtn.onclick = function(e) {
+            e.preventDefault();
+            if (typeof updateSynergyAndHUD === 'function') {
+                try {
+                    gameState.inLobby = false;
+                    document.getElementById('main-menu-overlay').classList.add('hidden');
+                    document.body.classList.add('in-battle');
+                    updateSynergyAndHUD();
+                } catch(e) { console.error('Continue error:', e); }
+            }
+        };
+    }
+
+    if (newGameBtn) {
+        newGameBtn.onclick = function(e) {
+            e.preventDefault();
+            if (typeof startNewCampaign === 'function') {
+                try {
+                    startNewCampaign();
+                } catch(e) { console.error('New game error:', e); }
+            }
+        };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => setTimeout(bootRecover, 150));
+  } else {
+    setTimeout(bootRecover, 150);
+  }
+})();
+</script>
 
 </body>
 </html>
