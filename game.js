@@ -2414,3 +2414,58 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(updateV5Badges, 600);
   });
 })();
+
+
+// ================= HOTFIX: LOBBY & START BUTTON FAILSAFE RECOVERY =================
+(function() {
+  function safeInitLobbyAndButtons() {
+    try {
+      if (typeof loadSaveData === 'function') {
+        try { loadSaveData(); } catch (e) { console.warn('Save load recovered:', e); }
+      }
+      if (typeof updateLobbyUI === 'function') {
+        try { updateLobbyUI(); } catch (e) { console.warn('Lobby UI recovered:', e); }
+      }
+      if (typeof initLobby === 'function') {
+        try { initLobby(); } catch (e) { console.warn('initLobby recovered:', e); }
+      }
+
+      // Populate blank lobby badges if they are still empty
+      const bestEl = document.getElementById('lobby-best-stage') || document.getElementById('best-stage-text');
+      if (bestEl && !bestEl.textContent.trim()) bestEl.textContent = '최고 도달: 제1장';
+      const presEl = document.getElementById('lobby-prestige') || document.getElementById('prestige-count');
+      if (presEl && !presEl.textContent.trim()) presEl.textContent = (typeof gameState !== 'undefined' ? (gameState.prestige || 0) : 0);
+
+      // Force-bind Start / Continue buttons in case earlier bindings failed
+      const buttons = Array.from(document.querySelectorAll('button'));
+      buttons.forEach(btn => {
+        const txt = (btn.textContent || '').trim();
+        if (txt.includes('전장 이어하기')) {
+          btn.onclick = function(e) {
+            e.preventDefault();
+            if (typeof startGame === 'function') startGame(true);
+            else if (typeof enterBattlefield === 'function') enterBattlefield(true);
+            const lobby = document.getElementById('lobby-screen') || document.getElementById('start-screen') || document.querySelector('.lobby-overlay');
+            if (lobby) lobby.style.display = 'none';
+          };
+        } else if (txt.includes('새로운 출진')) {
+          btn.onclick = function(e) {
+            e.preventDefault();
+            if (typeof startGame === 'function') startGame(false);
+            else if (typeof enterBattlefield === 'function') enterBattlefield(false);
+            const lobby = document.getElementById('lobby-screen') || document.getElementById('start-screen') || document.querySelector('.lobby-overlay');
+            if (lobby) lobby.style.display = 'none';
+          };
+        }
+      });
+    } catch (err) {
+      console.error('Failsafe recovery error:', err);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => setTimeout(safeInitLobbyAndButtons, 150));
+  } else {
+    setTimeout(safeInitLobbyAndButtons, 150);
+  }
+})();
