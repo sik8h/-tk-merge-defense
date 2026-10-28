@@ -498,5 +498,82 @@
   </div>
 </div>
 
+
+<!-- ================= PATCH v7.0: INDIVIDUAL HERO ILLUSTRATIONS & 3D APPEARANCES ================= -->
+<style>
+  #v7-hero-portrait-card {
+    position: fixed;
+    bottom: 132px;
+    left: 14px;
+    z-index: 415;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(28, 21, 16, 0.95) 0%, rgba(16, 12, 9, 0.98) 100%);
+    border: 2px solid #c89b3c;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.85), inset 0 0 10px rgba(200,155,60,0.2);
+    color: #f4e8c1;
+    font-family: 'Noto Serif KR', serif;
+    pointer-events: auto;
+    max-width: 320px;
+  }
+  #v7-portrait-img {
+    width: 68px;
+    height: 84px;
+    border: 1.5px solid #e6b85c;
+    border-radius: 5px;
+    background: #e8dcc4;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.7);
+  }
+  .v7-hero-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+  }
+  .v7-hero-title {
+    font-size: 14px;
+    font-weight: 900;
+    color: #ffd54f;
+  }
+  .v7-hero-appearance-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .v7-app-tag {
+    background: #2e2218;
+    border: 1px solid #735838;
+    color: #e0cda9;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10px;
+  }
+  .v7-mini-avatar {
+    width: 38px;
+    height: 46px;
+    border-radius: 4px;
+    border: 1px solid #c89b3c;
+    vertical-align: middle;
+    margin-right: 6px;
+    object-fit: cover;
+    background: #e8dcc4;
+  }
+</style>
+
+<div id="v7-hero-portrait-card">
+  <img id="v7-portrait-img" alt="장수 초상화" />
+  <div class="v7-hero-meta">
+    <div id="v7-portrait-name" class="v7-hero-title">무성 관우</div>
+    <div id="v7-portrait-sub" style="color:#b8a382;">촉(蜀) · 6성 신장</div>
+    <div id="v7-portrait-tags" class="v7-hero-appearance-tags"></div>
+  </div>
+</div>
+
 </body>
 </html>
