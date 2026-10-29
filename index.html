@@ -938,22 +938,7 @@
 
 <!-- ================= PATCH v8.6: SAVE RESET + 165/28 FIX + TRUE 3D SCULPT & NAMEPLATES ================= -->
 <style id="v8-6-master-styles">
-  #v86-reset-save-btn {
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    z-index: 99999;
-    background: linear-gradient(135deg, #8b1e16 0%, #3d0a07 100%);
-    color: #ffd54f;
-    border: 1.5px solid #f5c542;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-family: 'Noto Serif KR', serif;
-    font-size: 11px;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.85);
-  }
+
   #v86-unit-labels-layer {
     position: fixed;
     inset: 0;
@@ -986,8 +971,59 @@
     font-size: 9px;
   }
 </style>
-<button id="v86-reset-save-btn" onclick="window.v86FullResetSave()">🔄 데이터 초기화</button>
+
 <div id="v86-unit-labels-layer"></div>
+
+
+<!-- ================= OVERHAUL v9.0: CLEAN MOBILE UI & ILLUSTRATED BATTLEFIELD ================= -->
+<style id="v9-overhaul-css">
+  /* Declutter screen: compact top/bottom bars and hide noisy floating boxes by default */
+  #v5-hud-bar {
+    top: auto !important;
+    bottom: 138px !important;
+    right: 8px !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    transform: scale(0.85);
+    transform-origin: bottom right;
+  }
+  #v6-combo-banner {
+    top: 88px !important;
+    left: 12px !important;
+    transform: scale(0.85);
+    transform-origin: left top;
+    background: linear-gradient(90deg, rgba(180, 25, 18, 0.9) 0%, transparent 100%) !important;
+    padding: 3px 12px !important;
+  }
+  #v6-tactical-dock {
+    bottom: 62px !important;
+    width: 96vw !important;
+    padding: 4px 8px !important;
+    gap: 3px !important;
+    background: rgba(15, 11, 8, 0.88) !important;
+    backdrop-filter: blur(6px);
+  }
+  #v7-hero-portrait-card {
+    display: none !important; /* Replaced by direct on-board high-res 2.5D hero standees */
+  }
+  /* One-click Save Reset Button in Top Bar */
+  #v9-reset-btn {
+    position: fixed;
+    top: 8px;
+    right: 68px;
+    z-index: 9999;
+    background: #7f1d1d;
+    color: #fde68a;
+    border: 1px solid #f59e0b;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  }
+</style>
+<button id="v9-reset-btn" onclick="if(confirm('모든 세이브 데이터를 초기화하고 1장부터 새로 시작하시겠습니까?')){localStorage.clear();sessionStorage.clear();location.reload();}">🔄 초기화</button>
 
 </body>
 </html>
