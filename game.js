@@ -462,7 +462,7 @@ function refreshMainMenuUI() {
   gameState.bestWave = Math.max(gameState.bestWave, gameState.wave);
   document.getElementById('menu-best-wave').textContent = `제${gameState.bestWave}장`;
   document.getElementById('menu-fame-val').textContent = gameState.fame;
-  document.getElementById('menu-unlock-cnt').textContent = `${gameState.unlockedIds.length}/28`;
+  document.getElementById('menu-unlock-cnt').textContent = `${gameState.unlockedIds.length}/120`;
   document.getElementById('cont-wave-txt').textContent = `제${gameState.wave}장`;
 
   document.querySelectorAll('.lord-card').forEach(card => {
@@ -4363,4 +4363,132 @@ window.addEventListener('DOMContentLoaded', () => {
     transformEnemyMeshesV85();
     fireHeroInkSlashesV85();
   }, 550);
+})();
+
+
+// ================= PATCH v8.6: MASTER FIX (SAVE RESET, DEDUP UNLOCKED COUNTER, 3D SCULPT, NAMEPLATES) =================
+(function() {
+  // 1. One-Click Full Save & LocalStorage Reset
+  window.v86FullResetSave = function() {
+    if (confirm('모든 세이브 데이터(최고 도달 장, 무공 명성, 해방 명장 등)를 초기 상태로 완전히 초기화하시겠습니까?')) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {}
+      window.location.href = window.location.pathname + '?reset=' + Date.now();
+    }
+  };
+
+  // 2. Deduplicate unlockedIds (Fix 165/28 bug -> clean unique count / total HERO_DB length)
+  function sanitizeUnlockedCounter() {
+    const totalHeroes = (typeof HERO_DB !== 'undefined' && Array.isArray(HERO_DB)) ? HERO_DB.length : 120;
+    if (typeof gameState !== 'undefined' && Array.isArray(gameState.unlockedIds)) {
+      gameState.unlockedIds = Array.from(new Set(gameState.unlockedIds)).slice(0, totalHeroes);
+    }
+    const allEls = document.querySelectorAll('span, div, p');
+    allEls.forEach(el => {
+      if (el.children.length === 0 && el.textContent && el.textContent.includes('해방 명장:')) {
+        const uniqCount = (typeof gameState !== 'undefined' && Array.isArray(gameState.unlockedIds))
+          ? new Set(gameState.unlockedIds).size
+          : 12;
+        el.textContent = el.textContent.replace(/해방 명장:\s*\d+\s*\/\s*\d+/, '해방 명장: ' + Math.min(uniqCount, totalHeroes) + '/' + totalHeroes);
+      }
+    });
+  }
+
+  // 3. Convert Neon Cylinders into Dark Armored Heroes + True 3D Sculpted Parts
+  function upgradeCylinderToTrue3DGeneral(cell) {
+    if (!cell || !cell.hero || !cell.mesh || typeof THREE === 'undefined') return;
+    const mesh = cell.mesh;
+    if (!mesh.userData) mesh.userData = {};
+
+    mesh.traverse(child => {
+      if (child.isMesh && !child.userData.isV86Part && child.geometry && child.geometry.type === 'CylinderGeometry') {
+        child.scale.set(0.52, 0.68, 0.52);
+        if (child.material && child.material.emissiveIntensity !== undefined) {
+          child.material.emissiveIntensity = 0.08;
+        }
+      }
+    });
+
+    const sig = (cell.hero.name || 'hero') + '_' + (cell.stars || 1) + '_' + (cell.hero.tier || 1);
+    if (mesh.userData.v86SculptSig === sig) return;
+    if (mesh.userData.v86SculptGroup) {
+      try { mesh.remove(mesh.userData.v86SculptGroup); } catch (e) {}
+    }
+
+    const facHex = { shu: 0x1e8449, wei: 0x2874a6, wu: 0xb03a2e, qun: 0x7d3c98 }[cell.hero.faction || 'shu'] || 0x1e8449;
+    const tier = cell.hero.tier || 1;
+    const grp = new THREE.Group();
+    grp.userData.isV86Part = true;
+    const markPart = (m) => { m.userData.isV86Part = true; return m; };
+
+    // Armored Shoulders
+    const sh = markPart(new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.28, 0.52), new THREE.MeshBasicMaterial({ color: facHex })));
+    sh.position.set(0, 0.85, 0);
+    grp.add(sh);
+
+    // Sculpted Head
+    const head = markPart(new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 14), new THREE.MeshBasicMaterial({ color: 0xf0d2b8 })));
+    head.position.set(0, 1.28, 0);
+    grp.add(head);
+
+    // War Helmet & Crest
+    const helm = markPart(new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.38, 8), new THREE.MeshBasicMaterial({ color: tier >= 5 ? 0xffd700 : 0x34495e })));
+    helm.position.set(0, 1.54, 0);
+    grp.add(helm);
+
+    // Signature Polearm Weapon
+    const pole = markPart(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.75, 6), new THREE.MeshBasicMaterial({ color: 0x5d4037 })));
+    pole.position.set(0.46, 1.05, 0.15);
+    pole.rotation.z = -0.18;
+    grp.add(pole);
+
+    const blade = markPart(new THREE.Mesh(new THREE.ConeGeometry(0.20, 0.55, 4), new THREE.MeshBasicMaterial({ color: tier >= 6 ? 0xffd700 : 0xd0d3d4 })));
+    blade.position.set(0.58, 1.85, 0.15);
+    blade.rotation.z = -0.18;
+    grp.add(blade);
+
+    mesh.add(grp);
+    mesh.userData.v86SculptGroup = grp;
+    mesh.userData.v86SculptSig = sig;
+  }
+
+  // 4. Floating Xuan-Paper Nameplate Over Each 3D Hero on Battlefield
+  function sync3DUnitNameplates() {
+    const layer = document.getElementById('v86-unit-labels-layer');
+    if (!layer) return;
+    const overlay = document.getElementById('main-menu-overlay');
+    const inLobby = overlay && !overlay.classList.contains('hidden') && getComputedStyle(overlay).display !== 'none';
+    if (inLobby || typeof gameState === 'undefined' || !Array.isArray(gameState.grid) || typeof camera === 'undefined') {
+      layer.innerHTML = '';
+      return;
+    }
+
+    let htmlStr = '';
+    gameState.grid.forEach((cell) => {
+      if (!cell || !cell.hero || !cell.mesh) return;
+      upgradeCylinderToTrue3DGeneral(cell);
+      try {
+        const pos = new THREE.Vector3();
+        cell.mesh.getWorldPosition(pos);
+        pos.y += 1.95;
+        pos.project(camera);
+        if (pos.z > 1) return;
+        const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(pos.y * 0.5) + 0.5) * window.innerHeight;
+        const rawName = String(cell.hero.name || '장수').trim().split(/\s+/).pop();
+        const seal = rawName.charAt(0);
+        const stars = cell.stars || 1;
+        htmlStr += `<div class="v86-unit-tag" style="left:${Math.round(x)}px;top:${Math.round(y)}px;"><span class="v86-seal">${seal}</span><span>${rawName}</span><span style="color:#b85d19;">★${stars}</span></div>`;
+      } catch (e) {}
+    });
+    layer.innerHTML = htmlStr;
+  }
+
+  setInterval(function() {
+    sanitizeUnlockedCounter();
+    sync3DUnitNameplates();
+  }, 250);
+  setTimeout(sanitizeUnlockedCounter, 100);
 })();
