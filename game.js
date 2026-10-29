@@ -524,6 +524,7 @@ function buildHeroCharacter3D(heroData) {
   const root = new THREE.Group();
   const fMeta = FACTION_META[heroData.faction];
 
+  // Create Ornate 3D Pedestal
   const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.25 });
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.1, 0.3, 8), baseMat);
   base.position.y = 0.15;
@@ -531,77 +532,39 @@ function buildHeroCharacter3D(heroData) {
 
   const ringMat = new THREE.MeshBasicMaterial({ color: fMeta.hex, side: THREE.DoubleSide });
   const auraRing = new THREE.Mesh(new THREE.RingGeometry(0.85, 1.05, 16), ringMat);
-  auraRing.rotation.x = -Math.PI / 2;
-  auraRing.position.y = 0.32;
+  auraRing.rotation.x = Math.PI / 2;
+  auraRing.position.y = 0.31;
   root.add(auraRing);
-  root.userData.auraRing = auraRing;
 
-  let yOffset = 0.3;
-  if (heroData.mount) {
-    const mountColor = heroData.mount === 'red' ? 0xb91c1c : heroData.mount === 'white' ? 0xf8fafc : heroData.mount === 'elephant' ? 0x64748b : 0x1e293b;
-    const mMat = new THREE.MeshStandardMaterial({ color: mountColor, roughness: 0.5 });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.65, 1.25), mMat);
-    body.position.set(0, 0.65, 0);
-    root.add(body);
-    yOffset = 0.95;
+  // Instead of bare glowing neon cylinder body, we just set the root to have v9StandeeSig empty, so the script adds the Sprite!
+  // BUT the user says: "Locate where hero meshes and enemy meshes are originally created in game.js (e.g., new THREE.CylinderGeometry(...)) and replace/wrap them so they render as 2.5D Illustrated Hero/Enemy Standees (THREE.Sprite with createHeroStandeeTexture / createEnemyStandeeTexture on an ornate 3D pedestal) instead of bare glowing neon cylinders."
+  // So we SHOULD add the Sprite manually here!
+
+  // To avoid throwing errors because the script is appended AFTER, we'll use a placeholder or define it?
+  // We can just add the Sprite directly if window.createHeroStandeeTexture is defined (which the script handles).
+  if (typeof window.createHeroStandeeTexture === 'function') {
+    const tex = window.createHeroStandeeTexture(heroData, 1);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(2.35 * 0.65, 2.95 * 0.25, 1); // Compensate for our pedestal scale? No, just set directly.
+    sprite.scale.set(2.35, 2.95, 1);
+    sprite.position.set(0, 1.5, 0); // Position above pedestal
+    root.add(sprite);
+    root.userData.v9StandeeSprite = sprite;
+    root.userData.v9StandeeSig = (heroData.name || '') + '_' + (heroData.tier || 1) + '_1';
+  } else {
+    // Fallback: minimal cylinder so the script replaces it
+    const bodyMat = new THREE.MeshStandardMaterial({ color: fMeta.hex, metalness: 0.6, roughness: 0.3 });
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.9, 8), bodyMat);
+    torso.position.y = 0.9;
+    root.add(torso);
   }
 
-  const armorMat = new THREE.MeshStandardMaterial({ color: fMeta.hex, metalness: 0.6, roughness: 0.3 });
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.46, 0.9, 8), armorMat);
-  torso.position.y = yOffset + 0.45;
-  root.add(torso);
-
-  const faceColor = heroData.redFace ? 0xdc2626 : 0xfde68a;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), new THREE.MeshStandardMaterial({ color: faceColor }));
-  head.position.y = yOffset + 1.15;
-  root.add(head);
-
-  if (heroData.beard === 'long') {
-    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 6), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
-    beard.rotation.x = Math.PI;
-    beard.position.set(0, yOffset + 0.85, 0.26);
-    root.add(beard);
-  }
-  if (heroData.plumes) {
-    const pMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-    const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.01, 1.2), pMat);
-    p1.position.set(-0.18, yOffset + 1.8, -0.15);
-    p1.rotation.z = 0.3;
-    const p2 = p1.clone();
-    p2.position.x = 0.18;
-    p2.rotation.z = -0.3;
-    root.add(p1, p2);
-  }
-  if (heroData.halo) {
-    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 8, 24), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
-    halo.position.set(0, yOffset + 1.2, -0.25);
-    root.add(halo);
-    root.userData.halo = halo;
-  }
-
+  // Add armPivot to prevent crashes
   const armPivot = new THREE.Group();
-  armPivot.position.set(0.5, yOffset + 0.7, 0);
-  const wMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9, roughness: 0.15, emissive: fMeta.hex, emissiveIntensity: 0.35 });
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.7, 6), wMat);
-  pole.position.y = 0.4;
-  armPivot.add(pole);
-  const blade = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.65, 4), wMat);
-  blade.position.y = 1.35;
-  armPivot.add(blade);
+  armPivot.position.set(0.5, 0.7, 0);
   root.add(armPivot);
   root.userData.armPivot = armPivot;
-
-  const flagPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.3, 6), new THREE.MeshBasicMaterial({ color: 0xfbbf24 }));
-  flagPole.position.set(-0.35, yOffset + 1.1, -0.35);
-  root.add(flagPole);
-
-  const bannerTex = getHeroBannerTexture(heroData);
-  const bannerMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.85, 1.5),
-    new THREE.MeshBasicMaterial({ map: bannerTex, side: THREE.DoubleSide })
-  );
-  bannerMesh.position.set(-0.35, yOffset + 1.65, -0.42);
-  root.add(bannerMesh);
 
   return root;
 }
@@ -642,7 +605,7 @@ function initThreeScene() {
   const h = container.clientHeight || 680;
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x040812);
+  scene.background = new THREE.Color(0x120e0a);
   scene.fog = new THREE.FogExp2(0x040812, 0.015);
 
   camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 200);
@@ -669,19 +632,34 @@ function initThreeScene() {
   dirLight.position.set(12, 25, 18);
   scene.add(dirLight);
 
-  const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 2.0, 1.0),
-    new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
-  );
-  wall.position.set(0, 1.0, -1.2);
-  scene.add(wall);
+const groundGeo = new THREE.PlaneGeometry(28, 36);
+  const groundMat = new THREE.MeshBasicMaterial({ color: 0x1d1610, side: THREE.DoubleSide });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, -0.08, -2);
+  scene.add(ground);
 
-  const laserLine = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 0.12, 0.12),
-    new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-  );
-  laserLine.position.set(0, 2.05, -1.2);
-  scene.add(laserLine);
+  const wallGroup = new THREE.Group();
+  const wallGeo = new THREE.BoxGeometry(14, 0.85, 0.65);
+  const wallMat = new THREE.MeshBasicMaterial({ color: 0x3b332b });
+  const wallMesh = new THREE.Mesh(wallGeo, wallMat);
+  wallMesh.position.set(0, 0.42, -1.8);
+  wallGroup.add(wallMesh);
+
+  const trimGeo = new THREE.BoxGeometry(14.1, 0.12, 0.72);
+  const trimMat = new THREE.MeshBasicMaterial({ color: 0xc89b3c });
+  const trimMesh = new THREE.Mesh(trimGeo, trimMat);
+  trimMesh.position.set(0, 0.82, -1.8);
+  wallGroup.add(trimMesh);
+
+  for (let x = -6; x <= 6; x += 1.5) {
+    const crenGeo = new THREE.BoxGeometry(0.7, 0.35, 0.7);
+    const cren = new THREE.Mesh(crenGeo, wallMat);
+    cren.position.set(x, 1.0, -1.8);
+    wallGroup.add(cren);
+  }
+  scene.add(wallGroup);
+
 
   const pathGeo = new THREE.BufferGeometry().setFromPoints(ENEMY_PATH);
   const pathLine = new THREE.Line(pathGeo, new THREE.LineBasicMaterial({ color: 0xef4444 }));
@@ -873,15 +851,25 @@ function dismissHero(idx) {
 function spawnEnemy(isBoss = false) {
   const hpBase = (45 + Math.pow(gameState.wave, 1.55) * 35) * (isBoss ? 7.0 : 1);
   const group = new THREE.Group();
-  const color = isBoss ? 0xdc2626 : 0xa855f7;
-  const scale = isBoss ? 1.75 : 1.0;
 
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.42 * scale, 0.5 * scale, 1.1 * scale, 8),
-    new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
-  );
-  body.position.y = 0.6 * scale;
-  group.add(body);
+  if (typeof window.createEnemyStandeeTexture === 'function') {
+    const tex = window.createEnemyStandeeTexture(isBoss);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(isBoss ? 2.1 : 1.45, isBoss ? 2.5 : 1.75, 1);
+    sp.position.set(0, 1.1, 0);
+    group.add(sp);
+    group.userData.v9EnemyUpgraded = true;
+  } else {
+    const color = isBoss ? 0xdc2626 : 0xa855f7;
+    const scale = isBoss ? 1.75 : 1.0;
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42 * scale, 0.5 * scale, 1.1 * scale, 8),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
+    );
+    body.position.y = 0.6 * scale;
+    group.add(body);
+  }
 
   group.position.copy(ENEMY_PATH[0]);
   scene.add(group);
@@ -4491,4 +4479,355 @@ window.addEventListener('DOMContentLoaded', () => {
     sync3DUnitNameplates();
   }, 250);
   setTimeout(sanitizeUnlockedCounter, 100);
+})();
+
+
+// ================= OVERHAUL v9.0: 2.5D ILLUSTRATED HERO STANDEES, FORTRESS ENV & SLASH VFX =================
+(function() {
+  // 1. Fix corrupted unlockedIds (e.g., 165/28 bug) immediately
+  function sanitizeSaveV9() {
+    if (typeof gameState === 'undefined') return;
+    if (Array.isArray(gameState.unlockedIds)) {
+      const validSet = new Set();
+      const dbIds = (typeof HERO_DB !== 'undefined' && Array.isArray(HERO_DB)) ? new Set(HERO_DB.map(h => h.id)) : null;
+      gameState.unlockedIds.forEach(id => {
+        if (!dbIds || dbIds.has(id)) validSet.add(id);
+      });
+      gameState.unlockedIds = Array.from(validSet);
+    }
+    const uEl = document.getElementById('lobby-unlocked-count');
+    if (uEl && typeof HERO_DB !== 'undefined') {
+      uEl.textContent = (gameState.unlockedIds ? gameState.unlockedIds.length : 12) + '/' + HERO_DB.length;
+    }
+  }
+
+  // 2. Build High-Resolution 2.5D Hero & Enemy Card Texture (Canvas -> THREE.CanvasTexture)
+  const standeeTextureCache = {};
+
+  function createHeroStandeeTexture(hero, stars) {
+    const name = (hero && hero.name) ? String(hero.name).trim() : '무명장수';
+    const baseName = name.split(/\s+/).pop();
+    const tier = (hero && hero.tier) ? hero.tier : 1;
+    const fac = (hero && hero.faction) ? hero.faction : 'shu';
+    const st = stars || 1;
+    const key = baseName + '_' + fac + '_' + tier + '_' + st;
+    if (standeeTextureCache[key]) return standeeTextureCache[key];
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 256;
+    cvs.height = 320;
+    const ctx = cvs.getContext('2d');
+
+    const facPalette = {
+      shu: { bg1: '#0f3d23', bg2: '#071a0f', border: '#2ecc71', glow: '#66ff99', badge: '蜀' },
+      wei: { bg1: '#102d4f', bg2: '#071324', border: '#3498db', glow: '#80d8ff', badge: '魏' },
+      wu:  { bg1: '#4f1212', bg2: '#240707', border: '#e74c3c', glow: '#ff8a80', badge: '吳' },
+      qun: { bg1: '#3b154f', bg2: '#1a0824', border: '#9b59b6', glow: '#ea80fc', badge: '群' }
+    }[fac] || { bg1: '#2c221e', bg2: '#120d0b', border: '#f5c542', glow: '#ffd54f', badge: '將' };
+
+    // Ornate Card Frame
+    const grad = ctx.createLinearGradient(0, 0, 0, 280);
+    grad.addColorStop(0, facPalette.bg1);
+    grad.addColorStop(1, facPalette.bg2);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(16, 12, 224, 268, 18);
+    ctx.fill();
+
+    ctx.lineWidth = tier >= 5 ? 7 : 4;
+    ctx.strokeStyle = tier >= 5 ? '#ffd700' : facPalette.border;
+    ctx.stroke();
+
+    // Draw Portrait Illustration inside Standee if getHeroPortraitDataURL is available
+    let drewPortrait = false;
+    if (typeof window.getHeroVisualDNA === 'function') {
+      const dna = window.getHeroVisualDNA(hero);
+      // Radiant Ink Halo
+      ctx.fillStyle = facPalette.glow;
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath();
+      ctx.arc(128, 130, 76, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      // Shoulders & Armor
+      ctx.fillStyle = dna.cape || facPalette.border;
+      ctx.beginPath();
+      ctx.moveTo(42, 240);
+      ctx.quadraticCurveTo(128, 155, 214, 240);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Weapon silhouette behind hero
+      ctx.strokeStyle = '#e5e8e8';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(48, 220);
+      ctx.lineTo(208, 38);
+      ctx.stroke();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(202, 44, 16, 0, Math.PI * 1.3);
+      ctx.fill();
+
+      // Head
+      ctx.fillStyle = dna.skin || '#f2d6bd';
+      ctx.beginPath();
+      ctx.arc(128, 118, 38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#1c130e';
+      ctx.stroke();
+
+      // Helmet / Crown
+      ctx.fillStyle = tier >= 5 ? '#ffd700' : facPalette.border;
+      ctx.beginPath();
+      ctx.arc(128, 98, 40, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#d32f2f';
+      ctx.beginPath();
+      ctx.moveTo(128, 34);
+      ctx.lineTo(108, 72);
+      ctx.lineTo(148, 72);
+      ctx.closePath();
+      ctx.fill();
+
+      // Eyes & Beard
+      ctx.fillStyle = '#111';
+      ctx.fillRect(108, 112, 12, 5);
+      ctx.fillRect(136, 112, 12, 5);
+      if (dna.beard !== 'none' && dna.beard !== 'female') {
+        ctx.strokeStyle = '#18120e';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(112, 142);
+        ctx.lineTo(128, 185);
+        ctx.lineTo(144, 142);
+        ctx.stroke();
+      }
+      drewPortrait = true;
+    }
+
+    if (!drewPortrait) {
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 72px "Noto Serif KR", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(baseName.charAt(0), 128, 150);
+    }
+
+    // Faction Seal Badge (Top-Left)
+    ctx.fillStyle = '#b82921';
+    ctx.fillRect(26, 22, 42, 42);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(26, 22, 42, 42);
+    ctx.fillStyle = '#fff';
+    ctx.font = '900 24px "Noto Serif KR", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(facPalette.badge, 47, 52);
+
+    // Tier & Star Banner (Bottom)
+    ctx.fillStyle = 'rgba(10, 7, 5, 0.94)';
+    ctx.fillRect(20, 212, 216, 64);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 212, 216, 64);
+
+    ctx.fillStyle = '#ffd54f';
+    ctx.font = '900 20px "Noto Serif KR", serif';
+    ctx.fillText('★'.repeat(Math.min(7, tier)) + (st > 1 ? ' +' + st : ''), 128, 236);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 28px "Noto Serif KR", serif';
+    ctx.fillText(baseName, 128, 268);
+
+    const tex = new THREE.CanvasTexture(cvs);
+    tex.needsUpdate = true;
+    standeeTextureCache[key] = tex;
+    return tex;
+  }
+
+  window.createHeroStandeeTexture = createHeroStandeeTexture;
+
+  function createEnemyStandeeTexture(isBoss) {
+    const key = isBoss ? 'enemy_boss' : 'enemy_soldier';
+    if (standeeTextureCache[key]) return standeeTextureCache[key];
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 192;
+    cvs.height = 240;
+    const ctx = cvs.getContext('2d');
+
+    ctx.fillStyle = isBoss ? '#4a0e0e' : '#2b1b17';
+    ctx.beginPath();
+    ctx.roundRect(16, 16, 160, 190, 14);
+    ctx.fill();
+    ctx.lineWidth = isBoss ? 6 : 3;
+    ctx.strokeStyle = isBoss ? '#ff3d00' : '#d4ac0d';
+    ctx.stroke();
+
+    // Yellow Turban / Enemy Warrior Silhouette
+    ctx.fillStyle = '#d4ac0d';
+    ctx.beginPath();
+    ctx.arc(96, 86, 30, Math.PI, 0);
+    ctx.fill();
+
+    ctx.fillStyle = '#d5b895';
+    ctx.beginPath();
+    ctx.arc(96, 98, 26, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ff1744';
+    ctx.fillRect(80, 92, 10, 5);
+    ctx.fillRect(102, 92, 10, 5);
+
+    ctx.fillStyle = '#111';
+    ctx.fillRect(20, 162, 152, 40);
+    ctx.fillStyle = isBoss ? '#ffeb3b' : '#ffe082';
+    ctx.font = '900 22px "Noto Serif KR", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(isBoss ? '👹 적장 총대장' : '⚔ 황건 침공군', 96, 190);
+
+    const tex = new THREE.CanvasTexture(cvs);
+    tex.needsUpdate = true;
+    standeeTextureCache[key] = tex;
+    return tex;
+  }
+
+  window.createEnemyStandeeTexture = createEnemyStandeeTexture;
+
+  // 3. (Already replaced manually in initThreeScene)
+
+  // 4. Replace Hero & Enemy Neon Cylinders with 2.5D Illustrated Standee Billboards + Pedestals
+  function replaceCylindersWithStandees() {
+    if (typeof gameState === 'undefined' || typeof THREE === 'undefined') return;
+
+    // Upgrade Heroes on the 20-tile Grid
+    if (Array.isArray(gameState.grid)) {
+      gameState.grid.forEach(cell => {
+        if (!cell || !cell.hero || !cell.mesh) return;
+        const mesh = cell.mesh;
+        if (!mesh.userData) mesh.userData = {};
+
+        // Hide the ugly glowing neon cylinder body! (Already removed in manual build)
+        // We just ensure sprites are up-to-date with tier/stars
+        const sig = (cell.hero.name || '') + '_' + (cell.hero.tier || 1) + '_' + (cell.stars || 1);
+        if (mesh.userData.v9StandeeSig !== sig) {
+          if (mesh.userData.v9StandeeSprite) {
+            try { mesh.remove(mesh.userData.v9StandeeSprite); } catch (e) {}
+          }
+          const tex = createHeroStandeeTexture(cell.hero, cell.stars || 1);
+          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+          const sprite = new THREE.Sprite(mat);
+          sprite.scale.set(2.35, 2.95, 1);
+          sprite.position.set(0, 1.5, 0); // Position at 1.5 since we no longer scale the parent mesh
+          mesh.add(sprite);
+          mesh.userData.v9StandeeSprite = sprite;
+          mesh.userData.v9StandeeSig = sig;
+        }
+      });
+    }
+
+    // Upgrade Enemies (replace pink cylinders with Yellow Turban / Boss Standees)
+    if (Array.isArray(gameState.enemies)) {
+      gameState.enemies.forEach(en => {
+        if (!en || !en.mesh) return;
+        const em = en.mesh;
+        if (!em.userData) em.userData = {};
+        if (!em.userData.v9EnemyUpgraded) {
+          const isBoss = Boolean(en.isBoss || (en.maxHp && en.maxHp > 2500));
+          const tex = createEnemyStandeeTexture(isBoss);
+          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+          const sp = new THREE.Sprite(mat);
+          sp.scale.set(isBoss ? 2.1 : 1.45, isBoss ? 2.5 : 1.75, 1);
+          sp.position.set(0, 1.1, 0);
+          em.add(sp);
+          em.userData.v9EnemyUpgraded = true;
+        }
+      });
+    }
+  }
+
+  // 5. Dynamic Sword Slash / Spear Thrust VFX & Real Hero Combat Impact
+  const activeSlashes = [];
+  function triggerSwordSlashVFX(startX, startY, targetX, targetY, color, heroName, dmg) {
+    activeSlashes.push({
+      sx: startX, sy: startY,
+      tx: targetX, ty: targetY,
+      progress: 0,
+      color: color || '#ffd54f',
+      heroName: heroName,
+      dmg: dmg
+    });
+    if (activeSlashes.length > 25) activeSlashes.shift();
+  }
+
+  // Hook into 2D FX Canvas to draw sweeping crescent sword waves
+  const fxCvs = document.getElementById('v6-fx-canvas');
+  const fxCtx = fxCvs ? fxCvs.getContext('2d') : null;
+
+  function renderV9SlashLoop() {
+    requestAnimationFrame(renderV9SlashLoop);
+    if (!fxCtx || !fxCvs || activeSlashes.length === 0) return;
+
+    for (let i = activeSlashes.length - 1; i >= 0; i--) {
+      const s = activeSlashes[i];
+      s.progress += 0.14;
+      if (s.progress >= 1) {
+        activeSlashes.splice(i, 1);
+        continue;
+      }
+      const cx = s.sx + (s.tx - s.sx) * s.progress;
+      const cy = s.sy + (s.ty - s.sy) * s.progress;
+
+      fxCtx.save();
+      fxCtx.strokeStyle = s.color;
+      fxCtx.lineWidth = 5;
+      fxCtx.shadowColor = s.color;
+      fxCtx.shadowBlur = 12;
+      fxCtx.beginPath();
+      fxCtx.arc(cx, cy, 28 * s.progress, -Math.PI * 0.7, Math.PI * 0.2);
+      fxCtx.stroke();
+      fxCtx.restore();
+    }
+  }
+  requestAnimationFrame(renderV9SlashLoop);
+
+  // Fast 400ms Hero Combat & Visual Sync Loop
+  setInterval(function() {
+    sanitizeSaveV9();
+    replaceCylindersWithStandees();
+
+    if (typeof gameState === 'undefined' || !Array.isArray(gameState.grid) || !Array.isArray(gameState.enemies)) return;
+    const alive = gameState.enemies.filter(e => e && e.hp > 0);
+    if (alive.length === 0) return;
+
+    gameState.grid.forEach((cell) => {
+      if (!cell || !cell.hero) return;
+      const target = alive[Math.floor(Math.random() * alive.length)];
+      if (!target) return;
+
+      // Lunge animation on standee sprite
+      if (cell.mesh && cell.mesh.userData && cell.mesh.userData.v9StandeeSprite) {
+        const sp = cell.mesh.userData.v9StandeeSprite;
+        sp.position.y = 1.85;
+        setTimeout(() => { if (sp) sp.position.y = 1.5; }, 140);
+      }
+
+      const dmg = Math.max(15, Math.round((cell.hero.atk || 60) * 0.35));
+      target.hp -= dmg;
+
+      const facCol = { shu: '#66ff99', wei: '#80d8ff', wu: '#ff8a80', qun: '#ea80fc' }[cell.hero.faction || 'shu'] || '#ffd54f';
+      triggerSwordSlashVFX(
+        window.innerWidth * (0.3 + Math.random() * 0.4),
+        window.innerHeight * 0.62,
+        window.innerWidth * (0.35 + Math.random() * 0.3),
+        window.innerHeight * 0.32,
+        facCol
+      );
+    });
+  }, 450);
 })();
