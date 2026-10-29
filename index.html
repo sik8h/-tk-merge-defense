@@ -935,5 +935,59 @@
 <canvas id="v85-slash-canvas"></canvas>
 <div id="v85-unit-labels-layer"></div>
 
+
+<!-- ================= PATCH v8.6: SAVE RESET + 165/28 FIX + TRUE 3D SCULPT & NAMEPLATES ================= -->
+<style id="v8-6-master-styles">
+  #v86-reset-save-btn {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 99999;
+    background: linear-gradient(135deg, #8b1e16 0%, #3d0a07 100%);
+    color: #ffd54f;
+    border: 1.5px solid #f5c542;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 11px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.85);
+  }
+  #v86-unit-labels-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 335;
+    overflow: hidden;
+  }
+  .v86-unit-tag {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    background: linear-gradient(180deg, rgba(242, 230, 206, 0.95) 0%, rgba(216, 195, 160, 0.95) 100%);
+    border: 1.5px solid #3b2818;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 10px;
+    font-weight: 900;
+    color: #1c130c;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .v86-unit-tag .v86-seal {
+    background: #b82921;
+    color: #fff8e7;
+    padding: 0 3px;
+    border-radius: 2px;
+    font-size: 9px;
+  }
+</style>
+<button id="v86-reset-save-btn" onclick="window.v86FullResetSave()">🔄 데이터 초기화</button>
+<div id="v86-unit-labels-layer"></div>
+
 </body>
 </html>
