@@ -3986,3 +3986,381 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 650);
 })();
+
+
+// ================= PATCH v8.5: SCENE-WIDE CYLINDER REPLACER, INK NAMEPLATES & HERO SLASH ENGINE =================
+(function() {
+  const v85Slashes = [];
+  const labelPool = {};
+
+  function isLobbyOpenV85() {
+    const ov = document.getElementById('main-menu-overlay');
+    if (ov && !ov.classList.contains('hidden') && getComputedStyle(ov).display !== 'none') return true;
+    return false;
+  }
+
+  function findUnitRootObject(cell) {
+    if (!cell) return null;
+    return cell.mesh || cell.unitMesh || cell.group || cell.model || cell.object3D || null;
+  }
+
+  // 1. Replace glowing neon cylinder appearance with Dark Lacquer Armor + Oversized 3D Helmet, Cape, Weapon & Banner
+  function transformHeroMeshV85(cell, idx) {
+    if (typeof THREE === 'undefined' || !cell || !cell.hero) return;
+    const root = findUnitRootObject(cell);
+    if (!root) return;
+    if (!root.userData) root.userData = {};
+
+    const dna = (typeof window.getHeroVisualDNA === 'function')
+      ? window.getHeroVisualDNA(cell.hero)
+      : { baseName: cell.hero.name || '장수', sealChar: (cell.hero.name || '장').charAt(0), faction: cell.hero.faction || 'shu', tier: cell.hero.tier || 1, weapon: 'guandao', helm: 'general' };
+
+    const sig = dna.baseName + '_' + (cell.hero.tier || 1) + '_' + (cell.stars || 1);
+    if (root.userData.v85Transformed === sig) return;
+
+    // Tone down any glowing neon cylinder inside root so our 3D armor & helmet stand out clearly
+    try {
+      root.traverse(child => {
+        if (child && child.isMesh && !child.userData.v85Part) {
+          if (child.geometry && child.geometry.type && child.geometry.type.includes('Cylinder')) {
+            child.scale.set(0.55, 0.45, 0.55);
+            if (child.material) {
+              child.material.emissiveIntensity = 0.05;
+              child.material.color.setHex(0x1c1612);
+            }
+          }
+        }
+      });
+    } catch (e) {}
+
+    if (root.userData.v85Rig) {
+      try { root.remove(root.userData.v85Rig); } catch (e) {}
+    }
+
+    try {
+      const rig = new THREE.Group();
+      rig.userData.v85Part = true;
+
+      const facHex = { shu: 0x1e8449, wei: 0x2874a6, wu: 0xb03a2e, qun: 0x7d3c98 }[dna.faction] || 0x1e8449;
+      const goldHex = 0xf5c542;
+
+      const markMesh = (m) => { m.userData.v85Part = true; return m; };
+
+      // A. Broad Armored Torso & Flowing Cape
+      const torso = markMesh(new THREE.Mesh(
+        new THREE.BoxGeometry(0.68, 0.72, 0.44),
+        new THREE.MeshBasicMaterial({ color: facHex })
+      ));
+      torso.position.set(0, 0.55, 0);
+      rig.add(torso);
+
+      const belt = markMesh(new THREE.Mesh(
+        new THREE.BoxGeometry(0.72, 0.14, 0.48),
+        new THREE.MeshBasicMaterial({ color: goldHex })
+      ));
+      belt.position.set(0, 0.42, 0);
+      rig.add(belt);
+
+      // Shoulder Pauldrons (견갑)
+      const pGeo = new THREE.BoxGeometry(0.28, 0.24, 0.48);
+      const pMat = new THREE.MeshBasicMaterial({ color: 0x221a14 });
+      const pL = markMesh(new THREE.Mesh(pGeo, pMat));
+      pL.position.set(-0.46, 0.74, 0);
+      pL.rotation.z = 0.25;
+      const pR = markMesh(new THREE.Mesh(pGeo, pMat));
+      pR.position.set(0.46, 0.74, 0);
+      pR.rotation.z = -0.25;
+      rig.add(pL, pR);
+
+      // B. Distinct Sculpted Head, Beard & Tall Crown/Helmet
+      const head = markMesh(new THREE.Mesh(
+        new THREE.SphereGeometry(0.28, 14, 14),
+        new THREE.MeshBasicMaterial({ color: dna.baseName === '관우' ? 0xc85a3c : 0xf0d2b8 })
+      ));
+      head.position.set(0, 1.15, 0.04);
+      rig.add(head);
+
+      // Long Beard for Guan Yu / Strategists / Veterans
+      if (dna.beard && dna.beard !== 'none' && dna.beard !== 'female') {
+        const beard = markMesh(new THREE.Mesh(
+          new THREE.ConeGeometry(0.18, 0.48, 6),
+          new THREE.MeshBasicMaterial({ color: dna.beard === 'white_long' ? 0xecf0f1 : 0x111111 })
+        ));
+        beard.rotation.x = Math.PI;
+        beard.position.set(0, 0.88, 0.24);
+        rig.add(beard);
+      }
+
+      // High-Visibility Helmet / Plumes
+      const helm = markMesh(new THREE.Mesh(
+        new THREE.ConeGeometry(0.34, 0.42, 8),
+        new THREE.MeshBasicMaterial({ color: dna.tier >= 5 ? goldHex : facHex })
+      ));
+      helm.position.set(0, 1.46, 0);
+      rig.add(helm);
+
+      // Twin Red Pheasant Plumes for Tier 5+ or Lu Bu
+      if (dna.helm === 'lu_bu_crown' || dna.tier >= 5) {
+        const plGeo = new THREE.CylinderGeometry(0.025, 0.05, 0.95, 6);
+        const plMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
+        const pl1 = markMesh(new THREE.Mesh(plGeo, plMat));
+        pl1.position.set(-0.28, 1.82, -0.1);
+        pl1.rotation.z = 0.48;
+        const pl2 = markMesh(new THREE.Mesh(plGeo, plMat));
+        pl2.position.set(0.28, 1.82, -0.1);
+        pl2.rotation.z = -0.48;
+        rig.add(pl1, pl2);
+      }
+
+      // C. Oversized Signature 3D Weapon (Clearly visible from top-down camera!)
+      const wpnGroup = new THREE.Group();
+      wpnGroup.userData.v85Part = true;
+      const shaft = markMesh(new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.045, 1.85, 6),
+        new THREE.MeshBasicMaterial({ color: 0x5d4037 })
+      ));
+      wpnGroup.add(shaft);
+
+      if (dna.weapon === 'feather_fan') {
+        const fan = markMesh(new THREE.Mesh(
+          new THREE.CircleGeometry(0.38, 10),
+          new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        ));
+        fan.position.set(0, 0.65, 0);
+        wpnGroup.add(fan);
+      } else {
+        const blade = markMesh(new THREE.Mesh(
+          new THREE.ConeGeometry(0.24, 0.68, 4),
+          new THREE.MeshBasicMaterial({ color: dna.tier >= 5 ? 0xffe066 : 0x85c1e9 })
+        ));
+        blade.position.set(0, 1.05, 0.08);
+        wpnGroup.add(blade);
+      }
+      wpnGroup.position.set(0.54, 0.95, 0.15);
+      wpnGroup.rotation.z = -0.28;
+      wpnGroup.rotation.x = 0.35;
+      rig.add(wpnGroup);
+      root.userData.v85Weapon = wpnGroup;
+
+      root.add(rig);
+      root.userData.v85Rig = rig;
+      root.userData.v85Transformed = sig;
+    } catch (e) {}
+  }
+
+  // 2. Transform purple enemy cylinders into Armored Enemy Troops with Dark Shields & Horns
+  function transformEnemyMeshesV85() {
+    if (typeof THREE === 'undefined' || typeof gameState === 'undefined' || !Array.isArray(gameState.enemies)) return;
+    gameState.enemies.forEach(en => {
+      if (!en || en.hp <= 0) return;
+      const em = en.mesh || en.unitMesh || en.group || en.object3D;
+      if (!em || (em.userData && em.userData.v85EnemyStyled)) return;
+      if (!em.userData) em.userData = {};
+      try {
+        const eRig = new THREE.Group();
+        const armor = new THREE.Mesh(
+          new THREE.BoxGeometry(0.58, 0.62, 0.42),
+          new THREE.MeshBasicMaterial({ color: en.isBoss ? 0xb71c1c : 0x311b92 })
+        );
+        armor.position.set(0, 0.45, 0);
+        const hornL = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 5), new THREE.MeshBasicMaterial({ color: 0xffc107 }));
+        hornL.position.set(-0.22, 0.95, 0);
+        hornL.rotation.z = 0.4;
+        const hornR = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 5), new THREE.MeshBasicMaterial({ color: 0xffc107 }));
+        hornR.position.set(0.22, 0.95, 0);
+        hornR.rotation.z = -0.4;
+        eRig.add(armor, hornL, hornR);
+        em.add(eRig);
+        em.userData.v85EnemyStyled = true;
+      } catch (e) {}
+    });
+  }
+
+  // 3. Project 3D Hero Coordinates to 2D Screen for Crisp Xuan-Paper Nameplates above every Hero
+  function getScreenPosV85(obj3d) {
+    if (typeof THREE === 'undefined' || !obj3d) return null;
+    const cam = window.camera || (typeof camera !== 'undefined' ? camera : null);
+    if (!cam) return null;
+    try {
+      const vec = new THREE.Vector3();
+      obj3d.getWorldPosition(vec);
+      vec.y += 1.85;
+      vec.project(cam);
+      return {
+        x: (vec.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-(vec.y * 0.5) + 0.5) * window.innerHeight
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function syncHeroFloatingLabelsV85() {
+    const layer = document.getElementById('v85-unit-labels-layer');
+    if (!layer) return;
+    if (isLobbyOpenV85() || typeof gameState === 'undefined' || !Array.isArray(gameState.grid)) {
+      layer.innerHTML = '';
+      return;
+    }
+
+    const activeIndices = new Set();
+    gameState.grid.forEach((cell, idx) => {
+      if (!cell || !cell.hero) return;
+      activeIndices.add(idx);
+      transformHeroMeshV85(cell, idx);
+
+      let tag = labelPool[idx];
+      if (!tag) {
+        tag = document.createElement('div');
+        tag.className = 'v85-hero-tag';
+        layer.appendChild(tag);
+        labelPool[idx] = tag;
+      }
+
+      const dna = (typeof window.getHeroVisualDNA === 'function')
+        ? window.getHeroVisualDNA(cell.hero)
+        : { baseName: cell.hero.name || '장수', sealChar: (cell.hero.name || '장').charAt(0) };
+
+      tag.innerHTML = `<span class="v85-hero-seal">${dna.sealChar}</span><span class="v85-hero-name">${dna.baseName}</span><span class="v85-hero-wpn">★${cell.stars || 1}</span>`;
+
+      const root = findUnitRootObject(cell);
+      const pos = getScreenPosV85(root);
+      if (pos && pos.x > 10 && pos.x < window.innerWidth - 10 && pos.y > 60 && pos.y < window.innerHeight - 100) {
+        tag.style.display = 'flex';
+        tag.style.left = pos.x + 'px';
+        tag.style.top = pos.y + 'px';
+      } else {
+        // Fallback grid-based screen estimation if camera isn't global
+        const col = idx % 5;
+        const row = Math.floor(idx / 5);
+        const fx = window.innerWidth * (0.24 + col * 0.13);
+        const fy = window.innerHeight * (0.50 + row * 0.065);
+        tag.style.display = 'flex';
+        tag.style.left = fx + 'px';
+        tag.style.top = fy + 'px';
+      }
+    });
+
+    Object.keys(labelPool).forEach(k => {
+      if (!activeIndices.has(Number(k)) && labelPool[k]) {
+        labelPool[k].style.display = 'none';
+      }
+    });
+  }
+
+  // 4. Direct Hero-to-Enemy Ink-Wash Sword Slash & Real HP Damage Engine
+  function fireHeroInkSlashesV85() {
+    if (isLobbyOpenV85() || typeof gameState === 'undefined' || !Array.isArray(gameState.grid) || !Array.isArray(gameState.enemies)) return;
+    const alive = gameState.enemies.filter(e => e && e.hp > 0);
+    if (alive.length === 0) return;
+
+    gameState.grid.forEach((cell, idx) => {
+      if (!cell || !cell.hero) return;
+      const target = alive[idx % alive.length] || alive[0];
+      if (!target) return;
+
+      const baseAtk = Number(cell.hero.atk) || ((cell.hero.tier || 1) * 95);
+      const starMult = 1 + ((cell.stars || 1) - 1) * 0.35;
+      const dmg = Math.max(25, Math.round(baseAtk * starMult * 0.55));
+
+      target.hp = Math.max(0, target.hp - dmg);
+
+      // Animate 3D weapon swing
+      const root = findUnitRootObject(cell);
+      if (root && root.userData && root.userData.v85Weapon) {
+        root.userData.v85Weapon.rotation.x = 1.15;
+        setTimeout(() => {
+          if (root && root.userData && root.userData.v85Weapon) root.userData.v85Weapon.rotation.x = 0.35;
+        }, 180);
+      }
+
+      // Compute start (Hero) and end (Enemy) screen coordinates for Ink Brush Slash
+      const col = idx % 5;
+      const row = Math.floor(idx / 5);
+      const hPos = getScreenPosV85(root) || {
+        x: window.innerWidth * (0.24 + col * 0.13),
+        y: window.innerHeight * (0.52 + row * 0.065)
+      };
+      const eMesh = target.mesh || target.unitMesh || target.group;
+      const ePos = getScreenPosV85(eMesh) || {
+        x: window.innerWidth * (0.30 + Math.random() * 0.40),
+        y: window.innerHeight * (0.33 + Math.random() * 0.08)
+      };
+
+      const facColor = { shu: '#2ecc71', wei: '#5dade2', wu: '#ff5252', qun: '#ffd54f' }[cell.hero.faction] || '#ffd54f';
+      const dnaName = (typeof window.getHeroVisualDNA === 'function') ? window.getHeroVisualDNA(cell.hero).baseName : (cell.hero.name || '장수');
+
+      v85Slashes.push({
+        x1: hPos.x,
+        y1: hPos.y,
+        x2: ePos.x,
+        y2: ePos.y,
+        color: facColor,
+        alpha: 1.0,
+        label: '🖌️' + dnaName + ' -' + dmg
+      });
+    });
+  }
+
+  // Render Ink Brush Slashes & Hit Seals on #v85-slash-canvas
+  const sCanvas = document.getElementById('v85-slash-canvas');
+  const sCtx = sCanvas ? sCanvas.getContext('2d') : null;
+  function resizeSlashCanvas() {
+    if (!sCanvas) return;
+    sCanvas.width = window.innerWidth;
+    sCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeSlashCanvas);
+  resizeSlashCanvas();
+
+  function renderSlashLoopV85() {
+    requestAnimationFrame(renderSlashLoopV85);
+    if (!sCtx) return;
+    sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+    if (isLobbyOpenV85()) return;
+
+    for (let i = v85Slashes.length - 1; i >= 0; i--) {
+      const s = v85Slashes[i];
+      s.alpha -= 0.055;
+      if (s.alpha <= 0) {
+        v85Slashes.splice(i, 1);
+        continue;
+      }
+      sCtx.save();
+      sCtx.globalAlpha = Math.max(0, s.alpha);
+
+      // Outer ink brush stroke
+      sCtx.strokeStyle = '#110d0a';
+      sCtx.lineWidth = 7;
+      sCtx.lineCap = 'round';
+      sCtx.beginPath();
+      sCtx.moveTo(s.x1, s.y1);
+      sCtx.quadraticCurveTo((s.x1 + s.x2) * 0.5, Math.min(s.y1, s.y2) - 42, s.x2, s.y2);
+      sCtx.stroke();
+
+      // Inner glowing elemental sword aura
+      sCtx.strokeStyle = s.color;
+      sCtx.lineWidth = 3.2;
+      sCtx.beginPath();
+      sCtx.moveTo(s.x1, s.y1);
+      sCtx.quadraticCurveTo((s.x1 + s.x2) * 0.5, Math.min(s.y1, s.y2) - 42, s.x2, s.y2);
+      sCtx.stroke();
+
+      // Impact damage callout with hero name at enemy position
+      sCtx.font = '900 13px "Noto Serif KR", serif';
+      sCtx.fillStyle = '#fff8e7';
+      sCtx.shadowColor = '#000000';
+      sCtx.shadowBlur = 4;
+      sCtx.textAlign = 'center';
+      sCtx.fillText(s.label, s.x2, s.y2 - (1 - s.alpha) * 28);
+      sCtx.restore();
+    }
+  }
+  requestAnimationFrame(renderSlashLoopV85);
+
+  setInterval(function() {
+    syncHeroFloatingLabelsV85();
+    transformEnemyMeshesV85();
+    fireHeroInkSlashesV85();
+  }, 550);
+})();

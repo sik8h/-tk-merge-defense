@@ -871,5 +871,69 @@
 
 <div id="v8-ink-scroll-frame"></div>
 
+
+<!-- ================= PATCH v8.5: FLOATING INK HERO BADGES & SLASH CANVAS ================= -->
+<style id="v85-true-hero-visuals-css">
+  #v85-slash-canvas {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+    z-index: 360 !important;
+  }
+  #v85-unit-labels-layer {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+    z-index: 365 !important;
+    overflow: hidden !important;
+  }
+  .v85-hero-tag {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(244, 232, 193, 0.96) 0%, rgba(218, 198, 156, 0.96) 100%);
+    border: 1.5px solid #2b1d12;
+    outline: 1px solid #d4af37;
+    border-radius: 4px;
+    padding: 1px 5px 1px 2px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.85);
+    font-family: 'Noto Serif KR', serif;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .v85-hero-seal {
+    width: 16px;
+    height: 16px;
+    background: #b82921;
+    color: #fff8e7;
+    font-size: 10px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    border: 1px solid #f5c542;
+  }
+  .v85-hero-name {
+    font-size: 10px;
+    font-weight: 900;
+    color: #1a120c;
+    letter-spacing: -0.3px;
+  }
+  .v85-hero-wpn {
+    font-size: 9px;
+    font-weight: 700;
+    color: #7b241c;
+  }
+</style>
+<canvas id="v85-slash-canvas"></canvas>
+<div id="v85-unit-labels-layer"></div>
+
 </body>
 </html>
